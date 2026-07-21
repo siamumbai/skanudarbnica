@@ -13,6 +13,7 @@
     --text: #2A1F08; --muted: #7A6840; --border: rgba(120,90,20,0.18);
   }
   body { background: var(--bg); color: var(--text); font-family: 'Raleway', sans-serif; }
+  .page { max-width: 1600px; margin: 0 auto; background: var(--bg); overflow-x: hidden; }
   nav { display: flex; justify-content: space-between; align-items: center; padding: 1.5rem 3rem; background: var(--bg2); border-bottom: 0.5px solid var(--border); }
   .nav-logo { font-size: 18px; font-weight: 600; letter-spacing: 0.04em; }
   .nav-links { display: flex; gap: 2rem; }
@@ -85,6 +86,7 @@
 </style>
 </head>
 <body>
+<div class="page">
 
 <nav>
   <div style="display:flex; align-items:center; gap:1.5rem;">
@@ -330,5 +332,6 @@
   <div class="footer-note">Rīga, 2025 · skanudarbnica.lv</div>
 </footer>
 
+</div>
 </body>
 </html>
