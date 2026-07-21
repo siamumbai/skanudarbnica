@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="lv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vizualizācija</title>
+<link href="https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,300;0,400;0,600;0,800;1,300;1,600;1,800&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #F5EDD8;
+  font-family: 'Raleway', sans-serif;
+  overflow: hidden;
+}
+.stage {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+}
+.center-text {
+  position: absolute;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  z-index: 10;
+  pointer-events: none;
+  white-space: nowrap;
+  background: #7A5800;
+  padding: 0.7rem 2rem;
+  border-radius: 100px;
+}
+.center-line1 {
+  font-size: clamp(14px, 1.6vw, 22px);
+  font-weight: 600;
+  color: #F5EDD8;
+  line-height: 1.2;
+  display: block;
+}
+.center-line2 {
+  font-size: clamp(14px, 1.6vw, 22px);
+  font-weight: 300;
+  font-style: italic;
+  color: #D4A843;
+  display: block;
+  margin-top: 1px;
+}
+#lines-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+.word {
+  position: absolute;
+  font-family: 'Raleway', sans-serif;
+  color: #2A1F08;
+  pointer-events: none;
+  animation: breathe linear infinite;
+  white-space: nowrap;
+  z-index: 5;
+}
+@keyframes breathe {
+  0%   { opacity: var(--op-min); }
+  50%  { opacity: var(--op-max); }
+  100% { opacity: var(--op-min); }
+}
+.dash-line {
+  animation: linepulse linear infinite;
+}
+@keyframes linepulse {
+  0%   { opacity: var(--lop-min); }
+  50%  { opacity: var(--lop-max); }
+  100% { opacity: var(--lop-min); }
+}
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <svg id="lines-svg"></svg>
+  <div class="center-text" id="centerText">
+    <span class="center-line1">Ceļu, kuru iet,</span>
+    <span class="center-line2">izvēlas bērns.</span>
+  </div>
+</div>
+
+<script>
+// [text, fontWeight, sizeFactor, pulseSpeed(s), color: 0=dark, 1=amber]
+const words = [
+  ["Kino mūzika",    800, 1.35, 2.5, 0],
+  ["Klavieres",      700, 1.2,  3.5, 0],
+  ["Harmonija",      600, 1.0,  2.8, 0],
+  ["Ritms",          600, 1.0,  2.0, 0],
+  ["MIDI",           600, 0.95, 3.8, 0],
+  ["Bungas",         800, 1.3,  2.2, 1],
+  ["Improvizācija",  600, 1.05, 3.0, 1],
+  ["Efekti",         600, 1.0,  3.5, 1],
+  ["Loop",           700, 1.1,  1.8, 1],
+  ["Sampler",        600, 1.0,  2.8, 1],
+  ["DJ",             800, 1.4,  2.5, 1],
+  ["Skaņdarbs",      700, 1.15, 3.2, 0],
+  ["Vibrācijas",     600, 1.0,  3.0, 1],
+  ["Freestyle",      800, 1.2,  2.2, 1],
+  ["Mixing",         600, 1.0,  4.0, 0],
+  ["Sound Design",   600, 1.05, 2.8, 0],
+  ["Kosmoss",        700, 1.2,  3.5, 1],
+  ["Elektroniskā mūzika", 600, 1.05, 3.0, 0],
+  ["Producents",     500, 0.9,  4.2, 0],
+  ["Halle",          500, 0.92, 2.5, 0],
+  ["Reverbs",        500, 0.9,  3.2, 1],
+  ["Delay",          500, 0.88, 2.8, 0],
+  ["Perkusijas",     500, 0.88, 3.8, 0],
+  ["Hiphops",        500, 0.92, 2.2, 1],
+  ["Roks",           500, 0.92, 3.0, 0],
+  ["Ģitāra",         500, 1.0,  3.2, 1],
+  ["EQ",             600, 0.9,  4.5, 0],
+  ["Ambient Music",  500, 0.88, 2.8, 1],
+  ["Dators",         600, 0.88, 3.8, 0],
+  ["Melodija",       500, 0.88, 2.5, 1],
+  ["Sintezators",    500, 0.88, 3.2, 0],
+  ["Skaņa",          500, 0.88, 2.8, 1],
+  ["Tonis",          500, 0.88, 4.2, 0],
+  ["Akords",         500, 0.88, 2.5, 1],
+  ["Tempo",          600, 0.88, 3.5, 0],
+];
+
+const wordColors = ["#2A1F08", "#B8860B"];
+
+function opRange(weight) {
+  if (weight >= 700) return [0.40, 1.0];
+  return                     [0.25, 1.0];
+}
+
+const stage = document.getElementById("stage");
+const svg   = document.getElementById("lines-svg");
+const W = window.innerWidth;
+const H = window.innerHeight;
+
+// Grid-based placement: divide usable area into cells
+const usableH = H * 0.78; // words live in top 78%, more gap at bottom
+const cols = 7;
+const rows = Math.ceil(words.length / cols);
+const cellW = W / cols;
+const cellH = usableH / rows;
+const margin = 10;
+
+function rand(a, b) { return a + Math.random() * (b - a); }
+
+// Shuffle words for random cell assignment
+const shuffled = [...words].sort(() => Math.random() - 0.5);
+
+const els = shuffled.map(([text, weight, sizeFactor, speed, colorIdx], i) => {
+  const el = document.createElement("div");
+  el.className = "word";
+  el.textContent = text;
+  el.style.fontSize = (16 * sizeFactor) + "px";
+  el.style.fontWeight = weight;
+  el.style.color = wordColors[colorIdx];
+  const [oMin, oMax] = opRange(weight);
+  el.style.setProperty("--op-min", oMin);
+  el.style.setProperty("--op-max", oMax);
+  el.style.animationDuration = speed + "s";
+  el.style.animationDelay = "-" + rand(0, speed) + "s";
+  el.style.opacity = oMin;
+  el.style.left = "-999px";
+  el.style.top  = "-999px";
+  stage.appendChild(el);
+  return { el, weight, cell: i };
+});
+
+requestAnimationFrame(() => {
+  requestAnimationFrame(() => {
+    const btn = document.getElementById("centerText");
+    const bRect = btn.getBoundingClientRect();
+    const bcx = bRect.left + bRect.width / 2;
+    const bcy = bRect.top  + bRect.height / 2;
+
+    const placed = [];
+
+    els.forEach(({ el, weight, cell }) => {
+      const elW = el.offsetWidth;
+      const elH = el.offsetHeight;
+      const col = cell % cols;
+      const row = Math.floor(cell / cols);
+
+      // Random position within cell
+      const cellX = col * cellW;
+      const cellY = row * cellH;
+      const x = rand(cellX + margin, Math.max(cellX + margin, cellX + cellW - elW - margin));
+      const y = rand(cellY + margin, Math.max(cellY + margin, cellY + cellH - elH - margin));
+
+      el.style.left = x + "px";
+      el.style.top  = y + "px";
+      placed.push({ x, y, w: elW, h: elH, weight });
+    });
+
+    // Sort by angle from button center to prevent crossing
+    placed.sort((a, b) => {
+      const angA = Math.atan2((a.y + a.h/2) - bcy, (a.x + a.w/2) - bcx);
+      const angB = Math.atan2((b.y + b.h/2) - bcy, (b.x + b.w/2) - bcx);
+      return angA - angB;
+    });
+
+    placed.forEach((p, i) => {
+      const wx = p.x + p.w / 2;
+      const wy = p.y + p.h / 2;
+      const ang = Math.atan2(wy - bcy, wx - bcx);
+      const hw = bRect.width / 2;
+      const hh = bRect.height / 2;
+      const tanA = Math.tan(ang);
+      let ox, oy;
+      if (Math.abs(Math.cos(ang)) * hh > Math.abs(Math.sin(ang)) * hw) {
+        const sx = Math.sign(Math.cos(ang));
+        ox = bcx + sx * hw;
+        oy = bcy + sx * hw * tanA;
+      } else {
+        const sy = Math.sign(Math.sin(ang));
+        oy = bcy + sy * hh;
+        ox = bcx + (sy !== 0 ? sy * hh / tanA : 0);
+      }
+
+      const lineOpMax = p.weight >= 700 ? 0.55 : p.weight >= 500 ? 0.42 : 0.32;
+      const lineOpMin = lineOpMax * 0.6;
+      const lineDur = rand(4, 8);
+
+      const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      line.setAttribute("x1", ox);
+      line.setAttribute("y1", oy);
+      line.setAttribute("x2", wx);
+      line.setAttribute("y2", wy);
+      line.setAttribute("stroke", "#B8860B");
+      line.setAttribute("stroke-width", "0.8");
+      line.setAttribute("stroke-dasharray", "4 5");
+      line.classList.add("dash-line");
+      line.style.setProperty("--lop-min", lineOpMin);
+      line.style.setProperty("--lop-max", lineOpMax);
+      line.style.animationDuration = lineDur + "s";
+      line.style.animationDelay = "-" + rand(0, lineDur) + "s";
+      svg.appendChild(line);
+    });
+  });
+});
+</script>
+</body>
+</html>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #F5EDD8;
+  --accent: #B8860B;
+  --accent-dark: #7A5800;
+  --text: #2A1F08;
+  --muted: #7A6840;
+}
+body {
+  background: var(--bg);
+  font-family: 'Raleway', sans-serif;
+  overflow: hidden;
+}
+.stage {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+}
+/* Bottom text as button */
+.center-text {
+  position: absolute;
+  bottom: 3.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  z-index: 10;
+  pointer-events: none;
+  white-space: nowrap;
+  background: var(--accent-dark);
+  padding: 1rem 2.5rem;
+  border-radius: 100px;
+}
+.center-line1 {
+  font-size: clamp(18px, 2.2vw, 28px);
+  font-weight: 600;
+  color: #F5EDD8;
+  line-height: 1.2;
+  display: block;
+}
+.center-line2 {
+  font-size: clamp(18px, 2.2vw, 28px);
+  font-weight: 300;
+  font-style: italic;
+  color: #D4A843;
+  display: block;
+  margin-top: 2px;
+}
+/* SVG lines layer */
+#lines-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+/* Floating words */
+.word {
+  position: absolute;
+  font-family: 'Raleway', sans-serif;
+  pointer-events: none;
+  animation: breathe linear infinite;
+  white-space: nowrap;
+  z-index: 5;
+}
+@keyframes breathe {
+  0%   { opacity: var(--op-min); }
+  50%  { opacity: var(--op-max); }
+  100% { opacity: var(--op-min); }
+}
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <svg id="lines-svg"></svg>
+  <div class="center-text" id="centerText">
+    <span class="center-line1">Ceļu, kuru iet,</span>
+    <span class="center-line2">izvēlas bērns.</span>
+  </div>
+</div>
+
+<script>
+const words = [
+  ["Kino mūzika",    700, 1.2, 0],
+  ["Klavieres",      700, 1.1, 0],
+  ["Harmonija",      600, 0.85, 0],
+  ["Ritms",          600, 0.85, 0],
+  ["MIDI",           600, 0.85, 0],
+  ["Bungas",         700, 1.15, 1],
+  ["Improvizācija",  600, 0.9, 1],
+  ["Efekti",         600, 0.95, 1],
+  ["Loop",           600, 0.9, 1],
+  ["Sampler",        600, 0.85, 1],
+  ["DJ",             700, 1.2, 1],
+  ["Skaņdarbs",      700, 1.1, 0],
+  ["Vibrācijas",     600, 0.9, 1],
+  ["Freestyle",      700, 1.05, 1],
+  ["Mixing",         600, 0.9, 0],
+  ["Sound Design",   600, 0.95, 0],
+  ["Kosmoss",        700, 1.1, 1],
+  ["Producents",     300, 0.95, 2],
+  ["Hallē",          400, 1.0, 2],
+  ["Reverbs",        400, 0.95, 2],
+  ["Delay",          300, 0.9, 2],
+  ["Perkusijas",     300, 0.9, 2],
+  ["Hiphops",        400, 0.95, 2],
+  ["Roks",           400, 0.95, 2],
+  ["Ģitāra",         400, 1.0, 2],
+  ["EQ",             300, 0.85, 2],
+  ["Ambient",        300, 0.85, 2],
+  ["Dators",         300, 0.9, 2],
+  ["Basģitāra",      300, 0.9, 2],
+  ["Bungmašīna",     300, 0.88, 2],
+  ["Melodija",       300, 0.85, 2],
+  ["Sintezators",    300, 0.85, 2],
+  ["Skaņa",          300, 0.82, 0],
+  ["Tonis",          300, 0.82, 0],
+  ["Akords",         300, 0.82, 0],
+  ["Tembrs",         300, 0.82, 0],
+  ["Dinamika",       300, 0.82, 0],
+  ["Oktāva",         300, 0.82, 0],
+  ["Tempo",          300, 0.85, 0],
+  ["Frekvence",      300, 0.82, 0],
+];
+
+const colors = ["#2A1F08", "#B8860B", "#7A6840"];
+const opMin  = [0.5, 0.5, 0.35];
+const opMax  = [1.0, 1.0, 0.75];
+
+function rand(a, b) { return a + Math.random() * (b - a); }
+
+const stage = document.getElementById("stage");
+const svg   = document.getElementById("lines-svg");
+
+const W = window.innerWidth;
+const H = window.innerHeight;
+
+// Origin point — top of center text block (near bottom center)
+const originX = W / 2;
+const originY = H - 100; // approx top of bottom text
+
+// Place words with no-overlap in upper 80% of screen
+const placed = [];
+
+function overlaps(nx, ny, nw, nh) {
+  const pad = 12;
+  for (const p of placed) {
+    if (nx < p.x + p.w + pad &&
+        nx + nw + pad > p.x &&
+        ny < p.y + p.h + pad &&
+        ny + nh + pad > p.y) return true;
+  }
+  return false;
+}
+
+// Create word elements first (off-screen) to measure
+const els = words.map(([text, weight, sizeFactor, colorIdx]) => {
+  const el = document.createElement("div");
+  el.className = "word";
+  el.textContent = text;
+  el.style.fontSize = (16 * sizeFactor) + "px";
+  el.style.fontWeight = weight;
+  el.style.color = colors[colorIdx];
+  el.style.left = "-999px";
+  el.style.top = "-999px";
+  el.style.setProperty("--op-min", opMin[colorIdx]);
+  el.style.setProperty("--op-max", opMax[colorIdx]);
+  el.style.animationDuration = rand(4, 9) + "s";
+  el.style.animationDelay = "-" + rand(0, 8) + "s";
+  el.style.opacity = opMin[colorIdx];
+  stage.appendChild(el);
+  return { el, colorIdx };
+});
+
+// After paint, measure and position
+requestAnimationFrame(() => {
+  requestAnimationFrame(() => {
+    const margin = 16;
+    const maxY = H * 0.78; // words live in top 78%
+
+    // Split words into zones: first half left, second half right, rest random
+    const half = Math.ceil(els.length / 2);
+    els.forEach(({ el, colorIdx }, i) => {
+      const elW = el.offsetWidth;
+      const elH = el.offsetHeight;
+      let x, y, ok = false;
+
+      // Force zone: even index = left 55%, odd = right 55% (overlapping center)
+      const forceLeft  = i < half;
+      const xMin = forceLeft ? margin : W * 0.45;
+      const xMax = forceLeft ? W * 0.55 : W - elW - margin;
+
+      for (let attempt = 0; attempt < 300; attempt++) {
+        x = rand(xMin, Math.max(xMin + 1, xMax - elW));
+        y = rand(margin, maxY - elH);
+        if (!overlaps(x, y, elW, elH)) { ok = true; break; }
+      }
+      if (!ok) {
+        x = rand(margin, W - elW - margin);
+        y = rand(margin, maxY - elH);
+      }
+
+      el.style.left = x + "px";
+      el.style.top  = y + "px";
+      placed.push({ x, y, w: elW, h: elH, el, colorIdx });
+    });
+
+    // Sort placed words by angle from button center to avoid crossing lines
+    const btn = document.getElementById("centerText");
+    const bRect = btn.getBoundingClientRect();
+    const bcx = bRect.left + bRect.width / 2;
+    const bcy = bRect.top + bRect.height / 2;
+
+    placed.sort((a, b) => {
+      const angA = Math.atan2((a.y + a.h/2) - bcy, (a.x + a.w/2) - bcx);
+      const angB = Math.atan2((b.y + b.h/2) - bcy, (b.x + b.w/2) - bcx);
+      return angA - angB;
+    });
+
+    // Assign perimeter points in same angular order
+    placed.forEach((p, i) => {
+      const { colorIdx } = p;
+      const wx = p.x + p.w / 2;
+      const wy = p.y + p.h / 2;
+
+      // Pick perimeter point at same angle as the word
+      const ang = Math.atan2(wy - bcy, wx - bcx);
+      const bW = bRect.width;
+      const bH = bRect.height;
+      const hw = bW / 2;
+      const hh = bH / 2;
+      // Ellipse-like: clamp to rect boundary
+      const tanA = Math.tan(ang);
+      let ox, oy;
+      if (Math.abs(Math.cos(ang)) * hh > Math.abs(Math.sin(ang)) * hw) {
+        // hits left or right edge
+        const sx = Math.sign(Math.cos(ang));
+        ox = bcx + sx * hw;
+        oy = bcy + sx * hw * tanA;
+      } else {
+        // hits top or bottom edge
+        const sy = Math.sign(Math.sin(ang));
+        oy = bcy + sy * hh;
+        ox = bcx + sy * hh / tanA;
+      }
+
+      const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      line.setAttribute("x1", ox);
+      line.setAttribute("y1", oy);
+      line.setAttribute("x2", wx);
+      line.setAttribute("y2", wy);
+      line.setAttribute("stroke", colors[colorIdx]);
+      line.setAttribute("stroke-width", "0.8");
+      line.setAttribute("stroke-dasharray", "4 5");
+      line.setAttribute("opacity", colorIdx === 1 ? "0.3" : "0.18");
+      svg.appendChild(line);
+    });
+  });
+});
+</script>
+</body>
+</html>
