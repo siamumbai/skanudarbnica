@@ -15,7 +15,7 @@
   body { background: var(--bg); color: var(--text); font-family: 'Raleway', sans-serif; }
   .page { overflow-x: hidden; }
   nav { display: flex; justify-content: space-between; align-items: center; padding: 1.5rem max(3rem, calc((100% - var(--maxw)) / 2)); background: var(--bg2); border-bottom: 0.5px solid var(--border); }
-  .nav-logo { font-size: 26px; font-weight: 700; letter-spacing: 0.04em; }
+  .nav-logo { font-size: 26px; font-weight: 600; letter-spacing: 0.04em; }
   .nav-links { display: flex; gap: 2rem; }
   .nav-links a { font-size: 13px; color: var(--muted); text-decoration: none; }
   .nav-cta { font-size: 13px; background: var(--accent-dark); color: var(--bg); padding: 8px 20px; border-radius: 100px; font-weight: 600; text-decoration: none; }
@@ -71,11 +71,15 @@
     .nav-logo { font-size: 20px; }
     .nav-links { display: none; }
 
-    .hero { display: block !important; min-height: auto !important; }
-    .hero-left { padding: 2.5rem 1.25rem 1.5rem !important; }
-    .hero-right { padding-bottom: 2rem !important; }
-    .hero-title { font-size: clamp(30px, 8vw, 42px); }
-    .hero-sub { font-size: 15px; }
+    .hero { display: flex !important; flex-direction: column !important; min-height: auto !important; padding: 0 !important; }
+    .hero-left, .hero-right { display: contents !important; }
+    .hero-eyebrow { order: 1; padding: 1.25rem 1.25rem 0 !important; margin-bottom: 0.25rem !important; }
+    .hero-title { order: 2; padding: 0 1.25rem; margin-top: 0.5rem; font-size: clamp(30px, 8vw, 42px); }
+    .hero-right img { order: 3; flex: none !important; height: auto !important; margin-top: 1.5rem; }
+    .hero-sub { order: 4; padding: 0 1.25rem; margin-top: 1.5rem; font-size: 15px; }
+    .hero-note { order: 5; padding: 0 1.25rem; }
+    .hero-cta { order: 6; padding: 0 1.25rem; flex-wrap: wrap; }
+    .hero-quote { order: 7; margin: 1.5rem 1.25rem 2.5rem !important; padding: 0 0 0 1.25rem !important; }
 
     .faq-label { padding: 1.5rem 1.25rem 0 !important; }
     .faq-row { flex-direction: column !important; }
@@ -112,7 +116,7 @@
     <div class="hero-eyebrow">Rīga · VEF Kvartāls</div>
     <h1 class="hero-title">Vieta, kur bērns rada<br><span style="font-weight: 800; font-style: italic; color: var(--accent); font-size: 1.05em; letter-spacing: -0.01em;">savas pirmās dziesmas,</span><br>eksperimentējot un spēlējoties ar <span style="font-style:italic;font-weight:800;color:var(--accent);font-size:1.15em;">skaņu.</span></h1>
     <p class="hero-sub">Kurš instruments ir pirmais, Skaņu Darbnīcā bērns izvēlas pats.<br>Elektronika, dzīvie instrumenti un eksperimentēšana<br>Atrodi savu balsi skaņu pasaulē.</p>
-    <p style="font-size:13px; font-weight:400; color:var(--muted); letter-spacing:0.02em; margin-top:1.5rem; opacity:0.7;">Nodarbības no 2 gadu vecuma</p>
+    <p class="hero-note" style="font-size:13px; font-weight:400; color:var(--muted); letter-spacing:0.02em; margin-top:1.5rem; opacity:0.7;">Nodarbības no 2 gadu vecuma</p>
     <div class="hero-cta">
       <a href="#" class="btn-primary">Pierakstīties</a>
       <a href="#" class="btn-ghost">Uzzināt vairāk</a>
@@ -120,7 +124,7 @@
   </div>
   <div class="hero-right" style="background: var(--bg); display: flex; flex-direction: column; justify-content: space-between; padding-bottom: 5rem;">
     <img src="image/telpa1.jpg" alt="Skaņu Darbnīca studija" style="width: 100%; object-fit: contain; display: block; mix-blend-mode: multiply; flex: 1;">
-    <div style="padding: 0 2.5rem; text-align: left; border-left: 2px solid var(--accent); margin-left: 2.5rem; padding-left: 1.5rem;">
+    <div class="hero-quote" style="padding: 0 2.5rem; text-align: left; border-left: 2px solid var(--accent); margin-left: 2.5rem; padding-left: 1.5rem;">
       <p style="font-family: Georgia, serif; font-size: clamp(18px, 2vw, 26px); font-weight: 400; font-style: italic; color: var(--text); line-height: 1.4; margin-bottom: 0.4rem;">Kurš teica, ka mūziku var izdarīt nepareizi?</p>
       <p style="font-size: 12px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); opacity: 0.7;">— Rick Rubin</p>
     </div>
