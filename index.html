@@ -79,7 +79,7 @@
     .hero-eyebrow { order: 1; padding: 1.25rem 1.25rem 0 !important; margin-bottom: 0.25rem !important; }
     .hero-title { order: 2; padding: 0 1.25rem; margin-top: 0.5rem; font-size: clamp(24px, 6.4vw, 34px); line-height: 1.15; }
     .hero-right img { order: 3; flex: none !important; height: auto !important; margin-top: 1.25rem; }
-    .hero-sub { order: 4; padding: 0 1.25rem; margin-top: 1.25rem; font-size: 12.5px; line-height: 1.5; }
+    .hero-sub { order: 4; padding: 0 1rem; margin-top: 1.25rem; font-size: 14px; line-height: 1.5; }
     .hero-note { order: 5; padding: 0 1.25rem; font-size: 12px; }
     .hero-cta { order: 6; padding: 0 1.25rem; flex-wrap: wrap; }
     .hero-quote { order: 7; margin: 1.5rem 1.25rem 2.5rem !important; padding: 0 0 0 1.25rem !important; }
@@ -115,13 +115,14 @@
     .price-amount span { font-size: 13px !important; }
     .price-old { font-size: 15px; }
     .price-btn, .price-btn-light { white-space: normal; font-size: 12px; padding: 9px 14px; text-align: center; }
-    .gift-card { flex-direction: row !important; align-items: stretch !important; gap: 0.75rem !important; padding: 1rem !important; }
+    .gift-card { flex-direction: row !important; align-items: flex-start !important; gap: 0.75rem !important; padding: 1rem 1rem 0.85rem !important; }
     .gift-card > div:first-child { flex: 1 1 auto; min-width: 0; }
-    .gift-card .price-right { flex-shrink: 0; height: auto !important; }
-    .gift-card .price-right > div { font-size: 34px !important; }
+    .gift-card .price-right { flex-shrink: 0; height: auto !important; justify-content: flex-start !important; gap: 0.85rem; }
+    .gift-card .price-right > div { font-size: 32px !important; }
     .gift-card .price-right > a { white-space: normal; text-align: center; max-width: 130px; }
     .gift-tags { flex-direction: column; align-items: flex-start; margin-top: 0.5rem; }
     .faq-highlight { font-size: 14px !important; line-height: 1.5 !important; }
+    .ziedo-note { font-size: 11px !important; }
     .mob-br { display: inline !important; }
     .vai-list > div { padding: 0.7rem 1.25rem !important; }
 
@@ -163,11 +164,6 @@
 </svg>
 
 <!-- FAQ label + Quote block -->
-<div class="faq-label" style="background: var(--bg); padding: 2rem max(6rem, calc((100% - var(--maxw)) / 2)) 0;">
-  <div style="display: inline-block; background: var(--accent-dark); border-radius: 6px 6px 0 0; padding: 0.5rem 1.25rem;">
-    <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--bg);">Biežāk uzdotie jautājumi</span>
-  </div>
-</div>
 <div class="faq-row" style="background: var(--bg3); border-top: 0.5px solid var(--border); border-bottom: 0.5px solid var(--border); display: flex; align-items: stretch; border-radius: 0 12px 0 0;">
   <div style="flex: 1;">
     <div class="faq-q" style="padding: 2rem 6rem 1.5rem; text-align: center;">
@@ -279,11 +275,6 @@
           <div class="price-title" style="color: var(--bg);">Dāvini mūzikas pieredzi</div>
           <div class="price-meta" style="color: rgba(245,237,216,0.65); margin-bottom: 0.75rem;">Ideāla dāvana dzimšanas dienā un svētkos.</div>
           <div class="price-meta" style="color: rgba(245,237,216,0.5); margin-bottom: 0.75rem;">Dāvanu karti saņem Skaņu Darbnīcā, pakomātā vai elektroniski.</div>
-          <div class="gift-tags" style="display: flex; flex-wrap: wrap; gap: 8px;">
-            <span style="font-size: 12px; background: rgba(245,237,216,0.12); color: rgba(245,237,216,0.85); padding: 4px 12px; border-radius: 100px; font-family: 'Raleway', sans-serif;">Viena nodarbība</span>
-            <span style="font-size: 12px; background: rgba(245,237,216,0.12); color: rgba(245,237,216,0.85); padding: 4px 12px; border-radius: 100px; font-family: 'Raleway', sans-serif;">Abonements 1× nedēļā</span>
-            <span style="font-size: 12px; background: rgba(245,237,216,0.12); color: rgba(245,237,216,0.85); padding: 4px 12px; border-radius: 100px; font-family: 'Raleway', sans-serif;">Abonements 2× nedēļā</span>
-          </div>
         </div>
         <div class="price-right" style="align-items: flex-end; justify-content: space-between; height: 100%;">
           <div style="font-size: 52px; line-height: 1; text-align: right;">🎁</div>
@@ -299,7 +290,7 @@
           <div class="price-title" style="color: var(--text);">Nodarbība bērnam, kam tā nav pieejama</div>
           <div class="price-meta">Nodarbības ilgums: <span>50 minūtes</span></div>
           <div class="price-desc" style="margin-top: 0.5rem;">Apmaksā nodarbību bērnam no bērnu nama vai mazturīgas ģimenes.<br>Skaņu Darbnīca sadarbībā ar ... dod iespēju bērniem atklāt sevi caur mūziku.</div>
-          <div style="margin-top: 1rem; font-size: 14px; font-weight: 600; color: #3B6D11;">Tavs ziedojums var kļūt par kāda sākumu mūzikā.</div>
+          <div class="ziedo-note" style="margin-top: 1rem; font-size: 14px; font-weight: 600; color: #3B6D11;">Tavs ziedojums var kļūt par kāda sākumu mūzikā.</div>
         </div>
         <div class="price-right">
           <div class="price-amount">30€</div>
