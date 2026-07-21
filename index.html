@@ -10,11 +10,11 @@
   :root {
     --bg: #F5EDD8; --bg2: #EDE0C4; --bg3: #E3D0A8;
     --accent: #B8860B; --accent-light: #D4A843; --accent-dark: #7A5800;
-    --text: #2A1F08; --muted: #7A6840; --border: rgba(120,90,20,0.18);
+    --text: #2A1F08; --muted: #7A6840; --border: rgba(120,90,20,0.18); --maxw: 1600px;
   }
   body { background: var(--bg); color: var(--text); font-family: 'Raleway', sans-serif; }
-  .page { max-width: 1600px; margin: 0 auto; background: var(--bg); overflow-x: hidden; }
-  nav { display: flex; justify-content: space-between; align-items: center; padding: 1.5rem 3rem; background: var(--bg2); border-bottom: 0.5px solid var(--border); }
+  .page { overflow-x: hidden; }
+  nav { display: flex; justify-content: space-between; align-items: center; padding: 1.5rem max(3rem, calc((100% - var(--maxw)) / 2)); background: var(--bg2); border-bottom: 0.5px solid var(--border); }
   .nav-logo { font-size: 18px; font-weight: 600; letter-spacing: 0.04em; }
   .nav-links { display: flex; gap: 2rem; }
   .nav-links a { font-size: 13px; color: var(--muted); text-decoration: none; }
@@ -95,7 +95,7 @@
   <div class="nav-links"><a href="#">Cenas</a><a href="#">Kontakti</a></div>
   <a href="#" class="nav-cta">Pierakstīties</a>
 </nav>
-<section class="hero" style="max-width: 100%; padding: 0; display: grid; grid-template-columns: 1fr 1fr; min-height: 85vh;">
+<section class="hero" style="max-width: var(--maxw); margin: 0 auto; padding: 0; display: grid; grid-template-columns: 1fr 1fr; min-height: 85vh;">
   <div style="padding: 7rem 3rem 5rem; display: flex; flex-direction: column; justify-content: center;">
     <div class="hero-eyebrow">Rīga · VEF</div>
     <h1 class="hero-title">Vieta, kur bērns rada<br><span style="font-weight: 800; font-style: italic; color: var(--accent); font-size: 1.05em; letter-spacing: -0.01em;">savas pirmās dziesmas,</span><br>eksperimentējot un spēlējoties ar <span style="font-style:italic;font-weight:800;color:var(--accent);font-size:1.15em;">skaņu.</span></h1>
@@ -120,12 +120,12 @@
 </svg>
 
 <!-- FAQ label + Quote block -->
-<div style="background: var(--bg); padding: 2rem 6rem 0;">
+<div style="background: var(--bg); padding: 2rem max(6rem, calc((100% - var(--maxw)) / 2)) 0;">
   <div style="display: inline-block; background: var(--accent-dark); border-radius: 6px 6px 0 0; padding: 0.5rem 1.25rem;">
     <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--bg);">Biežāk uzdotie jautājumi</span>
   </div>
 </div>
-<div style="background: var(--bg3); border-top: 0.5px solid var(--border); border-bottom: 0.5px solid var(--border); display: flex; align-items: stretch; border-radius: 0 12px 0 0;">
+<div style="background: var(--bg3); border-top: 0.5px solid var(--border); border-bottom: 0.5px solid var(--border); display: flex; align-items: stretch; border-radius: 0 12px 0 0; padding-left: max(0px, calc((100% - var(--maxw)) / 2)); padding-right: max(0px, calc((100% - var(--maxw)) / 2));">
   <div style="flex: 1;">
     <div style="padding: 2rem 6rem 1.5rem; text-align: center;">
     <div style="display: inline-block; border-left: 4px solid var(--accent); padding-left: 1.5rem; margin-bottom: 0.5rem;">
