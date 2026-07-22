@@ -254,7 +254,7 @@
             <textarea id="laiki" placeholder="Piemēram: otrdienās un ceturtdienās pēc 16:00, vai sestdienu rītos."></textarea>
           </div>
 
-          <button class="cta" id="pogaSaglabatAnketu" style="margin-top:24px">Saglabāt anketu</button>
+          <button class="cta" id="pogaSaglabatAnketu" style="margin-top:24px">Saglabāt</button>
         </section>
 
       </div>
@@ -450,10 +450,6 @@ el('pogaSaglabatAnketu').onclick = async () => {
     instrumenta_piezime: el('instrumentsPiezime').value.trim(),
     velamie_laiki: el('laiki').value.trim(),
   };
-  if (!dati.berna_vards) {
-    paradit('Ieraksti bērna vārdu, uzvārdu.');
-    return;
-  }
 
   const jaunieBerni = [...berni];
   if (rediggamaisIndekss === null) {
@@ -462,7 +458,7 @@ el('pogaSaglabatAnketu').onclick = async () => {
     jaunieBerni[rediggamaisIndekss] = dati;
   }
 
-  await saglabat(el('pogaSaglabatAnketu'), { berni: jaunieBerni }, 'Anketa saglabāta.');
+  await saglabat(el('pogaSaglabatAnketu'), { berni: jaunieBerni }, 'Saglabāts.');
   berni = jaunieBerni;
   rediggamaisIndekss = null;
   anketaKarte.classList.add('paslepts');
