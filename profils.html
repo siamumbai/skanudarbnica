@@ -402,12 +402,13 @@ prasitPieteiksanos(async (user) => {
   el('epasts').value = user.email;
 
   // Vecie profili glabāja vienu bērnu tieši profilā — pārceļam to sarakstā.
+  // Firestore nepieņem "undefined" vērtības, tāpēc trūkstošajiem laukiem jāliek tukša virkne.
   berni = p?.berni || (p?.berna_vards ? [{
-    berna_vards: p.berna_vards, berna_vecums: p.berna_vecums,
-    vecaka_tel: p.vecaka_tel, berna_tel: p.berna_tel,
-    muzikas_pieredze: p.muzikas_pieredze, muzikas_piezime: p.muzikas_piezime,
-    instruments_majas: p.instruments_majas, instrumenta_piezime: p.instrumenta_piezime,
-    velamie_laiki: p.velamie_laiki,
+    berna_vards: p.berna_vards || '', berna_vecums: p.berna_vecums || '',
+    vecaka_tel: p.vecaka_tel || '', berna_tel: p.berna_tel || '',
+    muzikas_pieredze: p.muzikas_pieredze || '', muzikas_piezime: p.muzikas_piezime || '',
+    instruments_majas: p.instruments_majas || '', instrumenta_piezime: p.instrumenta_piezime || '',
+    velamie_laiki: p.velamie_laiki || '',
   }] : []);
   paradaitCilnes();
 
