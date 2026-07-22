@@ -421,23 +421,26 @@ async function saglabat(poga, dati, teksts) {
   const sakotnejais = poga.textContent;
   poga.disabled = true;
   poga.textContent = 'Saglabā…';
+  let izdevas = false;
   try {
     await saglabatProfilu(uid, dati);
     paradit(teksts, 'labi');
+    izdevas = true;
   } catch (err) {
     console.error('Kļūda saglabājot profilu:', err);
     paradit(kludasTeksts(err));
   }
   poga.disabled = false;
   poga.textContent = sakotnejais;
+  return izdevas;
 }
 
-el('pogaSaglabatProfilu').onclick = () => {
-  saglabat(el('pogaSaglabatProfilu'), {
+el('pogaSaglabatProfilu').onclick = async () => {
+  const izdevas = await saglabat(el('pogaSaglabatProfilu'), {
     vards: el('vards').value.trim(),
     telefons: el('telefons').value.trim(),
   }, 'Profils saglabāts.');
-  el('sveiciensVards').textContent = el('vards').value.trim() || 'draugs';
+  if (izdevas) el('sveiciensVards').textContent = el('vards').value.trim() || 'draugs';
 };
 
 el('pogaSaglabatAnketu').onclick = async () => {
@@ -460,7 +463,9 @@ el('pogaSaglabatAnketu').onclick = async () => {
     jaunieBerni[rediggamaisIndekss] = dati;
   }
 
-  await saglabat(el('pogaSaglabatAnketu'), { berni: jaunieBerni }, 'Saglabāts.');
+  const izdevas = await saglabat(el('pogaSaglabatAnketu'), { berni: jaunieBerni }, 'Saglabāts.');
+  if (!izdevas) return;
+
   berni = jaunieBerni;
   rediggamaisIndekss = null;
   anketaKarte.classList.add('paslepts');
