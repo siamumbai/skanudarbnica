@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mans profils · Skaņu Darbnīca</title>
+<title>skanudarbnica.lv/profils/</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,300;0,400;0,600;0,800;1,300;1,600&display=swap&subset=latin,latin-ext" rel="stylesheet">
@@ -124,6 +124,33 @@
   .cena-sum{font-size:15px;font-weight:800;white-space:nowrap;color:var(--accent-dark)}
   .cena-veca{font-size:12px;color:var(--muted);text-decoration:line-through;font-weight:400;margin-right:5px}
 
+  /* --- Bērnu cilnes --- */
+  .berni-cilnes{display:flex;flex-wrap:wrap;gap:8px;margin:-8px 0 16px}
+  .berni-cilnes:empty{margin:0}
+  .cilne-berns{
+    padding:8px 16px;border-radius:100px;
+    border:0.5px solid var(--border);background:var(--bg2);
+    font-family:inherit;font-size:13px;font-weight:600;
+    color:var(--muted);cursor:pointer;
+  }
+  .cilne-berns:hover{border-color:var(--accent-dark);color:var(--accent-dark)}
+  .cilne-berns.aktiva{background:var(--accent-dark);border-color:var(--accent-dark);color:var(--bg)}
+
+  /* --- Kompaktā anketa (uz pusi mazāka) --- */
+  .anketa-forma{padding:15px 14px;margin-top:16px}
+  .anketa-forma h2{font-size:11px;margin-bottom:4px}
+  .anketa-forma .h2-piezime{font-size:11.5px;margin-bottom:14px}
+  .anketa-forma .rinda{gap:10px}
+  .anketa-forma .lauks{margin-bottom:10px}
+  .anketa-forma label{font-size:10px;margin-bottom:5px}
+  .anketa-forma input,.anketa-forma textarea{padding:9px 11px;font-size:13px}
+  .anketa-forma textarea{min-height:46px}
+  .anketa-forma .jautajums{padding-top:12px;margin-top:12px}
+  .anketa-forma .jaut-teksts{font-size:14px;margin-bottom:9px}
+  .anketa-forma .izvele{gap:6px;margin-bottom:9px}
+  .anketa-forma .izvele label{padding:6px 13px;font-size:11.5px}
+  .anketa-forma .cta{padding:12px;font-size:13.5px}
+
   /* --- Ziņojumi --- */
   .zinojums{
     font-size:13.5px;line-height:1.55;padding:13px 15px;border-radius:10px;
@@ -157,8 +184,7 @@
 
   <div id="saturs" class="paslepts">
 
-    <h1 class="virsraksts">Sveiks, <em id="sveiciensVards"></em></h1>
-    <p class="ievads">Aizpildi anketu, lai mēs zinātu, ar ko sākt. Jo vairāk pastāstīsi, jo precīzāk sagatavosim pirmo nodarbību.</p>
+    <h1 class="virsraksts" style="margin-bottom:28px">Sveiks, <em id="sveiciensVards"></em></h1>
 
     <div class="zinojums" id="zinojums"></div>
 
@@ -172,7 +198,9 @@
           <p class="cta-piezime">Sazināsimies 1 darba dienas laikā, lai apstiprinātu laiku.</p>
         </section>
 
-        <section class="karte">
+        <div class="berni-cilnes" id="berniCilnes"></div>
+
+        <section class="karte anketa-forma paslepts" id="anketaKarte">
           <h2>Par bērnu</h2>
           <p class="h2-piezime">Šī informācija palīdz pasniedzējam sagatavoties.</p>
 
@@ -301,7 +329,11 @@ import {
 } from './js/firebase-init.js';
 
 const zinojums = document.getElementById('zinojums');
+const anketaKarte = document.getElementById('anketaKarte');
+const berniCilnesEl = document.getElementById('berniCilnes');
 let uid = null;
+let berni = [];
+let rediggamaisIndekss = null;
 
 const el = (id) => document.getElementById(id);
 
@@ -312,6 +344,7 @@ function paradit(teksts, veids = 'kluda') {
 }
 
 function iestatitRadio(nosaukums, vertiba) {
+  document.querySelectorAll(`input[name="${nosaukums}"]`).forEach((r) => (r.checked = false));
   if (!vertiba) return;
   const poga = document.querySelector(`input[name="${nosaukums}"][value="${vertiba}"]`);
   if (poga) poga.checked = true;
@@ -320,6 +353,36 @@ function iestatitRadio(nosaukums, vertiba) {
 function nolasitRadio(nosaukums) {
   const izvelets = document.querySelector(`input[name="${nosaukums}"]:checked`);
   return izvelets ? izvelets.value : '';
+}
+
+function iestatitAnketasFormu(berns) {
+  el('bernaVards').value = berns?.berna_vards || '';
+  el('bernaVecums').value = berns?.berna_vecums || '';
+  el('vecakaTel').value = berns?.vecaka_tel || el('telefons').value || '';
+  el('bernaTel').value = berns?.berna_tel || '';
+  iestatitRadio('muzika', berns?.muzikas_pieredze);
+  iestatitRadio('instruments', berns?.instruments_majas);
+  el('muzikaPiezime').value = berns?.muzikas_piezime || '';
+  el('instrumentsPiezime').value = berns?.instrumenta_piezime || '';
+  el('laiki').value = berns?.velamie_laiki || '';
+}
+
+function paradaitCilnes() {
+  berniCilnesEl.innerHTML = '';
+  berni.forEach((berns, i) => {
+    const poga = document.createElement('button');
+    poga.type = 'button';
+    poga.className = 'cilne-berns' + (i === rediggamaisIndekss ? ' aktiva' : '');
+    poga.textContent = berns.berna_vards || 'Bērns';
+    poga.onclick = () => {
+      rediggamaisIndekss = i;
+      iestatitAnketasFormu(berni[i]);
+      anketaKarte.classList.remove('paslepts');
+      paradaitCilnes();
+      anketaKarte.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    };
+    berniCilnesEl.appendChild(poga);
+  });
 }
 
 prasitPieteiksanos(async (user) => {
@@ -338,16 +401,15 @@ prasitPieteiksanos(async (user) => {
   el('telefons').value = p?.telefons || '';
   el('epasts').value = user.email;
 
-  el('bernaVards').value = p?.berna_vards || '';
-  el('bernaVecums').value = p?.berna_vecums || '';
-  el('vecakaTel').value = p?.vecaka_tel || p?.telefons || '';
-  el('bernaTel').value = p?.berna_tel || '';
-
-  iestatitRadio('muzika', p?.muzikas_pieredze);
-  iestatitRadio('instruments', p?.instruments_majas);
-  el('muzikaPiezime').value = p?.muzikas_piezime || '';
-  el('instrumentsPiezime').value = p?.instrumenta_piezime || '';
-  el('laiki').value = p?.velamie_laiki || '';
+  // Vecie profili glabāja vienu bērnu tieši profilā — pārceļam to sarakstā.
+  berni = p?.berni || (p?.berna_vards ? [{
+    berna_vards: p.berna_vards, berna_vecums: p.berna_vecums,
+    vecaka_tel: p.vecaka_tel, berna_tel: p.berna_tel,
+    muzikas_pieredze: p.muzikas_pieredze, muzikas_piezime: p.muzikas_piezime,
+    instruments_majas: p.instruments_majas, instrumenta_piezime: p.instrumenta_piezime,
+    velamie_laiki: p.velamie_laiki,
+  }] : []);
+  paradaitCilnes();
 
   el('ielade').classList.add('paslepts');
   el('saturs').classList.remove('paslepts');
@@ -375,8 +437,8 @@ el('pogaSaglabatProfilu').onclick = () => {
   el('sveiciensVards').textContent = el('vards').value.trim() || 'draugs';
 };
 
-el('pogaSaglabatAnketu').onclick = () => {
-  saglabat(el('pogaSaglabatAnketu'), {
+el('pogaSaglabatAnketu').onclick = async () => {
+  const dati = {
     berna_vards: el('bernaVards').value.trim(),
     berna_vecums: el('bernaVecums').value.trim(),
     vecaka_tel: el('vecakaTel').value.trim(),
@@ -386,21 +448,32 @@ el('pogaSaglabatAnketu').onclick = () => {
     instruments_majas: nolasitRadio('instruments'),
     instrumenta_piezime: el('instrumentsPiezime').value.trim(),
     velamie_laiki: el('laiki').value.trim(),
-  }, 'Anketa saglabāta.');
-};
-
-el('pogaPieteikt').onclick = async () => {
-  const berns = el('bernaVards').value.trim();
-  const laiki = el('laiki').value.trim();
-  if (!berns || !laiki) {
-    paradit('Lai pieteiktos, aizpildi bērna vārdu un vēlamās dienas zemāk.');
+  };
+  if (!dati.berna_vards) {
+    paradit('Ieraksti bērna vārdu, uzvārdu.');
     return;
   }
-  await saglabat(el('pogaPieteikt'), {
-    berna_vards: berns,
-    velamie_laiki: laiki,
-    pieteikums_iesniegts: new Date().toISOString(),
-  }, 'Pieteikums nosūtīts. Sazināsimies 1 darba dienas laikā.');
+
+  const jaunieBerni = [...berni];
+  if (rediggamaisIndekss === null) {
+    jaunieBerni.push(dati);
+  } else {
+    jaunieBerni[rediggamaisIndekss] = dati;
+  }
+
+  await saglabat(el('pogaSaglabatAnketu'), { berni: jaunieBerni }, 'Anketa saglabāta.');
+  berni = jaunieBerni;
+  rediggamaisIndekss = null;
+  anketaKarte.classList.add('paslepts');
+  paradaitCilnes();
+};
+
+el('pogaPieteikt').onclick = () => {
+  rediggamaisIndekss = null;
+  iestatitAnketasFormu(null);
+  anketaKarte.classList.remove('paslepts');
+  paradaitCilnes();
+  anketaKarte.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 };
 
 el('pogaIzrakstities').onclick = async () => {
