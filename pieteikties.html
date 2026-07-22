@@ -6,165 +6,92 @@
 <title>Pieteikties · Skaņu Darbnīca</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,300;0,400;0,600;0,800;1,300;1,600&display=swap&subset=latin,latin-ext" rel="stylesheet">
 <style>
-  :root{
-    --krems:#F4F0E6;
-    --papirs:#FBF9F4;
-    --tinte:#2B2721;
-    --tinte-vaja:#6B655B;
-    --zelts:#B4862C;
-    --zelts-gaisi:#E8D9B4;
-    --linija:#DED6C4;
-    --sarkans:#A4442E;
-  }
   *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#F5EDD8; --bg2:#EDE0C4; --bg3:#E3D0A8;
+    --accent:#B8860B; --accent-light:#D4A843; --accent-dark:#7A5800;
+    --text:#2A1F08; --muted:#7A6840; --border:rgba(120,90,20,0.18);
+    --zala:#3B6D11; --sarkana:#9C3A22;
+  }
   body{
-    background:var(--krems);
-    color:var(--tinte);
-    font-family:'Inter',system-ui,sans-serif;
-    min-height:100vh;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding:32px 20px;
+    background:var(--bg); color:var(--text);
+    font-family:'Raleway',sans-serif;
     -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    display:flex; align-items:center; justify-content:center;
+    padding:36px 20px;
   }
   .karte{
-    background:var(--papirs);
-    border:1px solid var(--linija);
-    border-radius:2px;
-    width:100%;
-    max-width:430px;
+    background:var(--bg2);
+    border:0.5px solid var(--border);
+    border-radius:16px;
+    width:100%; max-width:440px;
     padding:44px 38px 38px;
   }
   .atpakal{
-    display:inline-block;
-    font-size:13px;
-    color:var(--tinte-vaja);
-    text-decoration:none;
-    margin-bottom:26px;
-    letter-spacing:.02em;
+    display:inline-block;font-size:13px;color:var(--muted);
+    text-decoration:none;margin-bottom:26px;font-weight:600;
   }
-  .atpakal:hover{color:var(--zelts)}
+  .atpakal:hover{color:var(--accent-dark)}
   h1{
-    font-family:'Fraunces',Georgia,serif;
-    font-weight:400;
-    font-size:31px;
-    line-height:1.15;
-    margin-bottom:8px;
+    font-family:Georgia,serif;font-weight:400;font-size:30px;
+    line-height:1.2;margin-bottom:8px;
   }
-  h1 em{font-style:italic;color:var(--zelts)}
-  .apaksvirsraksts{
-    font-size:14px;
-    color:var(--tinte-vaja);
-    margin-bottom:28px;
-    line-height:1.5;
-  }
-  .celini{
-    display:flex;
-    gap:26px;
-    border-bottom:1px solid var(--linija);
-    margin-bottom:26px;
-  }
+  h1 em{font-style:italic;color:var(--accent-dark)}
+  .ievads{font-size:13.5px;color:var(--muted);margin-bottom:28px;line-height:1.6}
+  .celini{display:flex;gap:26px;border-bottom:0.5px solid var(--border);margin-bottom:26px}
   .celins{
-    background:none;
-    border:none;
-    border-bottom:2px solid transparent;
-    padding:0 0 12px;
-    margin-bottom:-1px;
-    font-family:inherit;
-    font-size:14px;
-    font-weight:500;
-    color:var(--tinte-vaja);
-    cursor:pointer;
+    background:none;border:none;border-bottom:2px solid transparent;
+    padding:0 0 12px;margin-bottom:-1px;
+    font-family:inherit;font-size:13.5px;font-weight:600;
+    color:var(--muted);cursor:pointer;
   }
-  .celins[aria-selected="true"]{color:var(--tinte);border-bottom-color:var(--zelts)}
+  .celins[aria-selected="true"]{color:var(--text);border-bottom-color:var(--accent-dark)}
   label{
-    display:block;
-    font-size:12px;
-    font-weight:500;
-    letter-spacing:.06em;
-    text-transform:uppercase;
-    color:var(--tinte-vaja);
-    margin-bottom:7px;
+    display:block;font-size:11.5px;font-weight:600;letter-spacing:.09em;
+    text-transform:uppercase;color:var(--muted);margin-bottom:8px;
   }
   .lauks{margin-bottom:17px}
   input{
-    width:100%;
-    padding:11px 13px;
-    font-family:inherit;
-    font-size:15px;
-    color:var(--tinte);
-    background:#fff;
-    border:1px solid var(--linija);
-    border-radius:2px;
+    width:100%;padding:12px 14px;font-family:inherit;font-size:14.5px;
+    color:var(--text);background:var(--bg);
+    border:0.5px solid var(--border);border-radius:10px;
   }
-  input:focus{outline:2px solid var(--zelts);outline-offset:-1px;border-color:transparent}
+  input:focus{outline:none;border-color:var(--accent);background:#FBF6E8}
+  input::placeholder{color:#B3A57F}
   .poga{
-    width:100%;
-    padding:13px;
-    font-family:inherit;
-    font-size:15px;
-    font-weight:500;
-    color:var(--papirs);
-    background:var(--tinte);
-    border:none;
-    border-radius:2px;
-    cursor:pointer;
-    margin-top:6px;
+    width:100%;padding:14px;font-family:inherit;font-size:14.5px;font-weight:600;
+    color:var(--bg);background:var(--accent-dark);
+    border:none;border-radius:100px;cursor:pointer;margin-top:8px;
   }
-  .poga:hover{background:var(--zelts)}
-  .poga:disabled{opacity:.5;cursor:default}
+  .poga:hover{background:var(--accent)}
+  .poga:disabled{opacity:.45;cursor:default}
   .poga-google{
-    width:100%;
-    padding:12px;
-    font-family:inherit;
-    font-size:14.5px;
-    font-weight:500;
-    color:var(--tinte);
-    background:#fff;
-    border:1px solid var(--linija);
-    border-radius:2px;
-    cursor:pointer;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    gap:10px;
+    width:100%;padding:13px;font-family:inherit;font-size:14px;font-weight:600;
+    color:var(--text);background:var(--bg);
+    border:0.5px solid var(--border);border-radius:100px;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:10px;
   }
-  .poga-google:hover{border-color:var(--zelts)}
+  .poga-google:hover{border-color:var(--accent-dark)}
   .skirtne{
-    display:flex;
-    align-items:center;
-    gap:14px;
-    margin:22px 0;
-    font-size:12px;
-    color:var(--tinte-vaja);
+    display:flex;align-items:center;gap:14px;margin:22px 0;
+    font-size:12px;color:var(--muted);
   }
-  .skirtne::before,.skirtne::after{content:"";flex:1;height:1px;background:var(--linija)}
+  .skirtne::before,.skirtne::after{content:"";flex:1;height:0.5px;background:var(--border)}
   .zinojums{
-    font-size:13.5px;
-    line-height:1.5;
-    padding:11px 13px;
-    border-radius:2px;
-    margin-bottom:18px;
-    display:none;
+    font-size:13.5px;line-height:1.55;padding:12px 14px;border-radius:10px;
+    margin-bottom:20px;display:none;
   }
-  .zinojums.kluda{display:block;background:#F7E9E5;color:var(--sarkans);border:1px solid #E5C9C1}
-  .zinojums.labi{display:block;background:var(--zelts-gaisi);color:#6E5316;border:1px solid #D9C48F}
+  .zinojums.kluda{display:block;background:#F4E2DC;color:var(--sarkana);border:0.5px solid rgba(156,58,34,.25)}
+  .zinojums.labi{display:block;background:#E4EDD8;color:var(--zala);border:0.5px solid rgba(59,109,17,.25)}
   .aizmirsu{
-    background:none;
-    border:none;
-    font-family:inherit;
-    font-size:13px;
-    color:var(--tinte-vaja);
-    text-decoration:underline;
-    cursor:pointer;
-    padding:0;
-    margin-top:16px;
-    display:block;
+    background:none;border:none;font-family:inherit;font-size:13px;
+    color:var(--muted);text-decoration:underline;cursor:pointer;
+    padding:0;margin-top:16px;display:block;
   }
-  .aizmirsu:hover{color:var(--zelts)}
+  .aizmirsu:hover{color:var(--accent-dark)}
   .paslepts{display:none}
 </style>
 </head>
@@ -174,7 +101,7 @@
   <a class="atpakal" href="index.html">← Atpakaļ uz sākumu</a>
 
   <h1>Skaņu <em>Darbnīca</em></h1>
-  <p class="apaksvirsraksts">Piesakies, lai rezervētu nodarbības un sekotu līdzi bērna ierakstiem.</p>
+  <p class="ievads">Izveido kontu, lai pieteiktu bērnu nodarbībām un sekotu līdzi ierakstiem.</p>
 
   <div class="celini" role="tablist">
     <button class="celins" id="celinsPieteikties" role="tab" aria-selected="true">Pieteikties</button>
@@ -183,7 +110,6 @@
 
   <div class="zinojums" id="zinojums"></div>
 
-  <!-- Pieteikšanās -->
   <form id="formaPieteikties">
     <div class="lauks">
       <label for="pEpasts">E-pasts</label>
@@ -197,11 +123,10 @@
     <button type="button" class="aizmirsu" id="pogaAizmirsu">Aizmirsi paroli?</button>
   </form>
 
-  <!-- Reģistrācija -->
   <form id="formaRegistret" class="paslepts">
     <div class="lauks">
       <label for="rVards">Vārds, uzvārds</label>
-      <input type="text" id="rVards" autocomplete="name" required>
+      <input type="text" id="rVards" autocomplete="name" placeholder="Emīls Bērziņš" required>
     </div>
     <div class="lauks">
       <label for="rEpasts">E-pasts</label>
@@ -209,11 +134,11 @@
     </div>
     <div class="lauks">
       <label for="rTelefons">Telefons</label>
-      <input type="tel" id="rTelefons" autocomplete="tel" placeholder="+371">
+      <input type="tel" id="rTelefons" autocomplete="tel" placeholder="+371 20 000 000">
     </div>
     <div class="lauks">
       <label for="rParole">Parole</label>
-      <input type="password" id="rParole" autocomplete="new-password" minlength="6" required>
+      <input type="password" id="rParole" autocomplete="new-password" minlength="6" placeholder="Vismaz 6 simboli" required>
     </div>
     <button type="submit" class="poga" id="pogaRegistret">Izveidot kontu</button>
   </form>
@@ -247,16 +172,12 @@ function paradit(teksts, veids = 'kluda') {
   zinojums.textContent = teksts;
   zinojums.className = 'zinojums ' + veids;
 }
-function notirit() {
-  zinojums.className = 'zinojums';
-}
+function notirit() { zinojums.className = 'zinojums'; }
 
-// Ja jau pieteicies, uzreiz uz profilu
 onAuthStateChanged(auth, (user) => {
   if (user) window.location.href = 'profils.html';
 });
 
-// Cilnes
 celinsPieteikties.onclick = () => {
   celinsPieteikties.setAttribute('aria-selected','true');
   celinsRegistret.setAttribute('aria-selected','false');
@@ -272,7 +193,6 @@ celinsRegistret.onclick = () => {
   notirit();
 };
 
-// Pieteikšanās
 formaPieteikties.onsubmit = async (e) => {
   e.preventDefault();
   const poga = document.getElementById('pogaPieteikties');
@@ -286,7 +206,6 @@ formaPieteikties.onsubmit = async (e) => {
   }
 };
 
-// Reģistrācija
 formaRegistret.onsubmit = async (e) => {
   e.preventDefault();
   const poga = document.getElementById('pogaRegistret');
@@ -305,7 +224,6 @@ formaRegistret.onsubmit = async (e) => {
   }
 };
 
-// Google
 document.getElementById('pogaGoogle').onclick = async () => {
   try {
     await pieteiktiesArGoogle();
@@ -315,7 +233,6 @@ document.getElementById('pogaGoogle').onclick = async () => {
   }
 };
 
-// Paroles atjaunošana
 document.getElementById('pogaAizmirsu').onclick = async () => {
   const epasts = pEpasts.value.trim();
   if (!epasts) {

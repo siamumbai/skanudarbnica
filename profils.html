@@ -6,184 +6,291 @@
 <title>Mans profils · Skaņu Darbnīca</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,300;0,400;0,600;0,800;1,300;1,600&display=swap&subset=latin,latin-ext" rel="stylesheet">
 <style>
-  :root{
-    --krems:#F4F0E6;
-    --papirs:#FBF9F4;
-    --tinte:#2B2721;
-    --tinte-vaja:#6B655B;
-    --zelts:#B4862C;
-    --zelts-gaisi:#E8D9B4;
-    --linija:#DED6C4;
-    --sarkans:#A4442E;
-  }
   *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#F5EDD8; --bg2:#EDE0C4; --bg3:#E3D0A8;
+    --accent:#B8860B; --accent-light:#D4A843; --accent-dark:#7A5800;
+    --text:#2A1F08; --muted:#7A6840; --border:rgba(120,90,20,0.18);
+    --zala:#3B6D11; --sarkana:#9C3A22;
+  }
   body{
-    background:var(--krems);
-    color:var(--tinte);
-    font-family:'Inter',system-ui,sans-serif;
+    background:var(--bg); color:var(--text);
+    font-family:'Raleway',sans-serif;
     -webkit-font-smoothing:antialiased;
     min-height:100vh;
   }
+
+  /* --- Josla --- */
   .josla{
-    border-bottom:1px solid var(--linija);
-    padding:16px 24px;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
+    border-bottom:0.5px solid var(--border);
+    padding:18px 32px;
+    display:flex; align-items:center; justify-content:space-between;
+    position:sticky; top:0; background:var(--bg); z-index:10;
   }
-  .logo{
-    font-family:'Fraunces',Georgia,serif;
-    font-size:17px;
-    text-decoration:none;
-    color:var(--tinte);
-  }
-  .logo em{font-style:italic;color:var(--zelts)}
+  .logo{font-size:15px;font-weight:600;letter-spacing:.02em;text-decoration:none;color:var(--text)}
+  .josla-labi{display:flex;align-items:center;gap:18px}
+  .josla-epasts{font-size:13px;color:var(--muted)}
   .izeja{
-    background:none;
-    border:1px solid var(--linija);
-    border-radius:2px;
-    padding:7px 14px;
-    font-family:inherit;
-    font-size:13.5px;
-    color:var(--tinte-vaja);
-    cursor:pointer;
+    background:transparent;border:0.5px solid var(--border);border-radius:100px;
+    padding:9px 18px;font-family:inherit;font-size:13px;font-weight:600;
+    color:var(--muted);cursor:pointer;
   }
-  .izeja:hover{border-color:var(--zelts);color:var(--zelts)}
-  main{max-width:620px;margin:0 auto;padding:48px 24px 80px}
-  .ielade{color:var(--tinte-vaja);font-size:15px}
-  .sveiciens{
-    font-family:'Fraunces',Georgia,serif;
-    font-weight:400;
-    font-size:34px;
-    line-height:1.15;
-    margin-bottom:6px;
+  .izeja:hover{border-color:var(--accent-dark);color:var(--accent-dark)}
+
+  /* --- Izkārtojums --- */
+  main{max-width:1180px;margin:0 auto;padding:44px 32px 90px}
+  .ielade{color:var(--muted);font-size:15px}
+  .virsraksts{
+    font-family:Georgia,serif;font-weight:400;font-size:clamp(26px,3.4vw,38px);
+    line-height:1.2;margin-bottom:6px;
   }
-  .sveiciens em{font-style:italic;color:var(--zelts)}
-  .epasts{font-size:14px;color:var(--tinte-vaja);margin-bottom:38px}
-  .bloks{
-    background:var(--papirs);
-    border:1px solid var(--linija);
-    border-radius:2px;
-    padding:30px 28px;
-    margin-bottom:20px;
+  .virsraksts em{font-style:italic;color:var(--accent-dark)}
+  .ievads{font-size:14px;color:var(--muted);margin-bottom:38px;line-height:1.6;max-width:52ch}
+  .rezgis{display:grid;grid-template-columns:1.45fr 1fr;gap:26px;align-items:start}
+
+  /* --- Kartes --- */
+  .karte{
+    background:var(--bg2);border:0.5px solid var(--border);
+    border-radius:14px;padding:30px 28px;margin-bottom:22px;
   }
+  .karte-uzsvers{background:var(--bg3)}
   h2{
-    font-size:12px;
-    font-weight:600;
-    letter-spacing:.09em;
-    text-transform:uppercase;
-    color:var(--tinte-vaja);
-    margin-bottom:20px;
+    font-size:12px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;
+    color:var(--accent-dark);margin-bottom:6px;
   }
+  .h2-piezime{font-size:13px;color:var(--muted);line-height:1.55;margin-bottom:22px}
+
+  /* --- Galvenā poga --- */
+  .cta{
+    display:block;width:100%;text-align:center;
+    background:var(--accent-dark);color:var(--bg);
+    border:none;border-radius:100px;padding:17px;
+    font-family:inherit;font-size:15px;font-weight:600;letter-spacing:.01em;
+    cursor:pointer;text-decoration:none;
+  }
+  .cta:hover{background:var(--accent)}
+  .cta:disabled{opacity:.45;cursor:default}
+  .cta-piezime{font-size:12.5px;color:var(--muted);text-align:center;margin-top:12px;line-height:1.5}
+
+  /* --- Lauki --- */
   label{
-    display:block;
-    font-size:12px;
-    font-weight:500;
-    letter-spacing:.06em;
-    text-transform:uppercase;
-    color:var(--tinte-vaja);
-    margin-bottom:7px;
+    display:block;font-size:11.5px;font-weight:600;letter-spacing:.09em;
+    text-transform:uppercase;color:var(--muted);margin-bottom:8px;
   }
-  .lauks{margin-bottom:17px}
-  .rinda{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-  input{
-    width:100%;
-    padding:11px 13px;
-    font-family:inherit;
-    font-size:15px;
-    color:var(--tinte);
-    background:#fff;
-    border:1px solid var(--linija);
-    border-radius:2px;
+  .lauks{margin-bottom:18px}
+  .rinda{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  input,textarea,select{
+    width:100%;padding:12px 14px;font-family:inherit;font-size:14.5px;
+    color:var(--text);background:var(--bg);
+    border:0.5px solid var(--border);border-radius:10px;
   }
-  input:focus{outline:2px solid var(--zelts);outline-offset:-1px;border-color:transparent}
-  .poga{
-    padding:12px 24px;
-    font-family:inherit;
-    font-size:15px;
-    font-weight:500;
-    color:var(--papirs);
-    background:var(--tinte);
-    border:none;
-    border-radius:2px;
-    cursor:pointer;
-    margin-top:6px;
+  textarea{resize:vertical;min-height:76px;line-height:1.55}
+  input:focus,textarea:focus,select:focus{
+    outline:none;border-color:var(--accent);background:#FBF6E8;
   }
-  .poga:hover{background:var(--zelts)}
-  .poga:disabled{opacity:.5;cursor:default}
+  input::placeholder,textarea::placeholder{color:#B3A57F}
+
+  /* --- Jautājumi --- */
+  .jautajums{
+    border-top:0.5px solid var(--border);
+    padding-top:22px;margin-top:22px;
+  }
+  .jaut-teksts{
+    font-family:Georgia,serif;font-size:16.5px;font-style:italic;
+    line-height:1.45;margin-bottom:14px;color:var(--text);
+  }
+  .izvele{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:13px}
+  .izvele input{position:absolute;opacity:0;pointer-events:none}
+  .izvele label{
+    margin:0;padding:8px 17px;border-radius:100px;
+    border:0.5px solid var(--border);background:var(--bg);
+    font-size:12.5px;font-weight:600;letter-spacing:.02em;text-transform:none;
+    color:var(--muted);cursor:pointer;
+  }
+  .izvele input:checked + label{
+    background:var(--accent-dark);border-color:var(--accent-dark);color:var(--bg);
+  }
+
+  /* --- Cenas --- */
+  .cena{
+    display:flex;justify-content:space-between;align-items:baseline;gap:14px;
+    padding:15px 0;border-bottom:0.5px solid var(--border);
+  }
+  .cena:last-of-type{border-bottom:none}
+  .cena-nos{font-size:14px;font-weight:600;line-height:1.35}
+  .cena-det{font-size:12px;color:var(--muted);font-weight:400;display:block;margin-top:3px}
+  .cena-sum{font-size:15px;font-weight:800;white-space:nowrap;color:var(--accent-dark)}
+  .cena-veca{font-size:12px;color:var(--muted);text-decoration:line-through;font-weight:400;margin-right:5px}
+
+  /* --- Ziņojumi --- */
   .zinojums{
-    font-size:13.5px;
-    line-height:1.5;
-    padding:11px 13px;
-    border-radius:2px;
-    margin-bottom:18px;
-    display:none;
+    font-size:13.5px;line-height:1.55;padding:13px 15px;border-radius:10px;
+    margin-bottom:20px;display:none;
   }
-  .zinojums.kluda{display:block;background:#F7E9E5;color:var(--sarkans);border:1px solid #E5C9C1}
-  .zinojums.labi{display:block;background:var(--zelts-gaisi);color:#6E5316;border:1px solid #D9C48F}
-  .tukss{
-    font-size:14.5px;
-    line-height:1.6;
-    color:var(--tinte-vaja);
-  }
-  .tukss a{color:var(--zelts)}
+  .zinojums.kluda{display:block;background:#F4E2DC;color:var(--sarkana);border:0.5px solid rgba(156,58,34,.25)}
+  .zinojums.labi{display:block;background:#E4EDD8;color:var(--zala);border:0.5px solid rgba(59,109,17,.25)}
   .paslepts{display:none}
-  @media(max-width:520px){
+
+  @media(max-width:900px){
+    .rezgis{grid-template-columns:1fr}
+    main{padding:32px 20px 70px}
+    .josla{padding:16px 20px}
+    .josla-epasts{display:none}
     .rinda{grid-template-columns:1fr}
-    .sveiciens{font-size:27px}
   }
 </style>
 </head>
 <body>
 
 <header class="josla">
-  <a class="logo" href="index.html">Skaņu <em>Darbnīca</em></a>
-  <button class="izeja" id="pogaIzrakstities">Izrakstīties</button>
+  <a class="logo" href="index.html">skanudarbnica.lv</a>
+  <div class="josla-labi">
+    <span class="josla-epasts" id="joslaEpasts"></span>
+    <button class="izeja" id="pogaIzrakstities">Izrakstīties</button>
+  </div>
 </header>
 
 <main>
   <p class="ielade" id="ielade">Ielādē profilu…</p>
 
   <div id="saturs" class="paslepts">
-    <h1 class="sveiciens">Sveiks, <em id="sveiciensVards"></em></h1>
-    <p class="epasts" id="lietotajaEpasts"></p>
+
+    <h1 class="virsraksts">Sveiks, <em id="sveiciensVards"></em></h1>
+    <p class="ievads">Aizpildi anketu, lai mēs zinātu, ar ko sākt. Jo vairāk pastāstīsi, jo precīzāk sagatavosim pirmo nodarbību.</p>
 
     <div class="zinojums" id="zinojums"></div>
 
-    <section class="bloks">
-      <h2>Kontaktinformācija</h2>
-      <form id="forma">
-        <div class="lauks">
-          <label for="vards">Vārds, uzvārds</label>
-          <input type="text" id="vards" required>
-        </div>
-        <div class="lauks">
-          <label for="telefons">Telefons</label>
-          <input type="tel" id="telefons" placeholder="+371">
-        </div>
-        <div class="rinda">
-          <div class="lauks">
-            <label for="bernaVards">Bērna vārds</label>
-            <input type="text" id="bernaVards">
-          </div>
-          <div class="lauks">
-            <label for="bernaVecums">Bērna vecums</label>
-            <input type="text" id="bernaVecums" placeholder="piem. 6">
-          </div>
-        </div>
-        <button type="submit" class="poga" id="pogaSaglabat">Saglabāt izmaiņas</button>
-      </form>
-    </section>
+    <div class="rezgis">
 
-    <section class="bloks">
-      <h2>Manas nodarbības</h2>
-      <p class="tukss">
-        Pagaidām nav rezervētu nodarbību.
-        <a href="index.html#cenas">Apskati piedāvājumu</a>
-      </p>
-    </section>
+      <!-- ============ KREISĀ PUSE ============ -->
+      <div>
+
+        <section class="karte karte-uzsvers">
+          <button class="cta" id="pogaPieteikt">Pieteikt uz nodarbību</button>
+          <p class="cta-piezime">Sazināsimies 1 darba dienas laikā, lai apstiprinātu laiku.</p>
+        </section>
+
+        <section class="karte">
+          <h2>Par bērnu</h2>
+          <p class="h2-piezime">Šī informācija palīdz pasniedzējam sagatavoties.</p>
+
+          <div class="rinda">
+            <div class="lauks">
+              <label for="bernaVards">Bērna vārds, uzvārds</label>
+              <input type="text" id="bernaVards" placeholder="Emīls Bērziņš">
+            </div>
+            <div class="lauks">
+              <label for="bernaVecums">Bērna vecums</label>
+              <input type="text" id="bernaVecums" placeholder="6 gadi">
+            </div>
+          </div>
+
+          <div class="rinda">
+            <div class="lauks">
+              <label for="vecakaTel">Vecāka telefons</label>
+              <input type="tel" id="vecakaTel" placeholder="+371 20 000 000">
+            </div>
+            <div class="lauks">
+              <label for="bernaTel">Bērna telefons</label>
+              <input type="tel" id="bernaTel" placeholder="ja ir">
+            </div>
+          </div>
+
+          <!-- 1. jautājums -->
+          <div class="jautajums">
+            <p class="jaut-teksts">Vai bērnam jau ir kāda saskarsme ar mūziku?</p>
+            <div class="izvele">
+              <input type="radio" name="muzika" id="mNav" value="Nav"><label for="mNav">Nav nekādas</label>
+              <input type="radio" name="muzika" id="mMazliet" value="Mazliet"><label for="mMazliet">Mazliet</label>
+              <input type="radio" name="muzika" id="mMacas" value="Mācās"><label for="mMacas">Jau mācās</label>
+            </div>
+            <textarea id="muzikaPiezime" placeholder="Pastāsti vairāk — cik ilgi, kur, kas patika vai nepatika…"></textarea>
+          </div>
+
+          <!-- 2. jautājums -->
+          <div class="jautajums">
+            <p class="jaut-teksts">Vai mājās ir kāds mūzikas instruments?</p>
+            <div class="izvele">
+              <input type="radio" name="instruments" id="iNav" value="Nav"><label for="iNav">Nav</label>
+              <input type="radio" name="instruments" id="iIr" value="Ir"><label for="iIr">Ir</label>
+              <input type="radio" name="instruments" id="iPlano" value="Plānojam"><label for="iPlano">Plānojam iegādāties</label>
+            </div>
+            <textarea id="instrumentsPiezime" placeholder="Kāds tieši? Klavieres, ģitāra, sintezators, bungas…"></textarea>
+          </div>
+
+          <!-- 3. jautājums -->
+          <div class="jautajums">
+            <p class="jaut-teksts">Kādās dienās vai datumos vēlētos nodarbības?</p>
+            <textarea id="laiki" placeholder="Piemēram: otrdienās un ceturtdienās pēc 16:00, vai sestdienu rītos."></textarea>
+          </div>
+
+          <button class="cta" id="pogaSaglabatAnketu" style="margin-top:24px">Saglabāt anketu</button>
+        </section>
+
+      </div>
+
+      <!-- ============ LABĀ PUSE ============ -->
+      <div>
+
+        <section class="karte">
+          <h2>Vecāka profils</h2>
+          <p class="h2-piezime">Ar šiem datiem sazināsimies par nodarbībām.</p>
+
+          <div class="lauks">
+            <label for="vards">Vārds, uzvārds</label>
+            <input type="text" id="vards">
+          </div>
+          <div class="lauks">
+            <label for="telefons">Telefons</label>
+            <input type="tel" id="telefons" placeholder="+371 20 000 000">
+          </div>
+          <div class="lauks">
+            <label for="epasts">E-pasts</label>
+            <input type="email" id="epasts" disabled title="E-pastu maina tikai caur atbalstu">
+          </div>
+          <button class="cta" id="pogaSaglabatProfilu">Saglabāt profilu</button>
+        </section>
+
+        <section class="karte">
+          <h2>Cenas un abonementi</h2>
+          <p class="h2-piezime">Nodarbības notiek VEF Kvartālā, Rīgā.</p>
+
+          <div class="cena">
+            <span class="cena-nos">Iepazīšanās
+              <span class="cena-det">Pirmā nodarbība · 20 min</span>
+            </span>
+            <span class="cena-sum">20&thinsp;€</span>
+          </div>
+          <div class="cena">
+            <span class="cena-nos">Viena nodarbība
+              <span class="cena-det">50 min</span>
+            </span>
+            <span class="cena-sum">80&thinsp;€</span>
+          </div>
+          <div class="cena">
+            <span class="cena-nos">1 nodarbība nedēļā
+              <span class="cena-det">Abonements · 4 nedēļas · 70&thinsp;€ par nodarbību</span>
+            </span>
+            <span class="cena-sum"><span class="cena-veca">320&thinsp;€</span>280&thinsp;€</span>
+          </div>
+          <div class="cena">
+            <span class="cena-nos">2 nodarbības nedēļā
+              <span class="cena-det">Abonements · 4 nedēļas · 70&thinsp;€ par nodarbību</span>
+            </span>
+            <span class="cena-sum"><span class="cena-veca">640&thinsp;€</span>560&thinsp;€</span>
+          </div>
+          <div class="cena">
+            <span class="cena-nos">Dāvanu karte
+              <span class="cena-det">Saņem klātienē, pakomātā vai e-pastā</span>
+            </span>
+            <span class="cena-sum">—</span>
+          </div>
+        </section>
+
+      </div>
+    </div>
   </div>
 </main>
 
@@ -194,57 +301,109 @@ import {
 } from './js/firebase-init.js';
 
 const zinojums = document.getElementById('zinojums');
-let pasreizejaisUid = null;
+let uid = null;
+
+const el = (id) => document.getElementById(id);
 
 function paradit(teksts, veids = 'kluda') {
   zinojums.textContent = teksts;
   zinojums.className = 'zinojums ' + veids;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function iestatitRadio(nosaukums, vertiba) {
+  if (!vertiba) return;
+  const poga = document.querySelector(`input[name="${nosaukums}"][value="${vertiba}"]`);
+  if (poga) poga.checked = true;
+}
+
+function nolasitRadio(nosaukums) {
+  const izvelets = document.querySelector(`input[name="${nosaukums}"]:checked`);
+  return izvelets ? izvelets.value : '';
 }
 
 prasitPieteiksanos(async (user) => {
-  pasreizejaisUid = user.uid;
-
-  let profils = null;
+  uid = user.uid;
+  let p = null;
   try {
-    profils = await iegutProfilu(user.uid);
+    p = await iegutProfilu(user.uid);
   } catch (err) {
     paradit(kludasTeksts(err));
   }
 
-  const vardsTeksts = profils?.vards || user.displayName || 'draugs';
-  document.getElementById('sveiciensVards').textContent = vardsTeksts;
-  document.getElementById('lietotajaEpasts').textContent = user.email;
+  el('sveiciensVards').textContent = p?.vards || user.displayName || 'draugs';
+  el('joslaEpasts').textContent = user.email;
 
-  document.getElementById('vards').value = profils?.vards || user.displayName || '';
-  document.getElementById('telefons').value = profils?.telefons || '';
-  document.getElementById('bernaVards').value = profils?.berna_vards || '';
-  document.getElementById('bernaVecums').value = profils?.berna_vecums || '';
+  el('vards').value = p?.vards || user.displayName || '';
+  el('telefons').value = p?.telefons || '';
+  el('epasts').value = user.email;
 
-  document.getElementById('ielade').classList.add('paslepts');
-  document.getElementById('saturs').classList.remove('paslepts');
+  el('bernaVards').value = p?.berna_vards || '';
+  el('bernaVecums').value = p?.berna_vecums || '';
+  el('vecakaTel').value = p?.vecaka_tel || p?.telefons || '';
+  el('bernaTel').value = p?.berna_tel || '';
+
+  iestatitRadio('muzika', p?.muzikas_pieredze);
+  iestatitRadio('instruments', p?.instruments_majas);
+  el('muzikaPiezime').value = p?.muzikas_piezime || '';
+  el('instrumentsPiezime').value = p?.instrumenta_piezime || '';
+  el('laiki').value = p?.velamie_laiki || '';
+
+  el('ielade').classList.add('paslepts');
+  el('saturs').classList.remove('paslepts');
 });
 
-document.getElementById('forma').onsubmit = async (e) => {
-  e.preventDefault();
-  const poga = document.getElementById('pogaSaglabat');
-  poga.disabled = true; poga.textContent = 'Saglabā…';
+async function saglabat(poga, dati, teksts) {
+  const sakotnejais = poga.textContent;
+  poga.disabled = true;
+  poga.textContent = 'Saglabā…';
   try {
-    await saglabatProfilu(pasreizejaisUid, {
-      vards: document.getElementById('vards').value.trim(),
-      telefons: document.getElementById('telefons').value.trim(),
-      berna_vards: document.getElementById('bernaVards').value.trim(),
-      berna_vecums: document.getElementById('bernaVecums').value.trim(),
-    });
-    paradit('Izmaiņas saglabātas.', 'labi');
-    document.getElementById('sveiciensVards').textContent =
-      document.getElementById('vards').value.trim() || 'draugs';
+    await saglabatProfilu(uid, dati);
+    paradit(teksts, 'labi');
   } catch (err) {
     paradit(kludasTeksts(err));
   }
-  poga.disabled = false; poga.textContent = 'Saglabāt izmaiņas';
+  poga.disabled = false;
+  poga.textContent = sakotnejais;
+}
+
+el('pogaSaglabatProfilu').onclick = () => {
+  saglabat(el('pogaSaglabatProfilu'), {
+    vards: el('vards').value.trim(),
+    telefons: el('telefons').value.trim(),
+  }, 'Profils saglabāts.');
+  el('sveiciensVards').textContent = el('vards').value.trim() || 'draugs';
 };
 
-document.getElementById('pogaIzrakstities').onclick = async () => {
+el('pogaSaglabatAnketu').onclick = () => {
+  saglabat(el('pogaSaglabatAnketu'), {
+    berna_vards: el('bernaVards').value.trim(),
+    berna_vecums: el('bernaVecums').value.trim(),
+    vecaka_tel: el('vecakaTel').value.trim(),
+    berna_tel: el('bernaTel').value.trim(),
+    muzikas_pieredze: nolasitRadio('muzika'),
+    muzikas_piezime: el('muzikaPiezime').value.trim(),
+    instruments_majas: nolasitRadio('instruments'),
+    instrumenta_piezime: el('instrumentsPiezime').value.trim(),
+    velamie_laiki: el('laiki').value.trim(),
+  }, 'Anketa saglabāta.');
+};
+
+el('pogaPieteikt').onclick = async () => {
+  const berns = el('bernaVards').value.trim();
+  const laiki = el('laiki').value.trim();
+  if (!berns || !laiki) {
+    paradit('Lai pieteiktos, aizpildi bērna vārdu un vēlamās dienas zemāk.');
+    return;
+  }
+  await saglabat(el('pogaPieteikt'), {
+    berna_vards: berns,
+    velamie_laiki: laiki,
+    pieteikums_iesniegts: new Date().toISOString(),
+  }, 'Pieteikums nosūtīts. Sazināsimies 1 darba dienas laikā.');
+};
+
+el('pogaIzrakstities').onclick = async () => {
   await izrakstities();
   window.location.href = 'index.html';
 };
