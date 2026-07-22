@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="lv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pieteikties · Skaņu Darbnīca</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --krems:#F4F0E6;
+    --papirs:#FBF9F4;
+    --tinte:#2B2721;
+    --tinte-vaja:#6B655B;
+    --zelts:#B4862C;
+    --zelts-gaisi:#E8D9B4;
+    --linija:#DED6C4;
+    --sarkans:#A4442E;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:var(--krems);
+    color:var(--tinte);
+    font-family:'Inter',system-ui,sans-serif;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:32px 20px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .karte{
+    background:var(--papirs);
+    border:1px solid var(--linija);
+    border-radius:2px;
+    width:100%;
+    max-width:430px;
+    padding:44px 38px 38px;
+  }
+  .atpakal{
+    display:inline-block;
+    font-size:13px;
+    color:var(--tinte-vaja);
+    text-decoration:none;
+    margin-bottom:26px;
+    letter-spacing:.02em;
+  }
+  .atpakal:hover{color:var(--zelts)}
+  h1{
+    font-family:'Fraunces',Georgia,serif;
+    font-weight:400;
+    font-size:31px;
+    line-height:1.15;
+    margin-bottom:8px;
+  }
+  h1 em{font-style:italic;color:var(--zelts)}
+  .apaksvirsraksts{
+    font-size:14px;
+    color:var(--tinte-vaja);
+    margin-bottom:28px;
+    line-height:1.5;
+  }
+  .celini{
+    display:flex;
+    gap:26px;
+    border-bottom:1px solid var(--linija);
+    margin-bottom:26px;
+  }
+  .celins{
+    background:none;
+    border:none;
+    border-bottom:2px solid transparent;
+    padding:0 0 12px;
+    margin-bottom:-1px;
+    font-family:inherit;
+    font-size:14px;
+    font-weight:500;
+    color:var(--tinte-vaja);
+    cursor:pointer;
+  }
+  .celins[aria-selected="true"]{color:var(--tinte);border-bottom-color:var(--zelts)}
+  label{
+    display:block;
+    font-size:12px;
+    font-weight:500;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    color:var(--tinte-vaja);
+    margin-bottom:7px;
+  }
+  .lauks{margin-bottom:17px}
+  input{
+    width:100%;
+    padding:11px 13px;
+    font-family:inherit;
+    font-size:15px;
+    color:var(--tinte);
+    background:#fff;
+    border:1px solid var(--linija);
+    border-radius:2px;
+  }
+  input:focus{outline:2px solid var(--zelts);outline-offset:-1px;border-color:transparent}
+  .poga{
+    width:100%;
+    padding:13px;
+    font-family:inherit;
+    font-size:15px;
+    font-weight:500;
+    color:var(--papirs);
+    background:var(--tinte);
+    border:none;
+    border-radius:2px;
+    cursor:pointer;
+    margin-top:6px;
+  }
+  .poga:hover{background:var(--zelts)}
+  .poga:disabled{opacity:.5;cursor:default}
+  .poga-google{
+    width:100%;
+    padding:12px;
+    font-family:inherit;
+    font-size:14.5px;
+    font-weight:500;
+    color:var(--tinte);
+    background:#fff;
+    border:1px solid var(--linija);
+    border-radius:2px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+  }
+  .poga-google:hover{border-color:var(--zelts)}
+  .skirtne{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    margin:22px 0;
+    font-size:12px;
+    color:var(--tinte-vaja);
+  }
+  .skirtne::before,.skirtne::after{content:"";flex:1;height:1px;background:var(--linija)}
+  .zinojums{
+    font-size:13.5px;
+    line-height:1.5;
+    padding:11px 13px;
+    border-radius:2px;
+    margin-bottom:18px;
+    display:none;
+  }
+  .zinojums.kluda{display:block;background:#F7E9E5;color:var(--sarkans);border:1px solid #E5C9C1}
+  .zinojums.labi{display:block;background:var(--zelts-gaisi);color:#6E5316;border:1px solid #D9C48F}
+  .aizmirsu{
+    background:none;
+    border:none;
+    font-family:inherit;
+    font-size:13px;
+    color:var(--tinte-vaja);
+    text-decoration:underline;
+    cursor:pointer;
+    padding:0;
+    margin-top:16px;
+    display:block;
+  }
+  .aizmirsu:hover{color:var(--zelts)}
+  .paslepts{display:none}
+</style>
+</head>
+<body>
+
+<main class="karte">
+  <a class="atpakal" href="index.html">← Atpakaļ uz sākumu</a>
+
+  <h1>Skaņu <em>Darbnīca</em></h1>
+  <p class="apaksvirsraksts">Piesakies, lai rezervētu nodarbības un sekotu līdzi bērna ierakstiem.</p>
+
+  <div class="celini" role="tablist">
+    <button class="celins" id="celinsPieteikties" role="tab" aria-selected="true">Pieteikties</button>
+    <button class="celins" id="celinsRegistret" role="tab" aria-selected="false">Izveidot kontu</button>
+  </div>
+
+  <div class="zinojums" id="zinojums"></div>
+
+  <!-- Pieteikšanās -->
+  <form id="formaPieteikties">
+    <div class="lauks">
+      <label for="pEpasts">E-pasts</label>
+      <input type="email" id="pEpasts" autocomplete="email" required>
+    </div>
+    <div class="lauks">
+      <label for="pParole">Parole</label>
+      <input type="password" id="pParole" autocomplete="current-password" required>
+    </div>
+    <button type="submit" class="poga" id="pogaPieteikties">Pieteikties</button>
+    <button type="button" class="aizmirsu" id="pogaAizmirsu">Aizmirsi paroli?</button>
+  </form>
+
+  <!-- Reģistrācija -->
+  <form id="formaRegistret" class="paslepts">
+    <div class="lauks">
+      <label for="rVards">Vārds, uzvārds</label>
+      <input type="text" id="rVards" autocomplete="name" required>
+    </div>
+    <div class="lauks">
+      <label for="rEpasts">E-pasts</label>
+      <input type="email" id="rEpasts" autocomplete="email" required>
+    </div>
+    <div class="lauks">
+      <label for="rTelefons">Telefons</label>
+      <input type="tel" id="rTelefons" autocomplete="tel" placeholder="+371">
+    </div>
+    <div class="lauks">
+      <label for="rParole">Parole</label>
+      <input type="password" id="rParole" autocomplete="new-password" minlength="6" required>
+    </div>
+    <button type="submit" class="poga" id="pogaRegistret">Izveidot kontu</button>
+  </form>
+
+  <div class="skirtne">vai</div>
+
+  <button type="button" class="poga-google" id="pogaGoogle">
+    <svg width="17" height="17" viewBox="0 0 48 48" aria-hidden="true">
+      <path fill="#4285F4" d="M45 24c0-1.6-.1-2.7-.4-4H24v7.5h12c-.2 2-1.5 5-4.4 7l6.7 5.2C42.2 36 45 30.6 45 24z"/>
+      <path fill="#34A853" d="M24 46c5.9 0 10.9-2 14.5-5.3l-6.9-5.4c-1.9 1.3-4.3 2.2-7.6 2.2-5.8 0-10.7-3.8-12.5-9.1l-7.1 5.5C8.1 41 15.4 46 24 46z"/>
+      <path fill="#FBBC05" d="M11.5 28.4c-.5-1.4-.7-2.9-.7-4.4s.3-3 .7-4.4l-7.1-5.5C2.9 17 2 20.4 2 24s.9 7 2.4 9.9l7.1-5.5z"/>
+      <path fill="#EA4335" d="M24 10.5c4.1 0 6.9 1.8 8.5 3.3l6.2-6C34.9 4.3 29.9 2 24 2 15.4 2 8.1 7 4.4 14.1l7.1 5.5C13.3 14.3 18.2 10.5 24 10.5z"/>
+    </svg>
+    Turpināt ar Google
+  </button>
+</main>
+
+<script type="module">
+import {
+  auth, registret, pieteikties, pieteiktiesArGoogle,
+  atjaunotParoli, kludasTeksts, onAuthStateChanged
+} from './js/firebase-init.js';
+
+const zinojums = document.getElementById('zinojums');
+const formaPieteikties = document.getElementById('formaPieteikties');
+const formaRegistret = document.getElementById('formaRegistret');
+const celinsPieteikties = document.getElementById('celinsPieteikties');
+const celinsRegistret = document.getElementById('celinsRegistret');
+
+function paradit(teksts, veids = 'kluda') {
+  zinojums.textContent = teksts;
+  zinojums.className = 'zinojums ' + veids;
+}
+function notirit() {
+  zinojums.className = 'zinojums';
+}
+
+// Ja jau pieteicies, uzreiz uz profilu
+onAuthStateChanged(auth, (user) => {
+  if (user) window.location.href = 'profils.html';
+});
+
+// Cilnes
+celinsPieteikties.onclick = () => {
+  celinsPieteikties.setAttribute('aria-selected','true');
+  celinsRegistret.setAttribute('aria-selected','false');
+  formaPieteikties.classList.remove('paslepts');
+  formaRegistret.classList.add('paslepts');
+  notirit();
+};
+celinsRegistret.onclick = () => {
+  celinsRegistret.setAttribute('aria-selected','true');
+  celinsPieteikties.setAttribute('aria-selected','false');
+  formaRegistret.classList.remove('paslepts');
+  formaPieteikties.classList.add('paslepts');
+  notirit();
+};
+
+// Pieteikšanās
+formaPieteikties.onsubmit = async (e) => {
+  e.preventDefault();
+  const poga = document.getElementById('pogaPieteikties');
+  poga.disabled = true; poga.textContent = 'Piesakās…';
+  try {
+    await pieteikties(pEpasts.value.trim(), pParole.value);
+    window.location.href = 'profils.html';
+  } catch (err) {
+    paradit(kludasTeksts(err));
+    poga.disabled = false; poga.textContent = 'Pieteikties';
+  }
+};
+
+// Reģistrācija
+formaRegistret.onsubmit = async (e) => {
+  e.preventDefault();
+  const poga = document.getElementById('pogaRegistret');
+  poga.disabled = true; poga.textContent = 'Veido kontu…';
+  try {
+    await registret({
+      epasts: rEpasts.value.trim(),
+      parole: rParole.value,
+      vards: rVards.value.trim(),
+      telefons: rTelefons.value.trim(),
+    });
+    window.location.href = 'profils.html';
+  } catch (err) {
+    paradit(kludasTeksts(err));
+    poga.disabled = false; poga.textContent = 'Izveidot kontu';
+  }
+};
+
+// Google
+document.getElementById('pogaGoogle').onclick = async () => {
+  try {
+    await pieteiktiesArGoogle();
+    window.location.href = 'profils.html';
+  } catch (err) {
+    paradit(kludasTeksts(err));
+  }
+};
+
+// Paroles atjaunošana
+document.getElementById('pogaAizmirsu').onclick = async () => {
+  const epasts = pEpasts.value.trim();
+  if (!epasts) {
+    paradit('Ieraksti e-pastu laukā augšā, tad spied vēlreiz.');
+    return;
+  }
+  try {
+    await atjaunotParoli(epasts);
+    paradit('Nosūtījām saiti paroles nomaiņai uz ' + epasts, 'labi');
+  } catch (err) {
+    paradit(kludasTeksts(err));
+  }
+};
+</script>
+</body>
+</html>

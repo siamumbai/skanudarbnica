@@ -137,7 +137,7 @@
   <div style="display:flex; align-items:center; gap:1.5rem;">
     <div class="nav-logo">skanudarbnica.lv</div>
   </div>
-  <a href="#" class="nav-cta">Pierakstīties</a>
+  <a href="pieteikties.html" class="nav-cta" id="navCta">Pierakstīties</a>
 </nav>
 <section class="hero" style="max-width: var(--maxw); margin: 0 auto; padding: 0; display: grid; grid-template-columns: 1fr 1fr; min-height: 85vh;">
   <div class="hero-left" style="padding: 7rem 3rem 5rem; display: flex; flex-direction: column; justify-content: center;">
@@ -146,7 +146,7 @@
     <p class="hero-sub"><span class="hs-line">Kurš instruments būs pirmais, bērns izvēlas pats.</span><span class="hs-line">Elektronika, dzīvie instrumenti un eksperimentēšana</span><span class="hs-line">Atrodi savu balsi skaņu pasaulē.</span></p>
     <p class="hero-note" style="font-size:13px; font-weight:400; color:var(--muted); letter-spacing:0.02em; margin-top:1.5rem; opacity:0.7;">Nodarbības no 2 gadu vecuma</p>
     <div class="hero-cta">
-      <a href="#" class="btn-primary">Pierakstīties</a>
+      <a href="pieteikties.html" class="btn-primary">Pierakstīties</a>
       <a href="#" class="btn-ghost">Uzzināt vairāk</a>
     </div>
   </div>
@@ -225,7 +225,7 @@
         </div>
         <div class="price-right">
           <div class="price-amount">20€</div>
-          <a href="#" class="price-btn">Rezervēt laiku</a>
+          <a href="pieteikties.html" class="price-btn">Rezervēt laiku</a>
         </div>
       </div>
       <div class="price-card full brown">
@@ -237,7 +237,7 @@
         </div>
         <div class="price-right">
           <div class="price-amount" style="color: var(--bg);">80€</div>
-          <a href="#" class="price-btn-light">Rezervēt laiku</a>
+          <a href="pieteikties.html" class="price-btn-light">Rezervēt laiku</a>
         </div>
       </div>
       <div class="price-card">
@@ -251,7 +251,7 @@
             <span style="font-size: 20px; font-weight: 700; color: var(--accent-dark);">280€</span>
             <span class="price-old">320€</span>
           </div>
-          <div style="margin-top: 1.5rem; text-align: center;"><a href="#" class="price-btn">Pieteikties abonementam</a></div>
+          <div style="margin-top: 1.5rem; text-align: center;"><a href="pieteikties.html" class="price-btn">Pieteikties abonementam</a></div>
         </div>
       </div>
       <div class="price-card">
@@ -265,7 +265,7 @@
             <span style="font-size: 20px; font-weight: 700; color: var(--accent-dark);">560€</span>
             <span class="price-old">640€</span>
           </div>
-          <div style="margin-top: 1.5rem; text-align: center;"><a href="#" class="price-btn">Pieteikties abonementam</a></div>
+          <div style="margin-top: 1.5rem; text-align: center;"><a href="pieteikties.html" class="price-btn">Pieteikties abonementam</a></div>
         </div>
       </div>
       <!-- DĀVANU KARTE -->
@@ -363,5 +363,17 @@
 </footer>
 
 </div>
+
+<script type="module">
+import { auth, onAuthStateChanged } from './js/firebase-init.js';
+onAuthStateChanged(auth, (user) => {
+  const poga = document.getElementById('navCta');
+  if (!poga) return;
+  if (user) {
+    poga.textContent = 'Mans profils';
+    poga.href = 'profils.html';
+  }
+});
+</script>
 </body>
 </html>

@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="lv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mans profils · Skaņu Darbnīca</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --krems:#F4F0E6;
+    --papirs:#FBF9F4;
+    --tinte:#2B2721;
+    --tinte-vaja:#6B655B;
+    --zelts:#B4862C;
+    --zelts-gaisi:#E8D9B4;
+    --linija:#DED6C4;
+    --sarkans:#A4442E;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:var(--krems);
+    color:var(--tinte);
+    font-family:'Inter',system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  .josla{
+    border-bottom:1px solid var(--linija);
+    padding:16px 24px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .logo{
+    font-family:'Fraunces',Georgia,serif;
+    font-size:17px;
+    text-decoration:none;
+    color:var(--tinte);
+  }
+  .logo em{font-style:italic;color:var(--zelts)}
+  .izeja{
+    background:none;
+    border:1px solid var(--linija);
+    border-radius:2px;
+    padding:7px 14px;
+    font-family:inherit;
+    font-size:13.5px;
+    color:var(--tinte-vaja);
+    cursor:pointer;
+  }
+  .izeja:hover{border-color:var(--zelts);color:var(--zelts)}
+  main{max-width:620px;margin:0 auto;padding:48px 24px 80px}
+  .ielade{color:var(--tinte-vaja);font-size:15px}
+  .sveiciens{
+    font-family:'Fraunces',Georgia,serif;
+    font-weight:400;
+    font-size:34px;
+    line-height:1.15;
+    margin-bottom:6px;
+  }
+  .sveiciens em{font-style:italic;color:var(--zelts)}
+  .epasts{font-size:14px;color:var(--tinte-vaja);margin-bottom:38px}
+  .bloks{
+    background:var(--papirs);
+    border:1px solid var(--linija);
+    border-radius:2px;
+    padding:30px 28px;
+    margin-bottom:20px;
+  }
+  h2{
+    font-size:12px;
+    font-weight:600;
+    letter-spacing:.09em;
+    text-transform:uppercase;
+    color:var(--tinte-vaja);
+    margin-bottom:20px;
+  }
+  label{
+    display:block;
+    font-size:12px;
+    font-weight:500;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    color:var(--tinte-vaja);
+    margin-bottom:7px;
+  }
+  .lauks{margin-bottom:17px}
+  .rinda{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  input{
+    width:100%;
+    padding:11px 13px;
+    font-family:inherit;
+    font-size:15px;
+    color:var(--tinte);
+    background:#fff;
+    border:1px solid var(--linija);
+    border-radius:2px;
+  }
+  input:focus{outline:2px solid var(--zelts);outline-offset:-1px;border-color:transparent}
+  .poga{
+    padding:12px 24px;
+    font-family:inherit;
+    font-size:15px;
+    font-weight:500;
+    color:var(--papirs);
+    background:var(--tinte);
+    border:none;
+    border-radius:2px;
+    cursor:pointer;
+    margin-top:6px;
+  }
+  .poga:hover{background:var(--zelts)}
+  .poga:disabled{opacity:.5;cursor:default}
+  .zinojums{
+    font-size:13.5px;
+    line-height:1.5;
+    padding:11px 13px;
+    border-radius:2px;
+    margin-bottom:18px;
+    display:none;
+  }
+  .zinojums.kluda{display:block;background:#F7E9E5;color:var(--sarkans);border:1px solid #E5C9C1}
+  .zinojums.labi{display:block;background:var(--zelts-gaisi);color:#6E5316;border:1px solid #D9C48F}
+  .tukss{
+    font-size:14.5px;
+    line-height:1.6;
+    color:var(--tinte-vaja);
+  }
+  .tukss a{color:var(--zelts)}
+  .paslepts{display:none}
+  @media(max-width:520px){
+    .rinda{grid-template-columns:1fr}
+    .sveiciens{font-size:27px}
+  }
+</style>
+</head>
+<body>
+
+<header class="josla">
+  <a class="logo" href="index.html">Skaņu <em>Darbnīca</em></a>
+  <button class="izeja" id="pogaIzrakstities">Izrakstīties</button>
+</header>
+
+<main>
+  <p class="ielade" id="ielade">Ielādē profilu…</p>
+
+  <div id="saturs" class="paslepts">
+    <h1 class="sveiciens">Sveiks, <em id="sveiciensVards"></em></h1>
+    <p class="epasts" id="lietotajaEpasts"></p>
+
+    <div class="zinojums" id="zinojums"></div>
+
+    <section class="bloks">
+      <h2>Kontaktinformācija</h2>
+      <form id="forma">
+        <div class="lauks">
+          <label for="vards">Vārds, uzvārds</label>
+          <input type="text" id="vards" required>
+        </div>
+        <div class="lauks">
+          <label for="telefons">Telefons</label>
+          <input type="tel" id="telefons" placeholder="+371">
+        </div>
+        <div class="rinda">
+          <div class="lauks">
+            <label for="bernaVards">Bērna vārds</label>
+            <input type="text" id="bernaVards">
+          </div>
+          <div class="lauks">
+            <label for="bernaVecums">Bērna vecums</label>
+            <input type="text" id="bernaVecums" placeholder="piem. 6">
+          </div>
+        </div>
+        <button type="submit" class="poga" id="pogaSaglabat">Saglabāt izmaiņas</button>
+      </form>
+    </section>
+
+    <section class="bloks">
+      <h2>Manas nodarbības</h2>
+      <p class="tukss">
+        Pagaidām nav rezervētu nodarbību.
+        <a href="index.html#cenas">Apskati piedāvājumu</a>
+      </p>
+    </section>
+  </div>
+</main>
+
+<script type="module">
+import {
+  prasitPieteiksanos, iegutProfilu, saglabatProfilu,
+  izrakstities, kludasTeksts
+} from './js/firebase-init.js';
+
+const zinojums = document.getElementById('zinojums');
+let pasreizejaisUid = null;
+
+function paradit(teksts, veids = 'kluda') {
+  zinojums.textContent = teksts;
+  zinojums.className = 'zinojums ' + veids;
+}
+
+prasitPieteiksanos(async (user) => {
+  pasreizejaisUid = user.uid;
+
+  let profils = null;
+  try {
+    profils = await iegutProfilu(user.uid);
+  } catch (err) {
+    paradit(kludasTeksts(err));
+  }
+
+  const vardsTeksts = profils?.vards || user.displayName || 'draugs';
+  document.getElementById('sveiciensVards').textContent = vardsTeksts;
+  document.getElementById('lietotajaEpasts').textContent = user.email;
+
+  document.getElementById('vards').value = profils?.vards || user.displayName || '';
+  document.getElementById('telefons').value = profils?.telefons || '';
+  document.getElementById('bernaVards').value = profils?.berna_vards || '';
+  document.getElementById('bernaVecums').value = profils?.berna_vecums || '';
+
+  document.getElementById('ielade').classList.add('paslepts');
+  document.getElementById('saturs').classList.remove('paslepts');
+});
+
+document.getElementById('forma').onsubmit = async (e) => {
+  e.preventDefault();
+  const poga = document.getElementById('pogaSaglabat');
+  poga.disabled = true; poga.textContent = 'Saglabā…';
+  try {
+    await saglabatProfilu(pasreizejaisUid, {
+      vards: document.getElementById('vards').value.trim(),
+      telefons: document.getElementById('telefons').value.trim(),
+      berna_vards: document.getElementById('bernaVards').value.trim(),
+      berna_vecums: document.getElementById('bernaVecums').value.trim(),
+    });
+    paradit('Izmaiņas saglabātas.', 'labi');
+    document.getElementById('sveiciensVards').textContent =
+      document.getElementById('vards').value.trim() || 'draugs';
+  } catch (err) {
+    paradit(kludasTeksts(err));
+  }
+  poga.disabled = false; poga.textContent = 'Saglabāt izmaiņas';
+};
+
+document.getElementById('pogaIzrakstities').onclick = async () => {
+  await izrakstities();
+  window.location.href = 'index.html';
+};
+</script>
+</body>
+</html>
