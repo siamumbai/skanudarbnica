@@ -391,6 +391,7 @@ prasitPieteiksanos(async (user) => {
   try {
     p = await iegutProfilu(user.uid);
   } catch (err) {
+    console.error('Kļūda ielādējot profilu:', err);
     paradit(kludasTeksts(err));
   }
 
@@ -424,6 +425,7 @@ async function saglabat(poga, dati, teksts) {
     await saglabatProfilu(uid, dati);
     paradit(teksts, 'labi');
   } catch (err) {
+    console.error('Kļūda saglabājot profilu:', err);
     paradit(kludasTeksts(err));
   }
   poga.disabled = false;
