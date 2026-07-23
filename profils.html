@@ -185,16 +185,30 @@
   }
   .poga-pievienot:hover{background:var(--accent)}
 
-  /* --- Audzēkņu kartītes (visa kartīte klikšķināma = rediģēt) --- */
+  /* --- Audzēkņu kartītes --- */
   .bernu-kartes{margin-top:22px}
   .bernu-karte{
-    display:flex;align-items:center;gap:14px;width:100%;text-align:left;
     background:var(--bg2);border:0.5px solid var(--border);
-    border-radius:14px;padding:18px 20px;margin-bottom:12px;
-    font-family:inherit;cursor:pointer;transition:background .15s,border-color .15s;
+    border-radius:14px;padding:16px 20px;margin-bottom:12px;
   }
-  .bernu-karte:hover{border-color:var(--accent-dark);background:var(--bg3)}
-  .bernu-vards{font-size:16px;font-weight:800;color:var(--text);line-height:1.2}
+  .bernu-rinda{display:flex;align-items:center;justify-content:space-between;gap:14px}
+  .bernu-vards-poga{
+    background:none;border:none;padding:0;cursor:pointer;text-align:left;
+    font-family:inherit;font-size:16px;font-weight:800;color:var(--text);line-height:1.2;
+  }
+  .bernu-vards-poga:hover{color:var(--accent-dark)}
+  .bernu-rediget{
+    background:none;border:none;padding:0;cursor:pointer;flex-shrink:0;
+    font-family:inherit;font-size:13px;font-weight:600;color:var(--muted);text-decoration:underline;
+  }
+  .bernu-rediget:hover{color:var(--accent-dark)}
+  .bernu-laiks-poga{
+    margin-top:14px;width:100%;text-align:left;
+    background:var(--bg);border:0.5px solid var(--accent-dark);border-radius:100px;
+    padding:11px 18px;font-family:inherit;font-size:13.5px;font-weight:600;
+    color:var(--accent-dark);cursor:pointer;transition:background .15s,color .15s;
+  }
+  .bernu-laiks-poga:hover{background:var(--accent-dark);color:var(--bg)}
 
   /* --- "Dzēst anketu" rediģēšanas apakšā --- */
   .dzest-anketu-rinda{
@@ -553,10 +567,9 @@ const el = (id) => document.getElementById(id);
 
 /* ---------- Stāvoklis ---------- */
 let uid = null;
-let berni = [];                 // Firestore users/{uid}.berni
+let berni = [];                 // Firestore users/{uid}.berni; katram bērnam ir savs nodarbibas_laiks
 let rediggamaisIndekss = null;  // kuru audzēkni šobrīd rediģē anketā (null = jauns)
 let izveletaisBernsIdx = null;  // 2. solī izvēlētais audzēknis
-let izveletaisLaiks = '';       // 2. solī izvēlētais nodarbības laiks
 
 // Pagaidu mock laiki, kamēr nav Calendly integrācijas.
 const pieejamieLaiki = [
@@ -565,16 +578,17 @@ const pieejamieLaiki = [
 ];
 
 /* ---------- PAGAIDU localStorage glabātuve ----------
-   Nodarbības laika izvēli un apmaksas soli glabājam lokāli pārlūkā, jo Calendly
-   un maksājumu backend vēl nav integrēts. Kad būs īsts backend, aizvieto šīs
-   funkcijas ar servera izsaukumiem — pārējais kods paliek nemainīgs. */
+   Šeit glabājam tikai to, kurš audzēknis 2. solī pēdējais bija atvērts (UI
+   ērtībai). Nodarbības laiks tagad glabājas pie katra audzēkņa (berni[i].
+   nodarbibas_laiks) Firestore. Kad būs Calendly/maksājumu backend, šo laika
+   lauku aizpildīs īstā rezervācija. */
 const pagaiduAtslega = () => `sd_pieteikums_${uid}`;
 function pagaiduIelasit() {
   try { return JSON.parse(localStorage.getItem(pagaiduAtslega())) || {}; }
   catch { return {}; }
 }
 function pagaiduSaglabat() {
-  localStorage.setItem(pagaiduAtslega(), JSON.stringify({ izveletaisBernsIdx, izveletaisLaiks }));
+  localStorage.setItem(pagaiduAtslega(), JSON.stringify({ izveletaisBernsIdx }));
 }
 
 /* ---------- Tosts ---------- */
@@ -616,6 +630,11 @@ navPogas.forEach(({ poga, sadala }) => { el(poga).onclick = () => paradietSadalu
 /* ---------- Apakšnavigācija (soļi) ---------- */
 const paneli = ['panelisAudzeknis', 'panelisLaiks', 'panelisApmaksa'];
 function paradietPaneli(panelisId) {
+  // Ienākot laika solī bez izvēlēta audzēkņa — izvēlamies pirmo.
+  if (panelisId === 'panelisLaiks' && izveletaisBernsIdx === null && berni.length) {
+    izveletaisBernsIdx = 0;
+    pagaiduSaglabat();
+  }
   paneli.forEach((id) => el(id).classList.toggle('aktiva', id === panelisId));
   document.querySelectorAll('.apaks-nav-poga').forEach((b) => {
     const aktivs = b.dataset.panelis === panelisId;
@@ -714,25 +733,51 @@ function paradietDzestAnketuApstiprinajumu(indekss) {
   rinda.appendChild(teksts); rinda.appendChild(ja); rinda.appendChild(ne);
 }
 
-/* ---------- Audzēkņu kartītes ---------- */
-// Visa kartīte ir klikšķināma un atver rediģēšanu.
+/* ---------- Audzēkņu kartītes ----------
+   Klikšķis uz vārda parāda kartītē pogu "Nodarbības laiks", kas aizved uz
+   2. soli. Labajā pusē "Rediģēt" atver anketas rediģēšanu. */
 function zimetBernuKartes() {
   const konteiners = el('bernuKartes');
   konteiners.innerHTML = '';
 
   berni.forEach((b, i) => {
-    const karte = document.createElement('button');
-    karte.type = 'button';
+    const karte = document.createElement('div');
     karte.className = 'bernu-karte';
-    karte.title = 'Rediģēt';
-    karte.setAttribute('aria-label', 'Rediģēt: ' + (b.berna_vards || 'Audzēknis'));
-    karte.onclick = () => atvertAnketu(i);
 
-    const vards = document.createElement('span');
-    vards.className = 'bernu-vards';
+    const rinda = document.createElement('div');
+    rinda.className = 'bernu-rinda';
+
+    const vards = document.createElement('button');
+    vards.type = 'button';
+    vards.className = 'bernu-vards-poga';
     vards.textContent = b.berna_vards || 'Audzēknis';
 
-    karte.appendChild(vards);
+    const rediget = document.createElement('button');
+    rediget.type = 'button';
+    rediget.className = 'bernu-rediget';
+    rediget.textContent = 'Rediģēt';
+    rediget.onclick = () => atvertAnketu(i);
+
+    rinda.appendChild(vards);
+    rinda.appendChild(rediget);
+
+    const laiksPoga = document.createElement('button');
+    laiksPoga.type = 'button';
+    laiksPoga.className = 'bernu-laiks-poga paslepts';
+    laiksPoga.textContent = b.nodarbibas_laiks
+      ? ('Nodarbības laiks: ' + b.nodarbibas_laiks)
+      : 'Nodarbības laiks';
+    laiksPoga.onclick = () => {
+      izveletaisBernsIdx = i;
+      pagaiduSaglabat();
+      atjaunotStavokli();
+      paradietPaneli('panelisLaiks');
+    };
+
+    vards.onclick = () => laiksPoga.classList.toggle('paslepts');
+
+    karte.appendChild(rinda);
+    karte.appendChild(laiksPoga);
     konteiners.appendChild(karte);
   });
 }
@@ -752,23 +797,31 @@ async function dzestBernu(indekss) {
   return true;
 }
 
+// Saglabā konkrētā audzēkņa nodarbības laiku (tukšs = noņemts).
+async function iestatitLaiku(indekss, laiks) {
+  if (indekss == null || !berni[indekss]) return;
+  const jaunieBerni = berni.map((b, i) => (i === indekss ? { ...b, nodarbibas_laiks: laiks } : b));
+  const izdevas = await saglabatBernus(jaunieBerni, laiks ? ('Laiks saglabāts: ' + laiks) : 'Laiks noņemts.');
+  if (!izdevas) return;
+  berni = jaunieBerni;
+  zimetBernuKartes();
+  atjaunotStavokli();
+}
+
 /* ---------- Saglabāšana Firestore ---------- */
-async function saglabatBernus(jaunieBerni, veiksmesTeksts) {
-  const poga = el('pogaSaglabatBernu');
-  const sak = poga.textContent;
-  poga.disabled = true;
+async function saglabatBernus(jaunieBerni, veiksmesTeksts, poga) {
+  const sak = poga ? poga.textContent : null;
+  if (poga) poga.disabled = true;
   try {
     await saglabatProfilu(uid, { berni: jaunieBerni });
-    tosts(veiksmesTeksts, 'labi');
-    poga.disabled = false;
-    poga.textContent = sak;
+    if (veiksmesTeksts) tosts(veiksmesTeksts, 'labi');
     return true;
   } catch (err) {
     console.error('Kļūda saglabājot audzēkņus:', err);
     tosts(kludasTeksts(err), 'kluda');
-    poga.disabled = false;
-    poga.textContent = sak;
     return false;
+  } finally {
+    if (poga) { poga.disabled = false; poga.textContent = sak; }
   }
 }
 
@@ -800,40 +853,35 @@ function zimetLaikaSlotus() {
     poga.type = 'button';
     poga.className = 'cal-slots';
     poga.textContent = laiks;
-    poga.onclick = () => {
-      izveletaisLaiks = laiks;
-      pagaiduSaglabat();
-      atjaunotStavokli();
-      tosts('Laiks izvēlēts: ' + laiks, 'labi');
-    };
+    poga.onclick = () => iestatitLaiku(izveletaisBernsIdx, laiks);
     konteiners.appendChild(poga);
   });
 }
-el('pogaMainitLaiku').onclick = () => { izveletaisLaiks = ''; pagaiduSaglabat(); atjaunotStavokli(); };
+el('pogaMainitLaiku').onclick = () => iestatitLaiku(izveletaisBernsIdx, '');
 el('pogaUzAudzekni').onclick = () => { paradietPaneli('panelisAudzeknis'); atvertAnketu(null); };
 
 /* ---------- Stāvokļa atjaunošana (soļu bloķēšana + apakšnav) ---------- */
 function atjaunotStavokli() {
   const irBerni = berni.length > 0;
-  const irIzveletsBerns = izveletaisBernsIdx !== null && !!berni[izveletaisBernsIdx];
-  const irLaiks = !!izveletaisLaiks;
+  const izv = (izveletaisBernsIdx !== null && berni[izveletaisBernsIdx]) ? berni[izveletaisBernsIdx] : null;
+  const laiks = izv ? (izv.nodarbibas_laiks || '') : '';
 
-  // 2. panelis
+  // 2. panelis — laiks tiek rādīts izvēlētajam audzēknim (katram savs).
   el('laiksSlegts').classList.toggle('paslepts', irBerni);
   el('laiksSaturs').classList.toggle('paslepts', !irBerni);
   if (irBerni) {
     zimetBernaIzveli();
-    el('izveletaisLaiksBloks').classList.toggle('paslepts', !irLaiks);
-    el('calendlyKonteiners').classList.toggle('paslepts', irLaiks);
-    if (irLaiks) el('izveletaisLaiksTeksts').textContent = izveletaisLaiks;
-    el('pogaTurpinatApmaksa').disabled = !(irIzveletsBerns && irLaiks);
+    el('izveletaisLaiksBloks').classList.toggle('paslepts', !laiks);
+    el('calendlyKonteiners').classList.toggle('paslepts', !!laiks);
+    if (laiks) el('izveletaisLaiksTeksts').textContent = laiks;
+    el('pogaTurpinatApmaksa').disabled = !(izv && laiks);
   }
 
   // 3. panelis — kopsavilkums vienmēr redzams, poga aktīva tikai kad gatavs.
-  const gatavsApmaksai = irBerni && irIzveletsBerns && irLaiks;
+  const gatavsApmaksai = !!(izv && laiks);
   el('pogaApmaksa').disabled = !gatavsApmaksai;
-  el('kopsAudzeknis').textContent = irIzveletsBerns ? (berni[izveletaisBernsIdx].berna_vards || 'Audzēknis') : '—';
-  el('kopsLaiks').textContent = irLaiks ? izveletaisLaiks : '—';
+  el('kopsAudzeknis').textContent = izv ? (izv.berna_vards || 'Audzēknis') : '—';
+  el('kopsLaiks').textContent = laiks || '—';
 }
 
 /* ---------- Notikumi: anketa ---------- */
@@ -858,7 +906,7 @@ el('pogaSaglabatBernu').onclick = async () => {
   else jaunieBerni[rediggamaisIndekss] = dati;
 
   const izdevas = await saglabatBernus(jaunieBerni,
-    bijaJauns ? 'Audzēknis pievienots.' : 'Izmaiņas saglabātas.');
+    bijaJauns ? 'Audzēknis pievienots.' : 'Izmaiņas saglabātas.', el('pogaSaglabatBernu'));
   if (!izdevas) return;
 
   berni = jaunieBerni;
@@ -880,7 +928,7 @@ el('pogaTurpinatApmaksa').onclick = () => {
 /* ---------- Notikumi: apmaksa (vietturis) ---------- */
 el('pogaApmaksa').onclick = () => {
   const berns = berni[izveletaisBernsIdx];
-  tosts(`Apmaksa "${berns?.berna_vards || 'audzēknim'}" (${izveletaisLaiks}) — drīzumā pieejama.`, 'labi');
+  tosts(`Apmaksa "${berns?.berna_vards || 'audzēknim'}" (${berns?.nodarbibas_laiks || ''}) — drīzumā pieejama.`, 'labi');
 };
 
 /* ---------- Notikumi: profils ---------- */
@@ -937,11 +985,10 @@ prasitPieteiksanos(async (user) => {
     velamie_laiki: p.velamie_laiki || '',
   }] : []);
 
-  // Atjaunojam pagaidu (localStorage) pieteikšanās stāvokli.
+  // Atjaunojam pēdējo atvērto audzēkni 2. solī (nodarbības laiks katram savs — Firestore).
   const pagaidu = pagaiduIelasit();
   izveletaisBernsIdx = (pagaidu.izveletaisBernsIdx != null && berni[pagaidu.izveletaisBernsIdx])
     ? pagaidu.izveletaisBernsIdx : null;
-  izveletaisLaiks = pagaidu.izveletaisLaiks || '';
 
   zimetLaikaSlotus();
   zimetBernuKartes();
