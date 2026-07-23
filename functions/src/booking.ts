@@ -102,6 +102,7 @@ export const getAvailableSlots = onCall({ region: REGION }, async (request) => {
     blocked,
     busy: busyFromSnap(busySnap),
     teacherIds,
+    annotate: true, // aizņemtos laikus UI rāda pelēkus, tāpēc atgriežam arī tos
   });
 
   return {
@@ -111,6 +112,7 @@ export const getAvailableSlots = onCall({ region: REGION }, async (request) => {
         startMillis: s.startMillis,
         endMillis: s.endMillis,
         teacherId: s.teacherId,
+        available: s.available,
       })),
     })),
     cancellationHours: settings.cancellationHours,

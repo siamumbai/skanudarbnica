@@ -47,6 +47,9 @@ export interface Slot {
   blockStartMillis: number;
   blockEndMillis: number;
   teacherId: string;
+  // false = laiks eksistē režģī, bet ir aizņemts/bloķēts/par tuvu —
+  // UI to rāda pelēku un nespiežamu (tikai annotate režīmā).
+  available: boolean;
 }
 
 export interface DaySlots {
@@ -75,8 +78,12 @@ export function generateSlots(opts: {
   blocked: BlockedSpec[];
   busy: BusySpec[];
   teacherIds: string[];
+  // true = atgriezt arī nepieejamos laikus ar available:false (UI režģim);
+  // false (noklusēti) = tikai brīvie laiki (rezervācijas validācijai).
+  annotate?: boolean;
 }): DaySlots[] {
   const { lessonType, settings, rules, blocked, busy, teacherIds, nowMillis } = opts;
+  const annotate = opts.annotate === true;
 
   const zone = settings.timezone || "Europe/Riga";
   const today = DateTime.fromMillis(nowMillis, { zone }).startOf("day");
@@ -129,30 +136,33 @@ export function generateSlots(opts: {
           const endMillis = blockStart.plus({ minutes: buffB + dur }).toMillis();
           const blockEndMillis = blockStart.plus({ minutes: blockMin }).toMillis();
 
-          if (startMillis < earliestStartMillis) continue;
           if (startMillis > windowEndMillis) continue;
 
+          const parAgru = startMillis < earliestStartMillis;
           const aizniemts = busy.some(
             (b) =>
               b.teacherId === teacherId &&
               overlap(blockStartMillis, blockEndMillis, b.blockStartMillis, b.blockEndMillis)
           );
-          if (aizniemts) continue;
-
           const blokets = blocked.some(
             (b) =>
               (b.teacherId === null || b.teacherId === teacherId) &&
               overlap(blockStartMillis, blockEndMillis, b.startMillis, b.endMillis)
           );
-          if (blokets) continue;
+          const available = !parAgru && !aizniemts && !blokets;
+          if (!available && !annotate) continue;
 
-          if (!byStart.has(startMillis)) {
+          // Laiks ir pieejams, ja brīvs ir jebkurš skolotājs — pieejamais
+          // ieraksts vienmēr uzvar nepieejamo.
+          const esosais = byStart.get(startMillis);
+          if (!esosais || (!esosais.available && available)) {
             byStart.set(startMillis, {
               startMillis,
               endMillis,
               blockStartMillis,
               blockEndMillis,
               teacherId,
+              available,
             });
           }
         }

@@ -119,6 +119,29 @@ test("otrs skolotājs aizpilda aizņemto laiku", () => {
   assert.equal(s11.teacherId, "t2");
 });
 
+test("annotate: aizņemtais laiks paliek sarakstā kā nepieejams", () => {
+  const dienas = generateSlots({
+    ...NOKLUSEJUMI,
+    annotate: true,
+    busy: [
+      {
+        teacherId: "t1",
+        blockStartMillis: rigasMillis(`${PIRMDIENA}T11:00:00`),
+        blockEndMillis: rigasMillis(`${PIRMDIENA}T12:00:00`),
+      },
+    ],
+  });
+  assert.deepEqual(laiki(dienas), ["10:00", "11:00", "12:00"]); // visi režģī
+  const s11 = dienas[0].slots.find(
+    (s) => s.startMillis === rigasMillis(`${PIRMDIENA}T11:00:00`)
+  );
+  assert.equal(s11.available, false);
+  assert.deepEqual(
+    dienas[0].slots.filter((s) => s.available).map((s) => s.startMillis),
+    [rigasMillis(`${PIRMDIENA}T10:00:00`), rigasMillis(`${PIRMDIENA}T12:00:00`)]
+  );
+});
+
 test("ziemas laiks: pēc pulksteņa pārgriešanas laiki paliek 10:00 lokāli", () => {
   // 2026-10-26 ir pirmdiena pēc pārejas uz ziemas laiku (25. okt.), UTC+2.
   const dienas = generateSlots({

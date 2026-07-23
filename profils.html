@@ -192,19 +192,19 @@
   .dzest-teksta-poga:hover{opacity:.8}
   .dzest-anketu-rinda span{font-size:13px;font-weight:600;color:var(--sarkana)}
 
-  /* --- Rezervācijas: bilance, veidi, laiki, saraksti, paketes --- */
-  .bilance{
-    display:flex;align-items:center;justify-content:space-between;gap:18px;
-    background:var(--accent-dark);color:var(--bg);
-    border-radius:16px;padding:20px 24px;margin-bottom:24px;flex-wrap:wrap;
+  /* --- Rezervācijas: bilances cips hederī, veidi, laiki, saraksti, paketes --- */
+  .bilances-cips{
+    display:flex;align-items:center;gap:12px;
+    background:var(--bg2);border:0.5px solid var(--border);border-radius:100px;
+    padding:6px 6px 6px 16px;font-size:13px;font-weight:600;color:var(--text);
   }
-  .bilance-teksts{font-size:12.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;opacity:.85}
-  .bilance-skaitlis{font-family:Georgia,serif;font-size:42px;line-height:1}
-  .bilance-poga{
-    background:var(--bg);color:var(--accent-dark);border:none;border-radius:100px;
-    padding:12px 20px;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;
+  .bilances-cips b{font-family:Georgia,serif;font-size:17px;color:var(--accent-dark)}
+  .cips-poga{
+    background:var(--accent-dark);color:var(--bg);border:none;border-radius:100px;
+    padding:8px 16px;font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer;
+    transition:background .15s;
   }
-  .bilance-poga:hover{background:var(--bg2)}
+  .cips-poga:hover{background:var(--accent)}
 
   .veidi{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:6px}
   .veids{
@@ -216,16 +216,35 @@
   .veids-nosaukums{font-size:14.5px;font-weight:700;margin-bottom:4px}
   .veids-info{font-size:12.5px;color:var(--muted)}
 
-  .diena{margin-bottom:18px}
-  .diena-virsraksts{font-size:14px;font-weight:800;margin-bottom:9px;text-transform:capitalize}
-  .laiki{display:flex;flex-wrap:wrap;gap:8px}
+  /* Dienu kolonnas: diena augšā, laiki no augšas uz leju, nākamā diena pa labi */
+  .dienu-ritjosla{display:flex;align-items:stretch;gap:8px}
+  .riti-poga{
+    flex-shrink:0;align-self:flex-start;margin-top:34px;
+    width:34px;height:34px;border-radius:50%;
+    background:var(--bg);border:0.5px solid var(--border);
+    font-size:17px;line-height:1;color:var(--muted);cursor:pointer;
+  }
+  .riti-poga:hover{border-color:var(--accent-dark);color:var(--accent-dark)}
+  .dienu-riti{
+    display:flex;gap:10px;overflow-x:auto;flex:1;
+    padding-bottom:6px;-webkit-overflow-scrolling:touch;scroll-behavior:smooth;
+  }
+  .diena-kolonna{flex:0 0 116px;display:flex;flex-direction:column;gap:8px}
+  .kolonna-virsraksts{text-align:center;margin-bottom:2px;min-height:34px}
+  .kolonna-diena{font-size:13px;font-weight:800;text-transform:capitalize}
+  .kolonna-datums{font-size:11.5px;color:var(--muted)}
   .laiks{
+    display:block;width:100%;text-align:center;
     background:var(--bg);border:1.5px solid var(--border);border-radius:100px;
-    padding:9px 17px;font-family:inherit;font-size:13.5px;font-weight:700;
+    padding:9px 0;font-family:inherit;font-size:13.5px;font-weight:700;
     color:var(--text);cursor:pointer;transition:border-color .15s,background .15s;
   }
-  .laiks:hover{border-color:var(--accent-light)}
+  .laiks:hover:not(:disabled){border-color:var(--accent-light)}
   .laiks.aktivs{background:var(--accent-dark);border-color:var(--accent-dark);color:var(--bg)}
+  .laiks.aiznemts{
+    background:var(--bg2);border-color:var(--border);color:#B3A57F;
+    cursor:not-allowed;text-decoration:line-through;font-weight:600;
+  }
   .tukss{font-size:13.5px;color:var(--muted);line-height:1.6}
 
   .vairak{
@@ -250,6 +269,7 @@
   }
   .saraksta-rinda:last-child{border-bottom:none}
   .saraksta-galvena{font-size:14px;font-weight:700}
+  .saraksta-vidus{flex:1;text-align:center;font-size:13px;color:var(--muted);min-width:200px}
   .saraksta-apaksa{font-size:12.5px;color:var(--muted);margin-top:3px}
   .atzime{
     display:inline-block;font-size:11px;font-weight:800;letter-spacing:.06em;
@@ -308,7 +328,9 @@
     .josla{padding:16px 18px}
     .josla-epasts{display:none}
     .rinda{grid-template-columns:1fr}
-    .bilance-skaitlis{font-size:34px}
+    .bilances-cips{padding:5px 5px 5px 12px;font-size:12px;gap:8px}
+    .bilances-cips b{font-size:15px}
+    .cips-poga{padding:7px 12px;font-size:11.5px}
   }
 </style>
 </head>
@@ -317,6 +339,10 @@
 <header class="josla">
   <a class="logo" href="index.html">skanudarbnica.lv</a>
   <div class="josla-labi">
+    <div class="bilances-cips paslepts" id="bilanceKarte">
+      <span>Atlikušās nodarbības: <b id="bilanceSkaitlis">–</b></span>
+      <button class="cips-poga" id="bilancePoga">Papildināt</button>
+    </div>
     <span class="josla-epasts" id="joslaEpasts"></span>
     <button class="izeja" id="pogaIzrakstities">Izrakstīties</button>
   </div>
@@ -349,15 +375,6 @@
 
   <!-- ======== SATURS ======== -->
   <main>
-
-    <!-- Bilances kartīte (redzama rezervāciju sadaļās) -->
-    <div class="bilance paslepts" id="bilanceKarte">
-      <div>
-        <div class="bilance-teksts">Atlikušās nodarbības</div>
-        <div class="bilance-skaitlis" id="bilanceSkaitlis">–</div>
-      </div>
-      <button class="bilance-poga" id="bilancePoga">Pirkt nodarbību paketi</button>
-    </div>
 
     <!-- ---------- SADAĻA: MANS PROFILS ---------- -->
     <section class="sadala aktiva" id="sadalaProfils" role="tabpanel" aria-labelledby="navProfils">
@@ -467,7 +484,7 @@
 
       <section class="karte" id="slotuKarte">
         <h2>2 · Diena un laiks</h2>
-        <p class="h2-piezime" id="slotuPiezime">Rādīti tuvākie pieejamie laiki.</p>
+        <p class="h2-piezime" id="slotuPiezime">Rādīti tuvākie laiki. Pelēkie jau ir aizņemti.</p>
         <div id="slotuSaraksts"><p class="tukss">Vispirms izvēlies nodarbības veidu.</p></div>
         <button class="vairak" id="pogaVairakDienu" hidden>Rādīt vairāk dienu</button>
       </section>
@@ -495,7 +512,7 @@
       </section>
 
       <section class="karte">
-        <h2>Notikušās un atceltās</h2>
+        <h2>Notikušās nodarbības</h2>
         <div id="pagatnesSaraksts"><p class="tukss">Ielādē…</p></div>
         <button class="vairak" id="pogaVairakPagatnes" hidden>Ielādēt vairāk</button>
       </section>
@@ -560,6 +577,8 @@ let kreditusKursors = null;
 
 /* ---------- Formatēšanas palīgi ---------- */
 const fmtDiena = new Intl.DateTimeFormat('lv-LV', { timeZone: LAIKA_ZONA, weekday: 'long', day: 'numeric', month: 'long' });
+const fmtNedelasDiena = new Intl.DateTimeFormat('lv-LV', { timeZone: LAIKA_ZONA, weekday: 'long' });
+const fmtDatumsIss = new Intl.DateTimeFormat('lv-LV', { timeZone: LAIKA_ZONA, day: '2-digit', month: '2-digit' });
 const fmtDatums = new Intl.DateTimeFormat('lv-LV', { timeZone: LAIKA_ZONA, day: 'numeric', month: 'long', year: 'numeric' });
 const fmtLaiks = new Intl.DateTimeFormat('lv-LV', { timeZone: LAIKA_ZONA, hour: '2-digit', minute: '2-digit' });
 const eiro = (centi) => (centi / 100).toLocaleString('lv-LV', { maximumFractionDigits: 2 }) + ' €';
@@ -818,19 +837,34 @@ async function ieladetSlotus() {
     if (!atbilde.days.length) {
       k.innerHTML = '<p class="tukss">Tuvākajās dienās brīvu laiku nav. Pamēģini paskatīties tālāk uz priekšu.</p>';
     } else {
-      k.innerHTML = atbilde.days.map((diena) => `
-        <div class="diena">
-          <div class="diena-virsraksts">${fmtDiena.format(new Date(diena.slots[0].startMillis))}</div>
-          <div class="laiki">
-            ${diena.slots.map((s) => `
-              <button class="laiks${izveletaisSlots?.startMillis === s.startMillis ? ' aktivs' : ''}"
-                      data-start="${s.startMillis}" data-teacher="${s.teacherId}" type="button">
-                ${fmtLaiks.format(new Date(s.startMillis))}
-              </button>`).join('')}
+      // Vertikālas dienu kolonnas: diena augšā, laiki uz leju, nākamā diena
+      // pa labi; aizņemtie laiki paliek redzami pelēki un nespiežami.
+      k.innerHTML = `
+        <div class="dienu-ritjosla">
+          <button class="riti-poga" id="ritiPaKreisi" type="button" aria-label="Ritināt pa kreisi">‹</button>
+          <div class="dienu-riti" id="dienuRiti">
+            ${atbilde.days.map((diena) => `
+              <div class="diena-kolonna">
+                <div class="kolonna-virsraksts">
+                  <div class="kolonna-diena">${fmtNedelasDiena.format(new Date(diena.slots[0].startMillis))}</div>
+                  <div class="kolonna-datums">${fmtDatumsIss.format(new Date(diena.slots[0].startMillis))}</div>
+                </div>
+                ${diena.slots.map((s) => s.available ? `
+                  <button class="laiks${izveletaisSlots?.startMillis === s.startMillis ? ' aktivs' : ''}"
+                          data-start="${s.startMillis}" data-teacher="${s.teacherId}" type="button">
+                    ${fmtLaiks.format(new Date(s.startMillis))}
+                  </button>` : `
+                  <button class="laiks aiznemts" type="button" disabled title="Aizņemts">
+                    ${fmtLaiks.format(new Date(s.startMillis))}
+                  </button>`).join('')}
+              </div>`).join('')}
           </div>
-        </div>
-      `).join('');
-      k.querySelectorAll('.laiks').forEach((poga) => {
+          <button class="riti-poga" id="ritiPaLabi" type="button" aria-label="Ritināt pa labi">›</button>
+        </div>`;
+      const riti = el('dienuRiti');
+      el('ritiPaKreisi').onclick = () => riti.scrollBy({ left: -378, behavior: 'smooth' });
+      el('ritiPaLabi').onclick = () => riti.scrollBy({ left: 378, behavior: 'smooth' });
+      k.querySelectorAll('.laiks:not(.aiznemts)').forEach((poga) => {
         poga.addEventListener('click', () => {
           izveletaisSlots = {
             startMillis: Number(poga.dataset.start),
@@ -895,21 +929,20 @@ el('pogaApstiprinat').onclick = async () => {
 };
 
 /* ---------- Manas nodarbības ---------- */
+// Rinda sākas ar audzēkņa vārdu; vidū — diena, datums un laiks "no–līdz".
 function nodarbibasRinda(b, id, { arAtceltPogu = false } = {}) {
   const sakums = b.startAt.toMillis();
+  const beigas = b.endAt?.toMillis?.() ?? null;
   const varAtcelt = arAtceltPogu && Date.now() < sakums - atcelsanasStundas * 3_600_000;
-  const statuss =
-    b.status === 'cancelled'
-      ? '<span class="atzime sarkana">Atcelta</span>'
-      : sakums < Date.now()
-        ? '<span class="atzime zala">Notikusi</span>'
-        : '<span class="atzime zala">Apstiprināta</span>';
+  const statuss = sakums < Date.now()
+    ? '<span class="atzime zala">Notikusi</span>'
+    : '<span class="atzime zala">Apstiprināta</span>';
+  const laiks = fmtLaiks.format(new Date(sakums))
+    + (beigas ? `–${fmtLaiks.format(new Date(beigas))}` : '');
   return `
     <div class="saraksta-rinda">
-      <div>
-        <div class="saraksta-galvena">${fmtDiena.format(new Date(sakums))} · ${fmtLaiks.format(new Date(sakums))}</div>
-        <div class="saraksta-apaksa">${escapeHTML(b.lessonTypeName || 'Nodarbība')}${b.childName ? ' · ' + escapeHTML(b.childName) : ''}</div>
-      </div>
+      <div class="saraksta-galvena">${escapeHTML(b.childName || b.studentName || 'Audzēknis')}</div>
+      <div class="saraksta-vidus">${fmtDiena.format(new Date(sakums))} · ${laiks}</div>
       <div style="display:flex;align-items:center;gap:10px">
         ${statuss}
         ${arAtceltPogu ? `<button class="maza-poga" data-atcelt="${id}" ${varAtcelt ? '' : `disabled title="Atcelt var ne vēlāk kā ${atcelsanasStundas}h pirms nodarbības"`}>Atcelt</button>` : ''}
@@ -979,9 +1012,9 @@ async function ieladetPagatni(nosakuma = false) {
     if (pagatnesKursors) dalas.push(startAfter(pagatnesKursors));
     const snap = await getDocs(query(...dalas));
 
-    // Rādām tikai pagātnes vai atceltās (gaidāmās ir savā sarakstā).
+    // Rādām tikai notikušās; atceltās nerādām vispār.
     const rindas = snap.docs
-      .filter((d) => d.data().status === 'cancelled' || d.data().startAt.toMillis() < Date.now())
+      .filter((d) => d.data().status !== 'cancelled' && d.data().startAt.toMillis() < Date.now())
       .map((d) => nodarbibasRinda(d.data(), d.id));
 
     if (nosakuma) k.innerHTML = '';
