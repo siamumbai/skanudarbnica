@@ -7,6 +7,7 @@ import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { DateTime } from "luxon";
 import {
   db,
+  adminAuth,
   REGION,
   assertAppCheck,
   assertAdmin,
@@ -284,6 +285,52 @@ export const adminAdjustCredits = onCall({ region: REGION }, async (request) => 
   });
 
   return rezultats;
+});
+
+/* ================= adminSyncUserProfiles ================= */
+
+// Papildina users/{uid} dokumentus ar e-pastu un vārdu no Firebase Auth
+// kontiem — noder vecajiem kontiem, kuru dokumentos šo lauku nav (vai kam
+// dokumenta vispār nav). Nekad nepārraksta jau aizpildītas vērtības.
+export const adminSyncUserProfiles = onCall({ region: REGION }, async (request) => {
+  assertAppCheck(request);
+  assertAdmin(request);
+
+  let kopa = 0;
+  let atjaunoti = 0;
+  let pageToken: string | undefined;
+
+  do {
+    const lapa = await adminAuth.listUsers(1000, pageToken);
+    pageToken = lapa.pageToken;
+    kopa += lapa.users.length;
+    if (lapa.users.length === 0) break;
+
+    const refs = lapa.users.map((u) => db.collection(COL.users).doc(u.uid));
+    const snaps = await db.getAll(...refs);
+    const batch = db.batch();
+    let batchIr = false;
+
+    lapa.users.forEach((konts, i) => {
+      const dati = snaps[i].data() ?? {};
+      const papildinajums: Record<string, unknown> = {};
+      if (!dati.epasts && konts.email) papildinajums.epasts = konts.email;
+      if (!dati.vards && konts.displayName) papildinajums.vards = konts.displayName;
+      if (!snaps[i].exists) {
+        papildinajums.loma = "vecaks";
+        papildinajums.izveidots = FieldValue.serverTimestamp();
+      }
+      if (Object.keys(papildinajums).length > 0) {
+        batch.set(refs[i], papildinajums, { merge: true });
+        atjaunoti++;
+        batchIr = true;
+      }
+    });
+
+    if (batchIr) await batch.commit();
+  } while (pageToken);
+
+  return { kopa, atjaunoti };
 });
 
 /* ================= seedDefaults ================= */

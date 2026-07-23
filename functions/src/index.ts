@@ -6,6 +6,7 @@ export {
   adminMoveBooking,
   adminCancelBooking,
   adminAdjustCredits,
+  adminSyncUserProfiles,
   seedDefaults,
 } from "./adminApi";
 export { createCheckoutSession, stripeWebhook } from "./payments";

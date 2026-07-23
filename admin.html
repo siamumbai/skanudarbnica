@@ -102,7 +102,13 @@
   .filtri > div{min-width:170px}
   .filtri .atzimes-lauks{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);padding-bottom:10px}
 
-  #kalendars{background:var(--bg);border:0.5px solid var(--border);border-radius:14px;padding:14px}
+  #kalendars{
+    background:var(--bg);border:0.5px solid var(--border);border-radius:14px;padding:14px;
+    /* Bloķētie periodi pilnā krāsā (noklusēti FullCalendar tos rāda 30% caurspīdīgus)
+       un pelēkāks fons laikam ārpus darba stundām */
+    --fc-bg-event-opacity:1;
+    --fc-non-business-color:rgba(58,50,34,.12);
+  }
   .fc .fc-toolbar-title{font-family:Georgia,serif;font-weight:400;font-size:20px}
   .fc .fc-button{
     background:var(--bg2);border:0.5px solid var(--border);color:var(--muted);
@@ -237,11 +243,12 @@
       </div>
       <div class="tabula-riti" style="margin-top:14px">
         <table>
-          <thead><tr><th>Vārds</th><th>E-pasts</th><th>Bilance</th><th></th></tr></thead>
+          <thead><tr><th>Vārds</th><th>E-pasts</th><th>Telefons</th><th>Bilance</th><th></th></tr></thead>
           <tbody id="audzeknuTabula"></tbody>
         </table>
       </div>
       <button class="maza-poga" id="pogaVairakAudzeknu" style="margin-top:10px" hidden>Ielādēt vairāk</button>
+      <button class="maza-poga" id="pogaSinhronizet" style="margin-top:10px" title="Papildina sarakstu ar vārdiem un e-pastiem no reģistrētajiem kontiem">Sinhronizēt kontus</button>
     </div>
 
     <div class="karte" id="audzeknaKarte" hidden>
@@ -809,11 +816,12 @@ async function ieladetAudzeknus(nosakuma = true) {
         <tr>
           <td>${escapeHTML(u.vards || "—")}</td>
           <td>${escapeHTML(u.epasts ?? "")}</td>
+          <td>${escapeHTML(u.telefons || "—")}</td>
           <td><strong>${typeof u.creditBalance === "number" ? u.creditBalance : 0}</strong></td>
           <td><button class="maza-poga" data-atvert="${d.id}">Atvērt</button></td>
         </tr>`;
     }).join("");
-    el("audzeknuTabula").insertAdjacentHTML("beforeend", rindas || (nosakuma ? '<tr><td colspan="4" class="tukss">Nekas nav atrasts.</td></tr>' : ""));
+    el("audzeknuTabula").insertAdjacentHTML("beforeend", rindas || (nosakuma ? '<tr><td colspan="5" class="tukss">Nekas nav atrasts.</td></tr>' : ""));
     el("audzeknuTabula").querySelectorAll("[data-atvert]").forEach((poga) => {
       if (poga._klausas) return;
       poga._klausas = true;
@@ -829,6 +837,25 @@ async function ieladetAudzeknus(nosakuma = true) {
 el("pogaAudzeknuMeklet").addEventListener("click", () => ieladetAudzeknus(true));
 el("audzeknuMeklet").addEventListener("keydown", (e) => { if (e.key === "Enter") ieladetAudzeknus(true); });
 el("pogaVairakAudzeknu").addEventListener("click", () => ieladetAudzeknus(false));
+
+// Aizpilda sarakstu ar vārdiem/e-pastiem no visiem reģistrētajiem kontiem —
+// arī tiem, kas savu profila lapu vēl nav atvēruši.
+el("pogaSinhronizet").addEventListener("click", async () => {
+  const poga = el("pogaSinhronizet");
+  poga.disabled = true;
+  poga.textContent = "Sinhronizē…";
+  try {
+    const r = await izsauktFunkciju("adminSyncUserProfiles");
+    tosts(`Konti: ${r.kopa}; papildināti: ${r.atjaunoti}.`);
+    ieladetAudzeknus(true);
+  } catch (e) {
+    console.error("adminSyncUserProfiles kļūda:", e);
+    tosts(funkcijasKluda(e));
+  } finally {
+    poga.disabled = false;
+    poga.textContent = "Sinhronizēt kontus";
+  }
+});
 
 async function atvertAudzekni(uid) {
   const snap = await getDoc(doc(db, "users", uid));
