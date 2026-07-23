@@ -1185,6 +1185,13 @@ prasitPieteiksanos(async (user) => {
     tosts(kludasTeksts(err), 'kluda');
   }
 
+  // Vecajiem profiliem (izveidoti pirms rezervāciju sistēmas) dokumentā var
+  // trūkt e-pasta lauka — bez tā admin panelis lietotāju neatrod meklēšanā.
+  // Aizpildām to klusām vienreiz.
+  if (!p?.epasts && user.email) {
+    try { await saglabatProfilu(uid, { epasts: user.email }); } catch { /* nav kritiski */ }
+  }
+
   el('sveiciensVards').textContent = p?.vards || user.displayName || 'draugs';
   el('joslaEpasts').textContent = user.email;
 
