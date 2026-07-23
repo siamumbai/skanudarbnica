@@ -191,29 +191,42 @@
     background:var(--bg2);border:0.5px solid var(--border);
     border-radius:14px;padding:16px 20px;margin-bottom:12px;
   }
-  .bernu-rinda{display:flex;align-items:center;justify-content:space-between;gap:14px}
-  .bernu-kreisa{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-  .bernu-vards-poga{
-    background:none;border:none;padding:0;cursor:pointer;text-align:left;
-    font-family:inherit;font-size:16px;font-weight:800;color:var(--text);line-height:1.2;
+  /* Visa kartīte klikšķināma = rediģēt. Aiz vārda — veida atzīme (oranža = neapmaksāts). */
+  .bernu-karte{
+    display:flex;align-items:center;gap:12px;width:100%;text-align:left;
+    background:var(--bg2);border:0.5px solid var(--border);border-radius:14px;
+    padding:18px 20px;margin-bottom:12px;font-family:inherit;cursor:pointer;
+    transition:background .15s,border-color .15s;
   }
-  .bernu-vards-poga:hover{color:var(--accent-dark)}
-  .bernu-rediget{
-    background:none;border:none;padding:0;cursor:pointer;flex-shrink:0;
-    font-family:inherit;font-size:13px;font-weight:600;color:var(--muted);text-decoration:underline;
+  .bernu-karte:hover{border-color:var(--accent-dark);background:var(--bg3)}
+  .bernu-vards{font-size:16px;font-weight:800;color:var(--text);line-height:1.2}
+  .bernu-badge{
+    font-size:12px;font-weight:700;padding:4px 12px;border-radius:100px;white-space:nowrap;
+    background:#F5E0C2;color:#B5651D;border:0.5px solid rgba(181,101,29,.4);
   }
-  .bernu-rediget:hover{color:var(--accent-dark)}
-  .bernu-laiks-poga{
-    background:var(--bg);border:0.5px solid var(--accent-dark);border-radius:100px;
-    padding:8px 16px;font-family:inherit;font-size:12.5px;font-weight:600;
-    color:var(--accent-dark);cursor:pointer;white-space:nowrap;transition:background .15s,color .15s;
-  }
-  .bernu-laiks-poga:hover{background:var(--accent-dark);color:var(--bg)}
+  .bernu-badge.apmaksats{background:#E4EDD8;color:var(--zala);border-color:rgba(59,109,17,.3)}
 
-  /* --- Kopsavilkums (2 kolonnas) --- */
-  .kops-rezgis{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
+  /* --- Nodarbības veida izvēle --- */
+  .veidu-izvele{display:flex;flex-direction:column;gap:10px;margin-bottom:22px}
+  .veids-poga{
+    display:flex;flex-direction:column;gap:3px;text-align:left;width:100%;
+    background:var(--bg);border:0.5px solid var(--border);border-radius:12px;
+    padding:14px 18px;font-family:inherit;cursor:pointer;transition:border-color .15s,background .15s;
+  }
+  .veids-poga:hover{border-color:var(--accent-dark)}
+  .veids-poga.aktiva{border-color:var(--accent-dark);background:var(--bg3)}
+  .veids-nos{font-size:14.5px;font-weight:700;color:var(--text)}
+  .veids-det{font-size:12.5px;color:var(--muted)}
+
+  /* Izvēlētais laika slots (vairākizvēle) */
+  .cal-slots.aktiva{background:var(--accent-dark);color:var(--bg)}
+
+  /* --- Kopsavilkums (3 kolonnas) --- */
+  .kops-rezgis{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap}
+  .kops-kol{min-width:80px}
   .kops-label{font-size:11.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
-  .kops-vertiba{font-size:16px;font-weight:700;color:var(--text);line-height:1.3}
+  .kops-vertiba{font-size:15px;font-weight:700;color:var(--text);line-height:1.3}
+  .kops-vidus{text-align:center}
   .kops-labais{text-align:right}
 
   /* --- "Dzēst anketu" rediģēšanas apakšā --- */
@@ -345,7 +358,7 @@
       <span class="apaks-nr">1</span> Pievienot audzēkni
     </button>
     <button class="apaks-nav-poga" data-panelis="panelisLaiks" role="tab" aria-selected="false">
-      <span class="apaks-nr">2</span> Nodarbības laiks
+      <span class="apaks-nr">2</span> Rezervēt nodarbību
     </button>
     <button class="apaks-nav-poga" data-panelis="panelisApmaksa" role="tab" aria-selected="false">
       <span class="apaks-nr">3</span> Veikt apmaksu
@@ -448,14 +461,14 @@
         <div class="bernu-kartes" id="bernuKartes"></div>
       </div>
 
-      <!-- ===== 2. PANELIS: IZVĒLĒTIES NODARBĪBAS LAIKU ===== -->
+      <!-- ===== 2. PANELIS: REZERVĒT NODARBĪBU ===== -->
       <div class="apaks-panelis" id="panelisLaiks" role="tabpanel">
-        <h1 class="virsraksts">Izvēlēties nodarbības laiku</h1>
-        <p class="ievads">Izvēlies, kuram audzēknim un kad notiks nodarbība.</p>
+        <h1 class="virsraksts">Rezervēt nodarbību</h1>
+        <p class="ievads">Izvēlies audzēkni, nodarbības veidu un laikus.</p>
 
         <!-- Slēgts (nav neviena audzēkņa) -->
         <div id="laiksSlegts">
-          <div class="slegts-note" style="margin-bottom:12px">Vispirms pievieno vismaz vienu audzēkni, tad varēsi izvēlēties nodarbības laiku.</div>
+          <div class="slegts-note" style="margin-bottom:12px">Vispirms pievieno vismaz vienu audzēkni, tad varēsi rezervēt nodarbību.</div>
           <button class="poga2" id="pogaUzAudzekni">+ Pievienot audzēkni</button>
         </div>
 
@@ -464,25 +477,23 @@
           <label id="bernsIzveleLabel">Kuram audzēknim?</label>
           <div class="berns-izvele" id="bernsIzvele" role="radiogroup" aria-labelledby="bernsIzveleLabel"></div>
 
-          <section class="karte">
-            <h2>Nodarbības laiks</h2>
-            <p class="h2-piezime">Izvēlies sev ērtu nodarbības laiku.</p>
+          <label>Nodarbības veids</label>
+          <div class="veidu-izvele" id="veiduIzvele"></div>
+
+          <section class="karte paslepts" id="laikuKarte">
+            <h2>Nodarbības laiki</h2>
+            <p class="h2-piezime" id="laikuPiezime">Izvēlies laikus.</p>
 
             <!-- Konteiners Calendly iegulšanai (pagaidām vietturis) -->
             <div class="calendly-viet" id="calendlyKonteiners">
               <div class="cal-ik" aria-hidden="true">📅</div>
               <p class="cal-teksts">Calendly kalendārs</p>
-              <p class="cal-sub">Šeit tiks integrēts Calendly nodarbības laika rezervēšanai. Pagaidām izvēlies vienu no pieejamajiem laikiem.</p>
+              <p class="cal-sub">Šeit tiks integrēts Calendly. Pagaidām izvēlies laikus no pieejamajiem.</p>
               <div class="cal-sloti" id="calSloti"></div>
-            </div>
-
-            <div class="izveletais-laiks paslepts" id="izveletaisLaiksBloks">
-              <span>✓ Izvēlētais laiks: <strong id="izveletaisLaiksTeksts"></strong></span>
-              <button class="mini-poga" id="pogaMainitLaiku">Mainīt</button>
             </div>
           </section>
 
-          <button class="cta" id="pogaTurpinatApmaksa" disabled>Veikt apmaksu</button>
+          <button class="cta" id="pogaSaglabatRezervaciju" disabled>Saglabāt</button>
         </div>
       </div>
 
@@ -498,9 +509,13 @@
               <div class="kops-label">Audzēknis</div>
               <div class="kops-vertiba" id="kopsAudzeknis">—</div>
             </div>
+            <div class="kops-kol kops-vidus">
+              <div class="kops-label">Nodarbības veids</div>
+              <div class="kops-vertiba" id="kopsVeids">—</div>
+            </div>
             <div class="kops-kol kops-labais">
-              <div class="kops-label">Nodarbības laiks</div>
-              <div class="kops-vertiba" id="kopsLaiks">—</div>
+              <div class="kops-label">Cena</div>
+              <div class="kops-vertiba" id="kopsCena">—</div>
             </div>
           </div>
         </section>
@@ -575,21 +590,33 @@ const el = (id) => document.getElementById(id);
 
 /* ---------- Stāvoklis ---------- */
 let uid = null;
-let berni = [];                 // Firestore users/{uid}.berni; katram bērnam ir savs nodarbibas_laiks
+let berni = [];                 // Firestore users/{uid}.berni; katram audzēknim sava rezervācija
 let rediggamaisIndekss = null;  // kuru audzēkni šobrīd rediģē anketā (null = jauns)
 let izveletaisBernsIdx = null;  // 2. solī izvēlētais audzēknis
 
-// Pagaidu mock laiki, kamēr nav Calendly integrācijas.
+// 2. soļa darba stāvoklis (rezervācija izvēlētajam audzēknim, pirms saglabāšanas)
+let izveletaisVeids = null;     // 'privat' | 'abon4' | 'abon8'
+let izveletieLaiki = [];        // izvēlētie laika slotu virknes
+
+// Nodarbību veidi (cena un cik datumu jāizvēlas).
+const veidi = {
+  privat: { isais: 'Nodarbība',  nosaukums: 'Privātnodarbība',        apraksts: '1 nodarbība · 50 min',            skaits: 1, cena: 80 },
+  abon4:  { isais: 'Abonements', nosaukums: 'Abonements · 4 nodarbības', apraksts: '1 nodarbība nedēļā · 4 nedēļas', skaits: 4, cena: 280 },
+  abon8:  { isais: 'Abonements', nosaukums: 'Abonements · 8 nodarbības', apraksts: '2 nodarbības nedēļā · 4 nedēļas', skaits: 8, cena: 560 },
+};
+
+// Pagaidu mock laiki, kamēr nav Calendly integrācijas (pietiek arī 8 nodarbībām).
 const pieejamieLaiki = [
-  'Pirmdiena 16:00', 'Otrdiena 17:00', 'Trešdiena 15:30',
-  'Ceturtdiena 17:30', 'Sestdiena 10:00',
+  'Pirmdiena 16:00', 'Pirmdiena 17:00', 'Otrdiena 16:00', 'Otrdiena 17:00',
+  'Trešdiena 15:30', 'Trešdiena 16:30', 'Ceturtdiena 17:00', 'Ceturtdiena 17:30',
+  'Piektdiena 16:00', 'Sestdiena 10:00', 'Sestdiena 11:00', 'Svētdiena 12:00',
 ];
 
 /* ---------- PAGAIDU localStorage glabātuve ----------
    Šeit glabājam tikai to, kurš audzēknis 2. solī pēdējais bija atvērts (UI
-   ērtībai). Nodarbības laiks tagad glabājas pie katra audzēkņa (berni[i].
-   nodarbibas_laiks) Firestore. Kad būs Calendly/maksājumu backend, šo laika
-   lauku aizpildīs īstā rezervācija. */
+   ērtībai). Rezervācija (veids + laiki + apmaksats) glabājas pie katra
+   audzēkņa Firestore. Kad būs Calendly/maksājumu backend, šos laukus
+   aizpildīs īstā rezervācija un apmaksa. */
 const pagaiduAtslega = () => `sd_pieteikums_${uid}`;
 function pagaiduIelasit() {
   try { return JSON.parse(localStorage.getItem(pagaiduAtslega())) || {}; }
@@ -638,9 +665,10 @@ navPogas.forEach(({ poga, sadala }) => { el(poga).onclick = () => paradietSadalu
 /* ---------- Apakšnavigācija (soļi) ---------- */
 const paneli = ['panelisAudzeknis', 'panelisLaiks', 'panelisApmaksa'];
 function paradietPaneli(panelisId) {
-  // Ienākot laika solī bez izvēlēta audzēkņa — izvēlamies pirmo.
-  if (panelisId === 'panelisLaiks' && izveletaisBernsIdx === null && berni.length) {
-    izveletaisBernsIdx = 0;
+  // Ienākot rezervācijas solī bez izvēlēta audzēkņa — izvēlamies pirmo un ielādējam viņa rezervāciju.
+  if (panelisId === 'panelisLaiks') {
+    if (izveletaisBernsIdx === null && berni.length) izveletaisBernsIdx = 0;
+    if (izveletaisBernsIdx !== null) ieladetRezervaciju(izveletaisBernsIdx);
     pagaiduSaglabat();
   }
   paneli.forEach((id) => el(id).classList.toggle('aktiva', id === panelisId));
@@ -742,62 +770,42 @@ function paradietDzestAnketuApstiprinajumu(indekss) {
 }
 
 /* ---------- Audzēkņu kartītes ----------
-   Klikšķis uz vārda parāda kartītē pogu "Nodarbības laiks", kas aizved uz
-   2. soli. Labajā pusē "Rediģēt" atver anketas rediģēšanu. */
+   Visa kartīte ir klikšķināma un atver rediģēšanu (bez atsevišķas "Rediģēt"
+   pogas). Aiz vārda — rezervētā veida atzīme oranžā krāsā (neapmaksāts). */
 function zimetBernuKartes() {
   const konteiners = el('bernuKartes');
   konteiners.innerHTML = '';
 
   berni.forEach((b, i) => {
-    const karte = document.createElement('div');
+    const karte = document.createElement('button');
+    karte.type = 'button';
     karte.className = 'bernu-karte';
+    karte.title = 'Rediģēt';
+    karte.setAttribute('aria-label', 'Rediģēt: ' + (b.berna_vards || 'Audzēknis'));
+    karte.onclick = () => atvertAnketu(i);
 
-    const rinda = document.createElement('div');
-    rinda.className = 'bernu-rinda';
-
-    // Kreisā puse: vārds + (pēc klikšķa) "Nodarbības laiks" poga blakus.
-    const kreisa = document.createElement('div');
-    kreisa.className = 'bernu-kreisa';
-
-    const vards = document.createElement('button');
-    vards.type = 'button';
-    vards.className = 'bernu-vards-poga';
+    const vards = document.createElement('span');
+    vards.className = 'bernu-vards';
     vards.textContent = b.berna_vards || 'Audzēknis';
+    karte.appendChild(vards);
 
-    const laiksPoga = document.createElement('button');
-    laiksPoga.type = 'button';
-    laiksPoga.className = 'bernu-laiks-poga paslepts';
-    laiksPoga.textContent = b.nodarbibas_laiks
-      ? ('Nodarbības laiks: ' + b.nodarbibas_laiks)
-      : 'Nodarbības laiks';
-    laiksPoga.onclick = () => {
-      izveletaisBernsIdx = i;
-      pagaiduSaglabat();
-      atjaunotStavokli();
-      paradietPaneli('panelisLaiks');
-    };
+    // Rezervētā veida atzīme (oranža, kamēr nav apmaksāts).
+    if (b.nodarbibas_veids && veidi[b.nodarbibas_veids]) {
+      const badge = document.createElement('span');
+      badge.className = 'bernu-badge' + (b.apmaksats ? ' apmaksats' : '');
+      badge.textContent = veidi[b.nodarbibas_veids].isais;
+      karte.appendChild(badge);
+    }
 
-    kreisa.appendChild(vards);
-    kreisa.appendChild(laiksPoga);
-
-    // Labā puse: "Rediģēt" — parādās tikai pēc klikšķa uz vārda.
-    const rediget = document.createElement('button');
-    rediget.type = 'button';
-    rediget.className = 'bernu-rediget paslepts';
-    rediget.textContent = 'Rediģēt';
-    rediget.onclick = () => atvertAnketu(i);
-
-    // Klikšķis uz vārda parāda/paslēpj abas pogas (vārda izmērs nemainās).
-    vards.onclick = () => {
-      laiksPoga.classList.toggle('paslepts');
-      rediget.classList.toggle('paslepts');
-    };
-
-    rinda.appendChild(kreisa);
-    rinda.appendChild(rediget);
-    karte.appendChild(rinda);
     konteiners.appendChild(karte);
   });
+}
+
+// Ielādē izvēlētā audzēkņa saglabāto rezervāciju darba stāvoklī.
+function ieladetRezervaciju(indekss) {
+  const b = berni[indekss];
+  izveletaisVeids = b?.nodarbibas_veids || null;
+  izveletieLaiki = Array.isArray(b?.nodarbibas_laiki) ? [...b.nodarbibas_laiki] : [];
 }
 
 async function dzestBernu(indekss) {
@@ -808,22 +816,12 @@ async function dzestBernu(indekss) {
   berni = jaunieBerni;
   if (izveletaisBernsIdx === indekss) izveletaisBernsIdx = null;
   else if (izveletaisBernsIdx > indekss) izveletaisBernsIdx--;
+  if (izveletaisBernsIdx !== null) ieladetRezervaciju(izveletaisBernsIdx);
   pagaiduSaglabat();
 
   zimetBernuKartes();
   atjaunotStavokli();
   return true;
-}
-
-// Saglabā konkrētā audzēkņa nodarbības laiku (tukšs = noņemts).
-async function iestatitLaiku(indekss, laiks) {
-  if (indekss == null || !berni[indekss]) return;
-  const jaunieBerni = berni.map((b, i) => (i === indekss ? { ...b, nodarbibas_laiks: laiks } : b));
-  const izdevas = await saglabatBernus(jaunieBerni, laiks ? ('Laiks saglabāts: ' + laiks) : 'Laiks noņemts.');
-  if (!izdevas) return;
-  berni = jaunieBerni;
-  zimetBernuKartes();
-  atjaunotStavokli();
 }
 
 /* ---------- Saglabāšana Firestore ---------- */
@@ -843,7 +841,7 @@ async function saglabatBernus(jaunieBerni, veiksmesTeksts, poga) {
   }
 }
 
-/* ---------- 2. panelis: audzēkņa izvēle + laiks ---------- */
+/* ---------- 2. panelis: audzēknis + veids + laiki ---------- */
 function zimetBernaIzveli() {
   const konteiners = el('bernsIzvele');
   konteiners.innerHTML = '';
@@ -855,7 +853,12 @@ function zimetBernaIzveli() {
     inp.id = id;
     inp.value = String(i);
     inp.checked = i === izveletaisBernsIdx;
-    inp.onchange = () => { izveletaisBernsIdx = i; pagaiduSaglabat(); atjaunotStavokli(); };
+    inp.onchange = () => {
+      izveletaisBernsIdx = i;
+      ieladetRezervaciju(i);   // katram audzēknim sava rezervācija
+      pagaiduSaglabat();
+      atjaunotStavokli();
+    };
     const lab = document.createElement('label');
     lab.setAttribute('for', id);
     lab.textContent = b.berna_vards || ('Audzēknis ' + (i + 1));
@@ -863,43 +866,74 @@ function zimetBernaIzveli() {
     konteiners.appendChild(lab);
   });
 }
-function zimetLaikaSlotus() {
-  const konteiners = el('calSloti');
+function zimetVeiduIzveli() {
+  const konteiners = el('veiduIzvele');
   konteiners.innerHTML = '';
-  pieejamieLaiki.forEach((laiks) => {
+  Object.entries(veidi).forEach(([atsl, v]) => {
     const poga = document.createElement('button');
     poga.type = 'button';
-    poga.className = 'cal-slots';
-    poga.textContent = laiks;
-    poga.onclick = () => iestatitLaiku(izveletaisBernsIdx, laiks);
+    poga.className = 'veids-poga' + (izveletaisVeids === atsl ? ' aktiva' : '');
+    poga.innerHTML = `<span class="veids-nos">${v.nosaukums}</span>`
+      + `<span class="veids-det">${v.apraksts} · ${v.cena}&thinsp;€</span>`;
+    poga.onclick = () => {
+      if (izveletaisVeids !== atsl) { izveletaisVeids = atsl; izveletieLaiki = []; }
+      atjaunotStavokli();
+    };
     konteiners.appendChild(poga);
   });
 }
-el('pogaMainitLaiku').onclick = () => iestatitLaiku(izveletaisBernsIdx, '');
+function zimetLaikaSlotus() {
+  const konteiners = el('calSloti');
+  konteiners.innerHTML = '';
+  const limits = izveletaisVeids ? veidi[izveletaisVeids].skaits : 0;
+  pieejamieLaiki.forEach((laiks) => {
+    const izv = izveletieLaiki.includes(laiks);
+    const poga = document.createElement('button');
+    poga.type = 'button';
+    poga.className = 'cal-slots' + (izv ? ' aktiva' : '');
+    poga.textContent = laiks;
+    poga.onclick = () => {
+      if (izv) izveletieLaiki = izveletieLaiki.filter((l) => l !== laiks);
+      else if (izveletieLaiki.length < limits) izveletieLaiki.push(laiks);
+      else { tosts(`Šim veidam jāizvēlas ${limits} laiki.`, 'kluda'); return; }
+      atjaunotStavokli();
+    };
+    konteiners.appendChild(poga);
+  });
+}
 el('pogaUzAudzekni').onclick = () => { paradietPaneli('panelisAudzeknis'); atvertAnketu(null); };
 
-/* ---------- Stāvokļa atjaunošana (soļu bloķēšana + apakšnav) ---------- */
+/* ---------- Stāvokļa atjaunošana ---------- */
 function atjaunotStavokli() {
   const irBerni = berni.length > 0;
-  const izv = (izveletaisBernsIdx !== null && berni[izveletaisBernsIdx]) ? berni[izveletaisBernsIdx] : null;
-  const laiks = izv ? (izv.nodarbibas_laiks || '') : '';
 
-  // 2. panelis — laiks tiek rādīts izvēlētajam audzēknim (katram savs).
+  // 2. panelis — rezervācija izvēlētajam audzēknim.
   el('laiksSlegts').classList.toggle('paslepts', irBerni);
   el('laiksSaturs').classList.toggle('paslepts', !irBerni);
   if (irBerni) {
     zimetBernaIzveli();
-    el('izveletaisLaiksBloks').classList.toggle('paslepts', !laiks);
-    el('calendlyKonteiners').classList.toggle('paslepts', !!laiks);
-    if (laiks) el('izveletaisLaiksTeksts').textContent = laiks;
-    el('pogaTurpinatApmaksa').disabled = !(izv && laiks);
+    zimetVeiduIzveli();
+    const veidsInfo = izveletaisVeids ? veidi[izveletaisVeids] : null;
+    el('laikuKarte').classList.toggle('paslepts', !veidsInfo);
+    if (veidsInfo) {
+      el('laikuPiezime').textContent =
+        `Izvēlies ${veidsInfo.skaits} nodarbību laiku${veidsInfo.skaits > 1 ? 's' : ''}. `
+        + `Izvēlēts: ${izveletieLaiki.length} no ${veidsInfo.skaits}.`;
+      zimetLaikaSlotus();
+    }
+    const gatavs = !!(veidsInfo && izveletieLaiki.length === veidsInfo.skaits);
+    el('pogaSaglabatRezervaciju').disabled = !gatavs;
   }
 
-  // 3. panelis — kopsavilkums vienmēr redzams, poga aktīva tikai kad gatavs.
-  const gatavsApmaksai = !!(izv && laiks);
+  // 3. panelis — kopsavilkums (audzēknis, veids, cena).
+  const izv = (izveletaisBernsIdx !== null && berni[izveletaisBernsIdx]) ? berni[izveletaisBernsIdx] : null;
+  const rezVeids = izv && izv.nodarbibas_veids ? veidi[izv.nodarbibas_veids] : null;
+  const gatavsApmaksai = !!(izv && rezVeids
+    && Array.isArray(izv.nodarbibas_laiki) && izv.nodarbibas_laiki.length === rezVeids.skaits);
   el('pogaApmaksa').disabled = !gatavsApmaksai;
   el('kopsAudzeknis').textContent = izv ? (izv.berna_vards || 'Audzēknis') : '—';
-  el('kopsLaiks').textContent = laiks || '—';
+  el('kopsVeids').textContent = rezVeids ? rezVeids.nosaukums : '—';
+  el('kopsCena').textContent = rezVeids ? (rezVeids.cena + ' €') : '—';
 }
 
 /* ---------- Notikumi: anketa ---------- */
@@ -937,16 +971,33 @@ el('pogaSaglabatBernu').onclick = async () => {
   atjaunotStavokli();
 };
 
-/* ---------- Notikumi: 2. solis "Saglabāt un turpināt" ---------- */
-el('pogaTurpinatApmaksa').onclick = () => {
-  if (el('pogaTurpinatApmaksa').disabled) return;
-  paradietPaneli('panelisApmaksa');
+/* ---------- Notikumi: 2. solis "Saglabāt" rezervāciju ---------- */
+el('pogaSaglabatRezervaciju').onclick = async () => {
+  if (izveletaisBernsIdx == null || !izveletaisVeids) return;
+  const info = veidi[izveletaisVeids];
+  if (izveletieLaiki.length !== info.skaits) return;
+
+  const jaunieBerni = berni.map((b, i) => (i === izveletaisBernsIdx ? {
+    ...b,
+    nodarbibas_veids: izveletaisVeids,
+    nodarbibas_laiki: [...izveletieLaiki],
+    apmaksats: false,          // vēl nav apmaksāts → oranža atzīme
+  } : b));
+
+  const izdevas = await saglabatBernus(jaunieBerni, 'Rezervācija saglabāta.', el('pogaSaglabatRezervaciju'));
+  if (!izdevas) return;
+
+  berni = jaunieBerni;
+  zimetBernuKartes();
+  atjaunotStavokli();
+  paradietPaneli('panelisApmaksa');   // uz apmaksas soli
 };
 
 /* ---------- Notikumi: apmaksa (vietturis) ---------- */
 el('pogaApmaksa').onclick = () => {
-  const berns = berni[izveletaisBernsIdx];
-  tosts(`Apmaksa "${berns?.berna_vards || 'audzēknim'}" (${berns?.nodarbibas_laiks || ''}) — drīzumā pieejama.`, 'labi');
+  const b = berni[izveletaisBernsIdx];
+  const v = b && b.nodarbibas_veids ? veidi[b.nodarbibas_veids] : null;
+  tosts(`Apmaksa "${b?.berna_vards || 'audzēknim'}" (${v ? v.nosaukums + ', ' + v.cena + ' €' : ''}) — drīzumā pieejama.`, 'labi');
 };
 
 /* ---------- Notikumi: profils ---------- */
@@ -1003,17 +1054,20 @@ prasitPieteiksanos(async (user) => {
     velamie_laiki: p.velamie_laiki || '',
   }] : []);
 
-  // Atjaunojam pēdējo atvērto audzēkni 2. solī (nodarbības laiks katram savs — Firestore).
+  // Atjaunojam pēdējo atvērto audzēkni 2. solī (rezervācija katram sava — Firestore).
   const pagaidu = pagaiduIelasit();
   izveletaisBernsIdx = (pagaidu.izveletaisBernsIdx != null && berni[pagaidu.izveletaisBernsIdx])
     ? pagaidu.izveletaisBernsIdx : null;
+  if (izveletaisBernsIdx !== null) ieladetRezervaciju(izveletaisBernsIdx);
 
-  zimetLaikaSlotus();
   zimetBernuKartes();
   atjaunotStavokli();
 
   el('ielade').classList.add('paslepts');
   el('izkartojums').classList.remove('paslepts');
+
+  // Lapa atveras ar "Pieteikties nodarbībai" sadaļu (nevis "Mans profils").
+  paradietSadalu('sadalaPieteikties');
 });
 </script>
 </body>
