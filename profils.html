@@ -50,6 +50,8 @@
     max-width:1180px;margin:0 auto;padding:36px 32px 90px;
     display:grid;grid-template-columns:224px 1fr;gap:38px;align-items:start;
   }
+  /* Ar apakšnavigāciju (3 kolonnas) — tikai sadaļā "Pieteikties nodarbībai" */
+  .izkartojums.ar-apaksnav{grid-template-columns:224px 220px 1fr;gap:30px}
   .ielade{max-width:1180px;margin:0 auto;padding:44px 32px;color:var(--muted);font-size:15px}
 
   /* --- Sānu navigācija --- */
@@ -65,9 +67,29 @@
   .nav-poga.aktiva{background:var(--accent-dark);border-color:var(--accent-dark);color:var(--bg)}
   .nav-poga .nav-ik{font-size:16px;line-height:1;width:20px;text-align:center;flex-shrink:0}
 
+  /* --- Apakšnavigācija (pieteikšanās soļi) --- */
+  .apaks-nav{position:sticky;top:92px;display:flex;flex-direction:column;gap:6px}
+  .apaks-nav-poga{
+    display:flex;align-items:center;gap:11px;width:100%;text-align:left;
+    background:var(--bg2);border:0.5px solid var(--border);border-radius:12px;
+    padding:13px 14px;font-family:inherit;font-size:13.5px;font-weight:600;
+    color:var(--muted);cursor:pointer;transition:background .15s,color .15s,border-color .15s;
+  }
+  .apaks-nav-poga:hover{border-color:var(--accent-dark);color:var(--text)}
+  .apaks-nav-poga.aktiva{background:var(--accent-dark);border-color:var(--accent-dark);color:var(--bg)}
+  .apaks-nr{
+    width:22px;height:22px;border-radius:50%;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;
+    background:var(--bg3);color:var(--muted);font-size:11px;font-weight:800;
+  }
+  .apaks-nav-poga.aktiva .apaks-nr{background:var(--bg);color:var(--accent-dark)}
+  .apaks-nav-poga.pabeigts .apaks-nr{background:var(--zala);color:#fff}
+
   /* --- Saturs / sadaļas --- */
-  .sadala{display:none;animation:paradities .2s ease}
+  .sadala{display:none}
   .sadala.aktiva{display:block}
+  .apaks-panelis{display:none}
+  .apaks-panelis.aktiva{display:block;animation:paradities .2s ease}
   @keyframes paradities{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 
   .virsraksts{
@@ -75,7 +97,7 @@
     line-height:1.2;margin-bottom:6px;
   }
   .virsraksts em{font-style:italic;color:var(--accent-dark)}
-  .ievads{font-size:14px;color:var(--muted);margin-bottom:30px;line-height:1.6;max-width:56ch}
+  .ievads{font-size:14px;color:var(--muted);margin-bottom:28px;line-height:1.6;max-width:56ch}
 
   /* --- Kartes --- */
   .karte{
@@ -155,43 +177,8 @@
   }
   .izvele input:focus-visible + label{outline:2px solid var(--accent-dark);outline-offset:2px}
 
-  /* --- Soļi (pieteikšanās plūsma) --- */
-  .celi{
-    list-style:none;display:flex;gap:8px;flex-wrap:wrap;margin-bottom:26px;
-  }
-  .celi li{
-    display:flex;align-items:center;gap:8px;
-    font-size:12.5px;font-weight:600;color:var(--muted);
-    background:var(--bg2);border:0.5px solid var(--border);
-    border-radius:100px;padding:7px 14px 7px 8px;
-  }
-  .celi li .celi-nr{
-    width:20px;height:20px;border-radius:50%;flex-shrink:0;
-    display:flex;align-items:center;justify-content:center;
-    background:var(--bg3);color:var(--muted);font-size:11px;font-weight:800;
-  }
-  .celi li.aktivs{color:var(--text);border-color:var(--accent-dark)}
-  .celi li.aktivs .celi-nr{background:var(--accent-dark);color:var(--bg)}
-  .celi li.pabeigts .celi-nr{background:var(--zala);color:#fff}
-
-  .solis-blok{margin-bottom:28px}
-  .solis-galva{display:flex;align-items:center;gap:11px;margin-bottom:14px}
-  .solis-nr{
-    width:26px;height:26px;border-radius:50%;flex-shrink:0;
-    display:flex;align-items:center;justify-content:center;
-    background:var(--accent-dark);color:var(--bg);font-size:13px;font-weight:800;
-  }
-  .solis-galva h2{margin-bottom:0}
-  .solis-blok.blokets{opacity:.55}
-  .solis-blok.blokets .solis-nr{background:var(--bg3);color:var(--muted)}
-  .slegts-note{
-    font-size:13px;color:var(--muted);line-height:1.55;
-    background:var(--bg2);border:0.5px dashed var(--border);
-    border-radius:12px;padding:16px 18px;margin-top:2px;
-  }
-
-  /* --- Bērnu kartītes --- */
-  .bernu-kartes{margin-top:16px}
+  /* --- Audzēkņu kartītes --- */
+  .bernu-kartes{margin-top:20px}
   .bernu-karte{
     background:var(--bg2);border:0.5px solid var(--border);
     border-radius:14px;padding:18px 20px;margin-bottom:12px;
@@ -207,7 +194,7 @@
   }
   .bernu-dzest-apst span{font-size:13px;font-weight:600;color:var(--sarkana)}
 
-  /* --- Bērna izvēle (2. solis) --- */
+  /* --- Audzēkņa izvēle (2. solis) --- */
   .berns-izvele{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
   .berns-izvele input{position:absolute;opacity:0;pointer-events:none}
   .berns-izvele label{
@@ -253,11 +240,12 @@
   .cena-sum{font-size:15px;font-weight:800;white-space:nowrap;color:var(--accent-dark)}
   .cena-veca{font-size:12px;color:var(--muted);text-decoration:line-through;font-weight:400;margin-right:5px}
 
-  .tukss-note{
+  .slegts-note, .tukss-note{
     font-size:13px;color:var(--muted);line-height:1.6;
-    background:var(--bg);border:0.5px dashed var(--border);
-    border-radius:12px;padding:18px 20px;
+    background:var(--bg2);border:0.5px dashed var(--border);
+    border-radius:12px;padding:16px 18px;
   }
+  .tukss-note{background:var(--bg)}
 
   /* --- Tosts (neuzbāzīgs paziņojums) --- */
   .tosts{
@@ -275,17 +263,16 @@
 
   /* --- Responsīvi: planšete un telefons --- */
   @media(max-width:860px){
-    .izkartojums{grid-template-columns:1fr;gap:20px;padding:22px 18px 70px}
-    .sanu-nav{
-      position:static;flex-direction:row;gap:8px;
+    .izkartojums, .izkartojums.ar-apaksnav{grid-template-columns:1fr;gap:16px;padding:22px 18px 70px}
+    .sanu-nav, .apaks-nav{
+      position:static;flex-direction:row;gap:8px;margin-top:0 !important;
       overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;
     }
-    .nav-poga{white-space:nowrap;padding:10px 14px;font-size:13px;width:auto}
+    .nav-poga, .apaks-nav-poga{white-space:nowrap;padding:10px 14px;font-size:13px;width:auto}
     .josla{padding:16px 18px}
     .josla-epasts{display:none}
     .rinda{grid-template-columns:1fr}
     .bernu-karte-galva{flex-direction:column}
-    .bernu-pogas{flex-shrink:0}
   }
 </style>
 </head>
@@ -305,16 +292,29 @@
 <!-- Galvenais saturs -->
 <div class="izkartojums paslepts" id="izkartojums">
 
-  <!-- ======== SĀNU NAVIGĀCIJA ======== -->
+  <!-- ======== GALVENĀ SĀNU NAVIGĀCIJA ======== -->
   <nav class="sanu-nav" role="tablist" aria-label="Profila sadaļas">
-    <button class="nav-poga aktiva" id="navProfils" role="tab" aria-selected="true" aria-controls="sadalaProfils" data-sadala="Profils">
+    <button class="nav-poga aktiva" id="navProfils" role="tab" aria-selected="true" aria-controls="sadalaProfils">
       <span class="nav-ik" aria-hidden="true">👤</span> Mans profils
     </button>
-    <button class="nav-poga" id="navPieteikties" role="tab" aria-selected="false" aria-controls="sadalaPieteikties" data-sadala="Pieteikties">
+    <button class="nav-poga" id="navPieteikties" role="tab" aria-selected="false" aria-controls="sadalaPieteikties">
       <span class="nav-ik" aria-hidden="true">🎵</span> Pieteikties nodarbībai
     </button>
-    <button class="nav-poga" id="navMaksajumi" role="tab" aria-selected="false" aria-controls="sadalaMaksajumi" data-sadala="Maksajumi">
+    <button class="nav-poga" id="navMaksajumi" role="tab" aria-selected="false" aria-controls="sadalaMaksajumi">
       <span class="nav-ik" aria-hidden="true">💳</span> Maksājumi
+    </button>
+  </nav>
+
+  <!-- ======== APAKŠNAVIGĀCIJA (soļi) — redzama tikai "Pieteikties nodarbībai" ======== -->
+  <nav class="apaks-nav paslepts" id="apaksNav" role="tablist" aria-label="Pieteikšanās soļi">
+    <button class="apaks-nav-poga aktiva" data-panelis="panelisAudzeknis" role="tab" aria-selected="true">
+      <span class="apaks-nr">1</span> Pievienot audzēkni
+    </button>
+    <button class="apaks-nav-poga" data-panelis="panelisLaiks" role="tab" aria-selected="false">
+      <span class="apaks-nr">2</span> Izvēlēties nodarbības laiku
+    </button>
+    <button class="apaks-nav-poga" data-panelis="panelisApmaksa" role="tab" aria-selected="false">
+      <span class="apaks-nr">3</span> Veikt apmaksu
     </button>
   </nav>
 
@@ -346,39 +346,28 @@
       </section>
     </section>
 
-    <!-- ---------- SADAĻA: PIETEIKTIES NODARBĪBAI ---------- -->
+    <!-- ---------- SADAĻA: PIETEIKTIES NODARBĪBAI (3 apakšpaneļi) ---------- -->
     <section class="sadala" id="sadalaPieteikties" role="tabpanel" aria-labelledby="navPieteikties">
-      <h1 class="virsraksts">Pieteikties nodarbībai</h1>
-      <p class="ievads">Pievieno bērnu, izvēlies nodarbības laiku un veic apmaksu — soli pa solim.</p>
 
-      <!-- Soļu josla -->
-      <ol class="celi" id="celi" aria-hidden="true">
-        <li data-cels="1"><span class="celi-nr">1</span> Pievienot bērnu</li>
-        <li data-cels="2"><span class="celi-nr">2</span> Izvēlēties laiku</li>
-        <li data-cels="3"><span class="celi-nr">3</span> Veikt apmaksu</li>
-      </ol>
+      <!-- ===== 1. PANELIS: PIEVIENOT AUDZĒKNI ===== -->
+      <div class="apaks-panelis aktiva" id="panelisAudzeknis" role="tabpanel">
+        <h1 class="virsraksts">Pievienot audzēkni</h1>
+        <p class="ievads">Pievieno vienu vai vairākus audzēkņus, ko vēlies pieteikt nodarbībām.</p>
 
-      <!-- ===== 1. SOLIS: PIEVIENOT BĒRNU ===== -->
-      <div class="solis-blok">
-        <div class="solis-galva">
-          <span class="solis-nr">1</span>
-          <h2>Pievienot bērnu</h2>
-        </div>
+        <button class="cta" id="pogaPieteiktBernu">Pieteikt audzēkni nodarbībai</button>
 
-        <button class="cta" id="pogaPieteiktBernu">Pieteikt bērnu nodarbībai</button>
-
-        <!-- Bērna anketa (sākotnēji paslēpta) -->
-        <section class="karte paslepts" id="anketaKarte" style="margin-top:16px" aria-label="Bērna anketa">
-          <h2 id="anketaVirsraksts">Par bērnu</h2>
+        <!-- Audzēkņa anketa (sākotnēji paslēpta) -->
+        <section class="karte paslepts" id="anketaKarte" style="margin-top:16px" aria-label="Audzēkņa anketa">
+          <h2 id="anketaVirsraksts">Par audzēkni</h2>
           <p class="h2-piezime">Šī informācija palīdz pasniedzējam sagatavoties.</p>
 
           <div class="rinda">
             <div class="lauks">
-              <label for="bernaVards">Bērna vārds, uzvārds</label>
+              <label for="bernaVards">Audzēkņa vārds, uzvārds</label>
               <input type="text" id="bernaVards" placeholder="Emīls Bērziņš">
             </div>
             <div class="lauks">
-              <label for="bernaVecums">Bērna vecums</label>
+              <label for="bernaVecums">Audzēkņa vecums</label>
               <input type="text" id="bernaVecums" placeholder="6 gadi">
             </div>
           </div>
@@ -389,13 +378,13 @@
               <input type="tel" id="vecakaTel" placeholder="+371 20 000 000">
             </div>
             <div class="lauks">
-              <label for="bernaTel">Bērna telefons</label>
+              <label for="bernaTel">Audzēkņa telefons</label>
               <input type="tel" id="bernaTel" placeholder="ja ir">
             </div>
           </div>
 
           <div class="jautajums">
-            <p class="jaut-teksts">Vai bērnam jau ir kāda saskarsme ar mūziku?</p>
+            <p class="jaut-teksts">Vai audzēknim jau ir kāda saskarsme ar mūziku?</p>
             <div class="izvele">
               <input type="radio" name="muzika" id="mNav" value="Nav"><label for="mNav">Nav nekādas</label>
               <input type="radio" name="muzika" id="mMazliet" value="Mazliet"><label for="mMazliet">Mazliet</label>
@@ -420,34 +409,32 @@
           </div>
 
           <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:22px;align-items:center">
-            <button class="cta" id="pogaSaglabatBernu" style="flex:1;min-width:200px">Saglabāt bērna anketu</button>
+            <button class="cta" id="pogaSaglabatBernu" style="flex:1;min-width:200px">Saglabāt audzēkņa anketu</button>
             <button class="poga2" id="pogaAtceltAnketu">Atcelt</button>
           </div>
         </section>
 
-        <!-- Saglabāto bērnu kartītes -->
+        <!-- Saglabāto audzēkņu kartītes -->
         <div class="bernu-kartes" id="bernuKartes"></div>
       </div>
 
-      <!-- ===== 2. SOLIS: IZVĒLĒTIES NODARBĪBAS LAIKU ===== -->
-      <div class="solis-blok blokets" id="solis2">
-        <div class="solis-galva">
-          <span class="solis-nr">2</span>
-          <h2>Izvēlēties nodarbības laiku</h2>
+      <!-- ===== 2. PANELIS: IZVĒLĒTIES NODARBĪBAS LAIKU ===== -->
+      <div class="apaks-panelis" id="panelisLaiks" role="tabpanel">
+        <h1 class="virsraksts">Izvēlēties nodarbības laiku</h1>
+        <p class="ievads">Izvēlies, kuram audzēknim un kad notiks nodarbība.</p>
+
+        <!-- Slēgts (nav neviena audzēkņa) -->
+        <div id="laiksSlegts">
+          <div class="slegts-note" style="margin-bottom:12px">Vispirms pievieno vismaz vienu audzēkni, tad varēsi izvēlēties nodarbības laiku.</div>
+          <button class="poga2" id="pogaUzAudzekni">+ Pievienot audzēkni</button>
         </div>
 
-        <!-- Slēgts stāvoklis (kamēr nav neviena bērna) -->
-        <div id="solis2Slegts">
-          <div class="slegts-note" style="margin-bottom:12px">Vispirms pievieno vismaz vienu bērnu, tad varēsi izvēlēties nodarbības laiku.</div>
-          <button class="poga2" id="pogaSlegtsPievienot">+ Pievienot bērnu</button>
-        </div>
-
-        <!-- Atvērts stāvoklis -->
-        <div id="solis2Saturs" class="paslepts">
-          <label for="bernsIzvele" id="bernsIzveleLabel">Kuram bērnam?</label>
+        <!-- Atvērts -->
+        <div id="laiksSaturs" class="paslepts">
+          <label id="bernsIzveleLabel">Kuram audzēknim?</label>
           <div class="berns-izvele" id="bernsIzvele" role="radiogroup" aria-labelledby="bernsIzveleLabel"></div>
 
-          <div class="karte" style="margin-bottom:0">
+          <section class="karte">
             <h2>Nodarbības laiks</h2>
             <p class="h2-piezime">Izvēlies sev ērtu nodarbības laiku.</p>
 
@@ -459,25 +446,41 @@
               <div class="cal-sloti" id="calSloti"></div>
             </div>
 
-            <!-- Izvēlētais laiks -->
             <div class="izveletais-laiks paslepts" id="izveletaisLaiksBloks">
               <span>✓ Izvēlētais laiks: <strong id="izveletaisLaiksTeksts"></strong></span>
               <button class="mini-poga" id="pogaMainitLaiku">Mainīt</button>
             </div>
-          </div>
+          </section>
+
+          <button class="cta" id="pogaTurpinatApmaksa" disabled>Saglabāt un turpināt</button>
         </div>
       </div>
 
-      <!-- ===== 3. SOLIS: VEIKT APMAKSU ===== -->
-      <div class="solis-blok blokets" id="solis3">
-        <div class="solis-galva">
-          <span class="solis-nr">3</span>
-          <h2>Veikt apmaksu</h2>
+      <!-- ===== 3. PANELIS: VEIKT APMAKSU ===== -->
+      <div class="apaks-panelis" id="panelisApmaksa" role="tabpanel">
+        <h1 class="virsraksts">Veikt apmaksu</h1>
+        <p class="ievads">Pārbaudi izvēli un veic apmaksu, lai apstiprinātu nodarbību.</p>
+
+        <div class="slegts-note paslepts" id="apmaksaSlegts" style="margin-bottom:16px">
+          Vispirms izvēlies audzēkni un nodarbības laiku 2. solī.
         </div>
-        <div class="slegts-note" id="solis3Slegts" style="margin-bottom:12px">Izvēlies bērnu un nodarbības laiku, lai turpinātu uz apmaksu.</div>
+
+        <section class="karte" id="apmaksaKopsavilkums">
+          <h2>Kopsavilkums</h2>
+          <div class="cena">
+            <span class="cena-nos">Audzēknis</span>
+            <span class="cena-sum" id="kopsAudzeknis" style="color:var(--text)">—</span>
+          </div>
+          <div class="cena">
+            <span class="cena-nos">Nodarbības laiks</span>
+            <span class="cena-sum" id="kopsLaiks" style="color:var(--text)">—</span>
+          </div>
+        </section>
+
         <button class="cta" id="pogaApmaksa" disabled>Veikt apmaksu</button>
         <p class="cta-piezime">Pēc apmaksas sazināsimies, lai apstiprinātu nodarbību.</p>
       </div>
+
     </section>
 
     <!-- ---------- SADAĻA: MAKSĀJUMI ---------- -->
@@ -545,8 +548,8 @@ const el = (id) => document.getElementById(id);
 /* ---------- Stāvoklis ---------- */
 let uid = null;
 let berni = [];                 // Firestore users/{uid}.berni
-let rediggamaisIndekss = null;  // kuru bērnu šobrīd rediģē anketā (null = jauns)
-let izveletaisBernsIdx = null;  // 2. solī izvēlētais bērns
+let rediggamaisIndekss = null;  // kuru audzēkni šobrīd rediģē anketā (null = jauns)
+let izveletaisBernsIdx = null;  // 2. solī izvēlētais audzēknis
 let izveletaisLaiks = '';       // 2. solī izvēlētais nodarbības laiks
 
 // Pagaidu mock laiki, kamēr nav Calendly integrācijas.
@@ -565,9 +568,7 @@ function pagaiduIelasit() {
   catch { return {}; }
 }
 function pagaiduSaglabat() {
-  localStorage.setItem(pagaiduAtslega(), JSON.stringify({
-    izveletaisBernsIdx, izveletaisLaiks,
-  }));
+  localStorage.setItem(pagaiduAtslega(), JSON.stringify({ izveletaisBernsIdx, izveletaisLaiks }));
 }
 
 /* ---------- Tosts ---------- */
@@ -580,7 +581,7 @@ function tosts(teksts, veids = 'labi') {
   tostsTaimeris = setTimeout(() => { t.className = 'tosts ' + veids; }, 3400);
 }
 
-/* ---------- Navigācija starp sadaļām ---------- */
+/* ---------- Galvenā navigācija ---------- */
 const navPogas = [
   { poga: 'navProfils', sadala: 'sadalaProfils' },
   { poga: 'navPieteikties', sadala: 'sadalaPieteikties' },
@@ -593,9 +594,33 @@ function paradietSadalu(sadalasId) {
     el(poga).setAttribute('aria-selected', aktivs ? 'true' : 'false');
     el(sadala).classList.toggle('aktiva', aktivs);
   });
+
+  // Apakšnavigāciju rādām tikai pieteikšanās sadaļā.
+  const pieteikties = sadalasId === 'sadalaPieteikties';
+  el('izkartojums').classList.toggle('ar-apaksnav', pieteikties);
+  el('apaksNav').classList.toggle('paslepts', !pieteikties);
+  if (pieteikties) {
+    // Apakšnav sākas tajā pašā augstumā, kur galvenās nav 2. poga "Pieteikties nodarbībai".
+    el('apaksNav').style.marginTop = el('navPieteikties').offsetTop + 'px';
+  }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
-navPogas.forEach(({ poga, sadala }) => {
-  el(poga).onclick = () => paradietSadalu(sadala);
+navPogas.forEach(({ poga, sadala }) => { el(poga).onclick = () => paradietSadalu(sadala); });
+
+/* ---------- Apakšnavigācija (soļi) ---------- */
+const paneli = ['panelisAudzeknis', 'panelisLaiks', 'panelisApmaksa'];
+function paradietPaneli(panelisId) {
+  paneli.forEach((id) => el(id).classList.toggle('aktiva', id === panelisId));
+  document.querySelectorAll('.apaks-nav-poga').forEach((b) => {
+    const aktivs = b.dataset.panelis === panelisId;
+    b.classList.toggle('aktiva', aktivs);
+    b.setAttribute('aria-selected', aktivs ? 'true' : 'false');
+  });
+  if (panelisId === 'panelisLaiks' || panelisId === 'panelisApmaksa') atjaunotStavokli();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+document.querySelectorAll('.apaks-nav-poga').forEach((b) => {
+  b.onclick = () => paradietPaneli(b.dataset.panelis);
 });
 
 /* ---------- Radio pogu palīgfunkcijas ---------- */
@@ -625,11 +650,10 @@ function iestatitAnketasFormu(berns) {
 function atvertAnketu(indekss) {
   rediggamaisIndekss = indekss;
   iestatitAnketasFormu(indekss === null ? null : berni[indekss]);
-  el('anketaVirsraksts').textContent = indekss === null ? 'Par bērnu' : 'Rediģēt bērnu';
-  el('pogaSaglabatBernu').textContent = indekss === null ? 'Saglabāt bērna anketu' : 'Saglabāt izmaiņas';
+  el('anketaVirsraksts').textContent = indekss === null ? 'Par audzēkni' : 'Rediģēt audzēkni';
+  el('pogaSaglabatBernu').textContent = indekss === null ? 'Saglabāt audzēkņa anketu' : 'Saglabāt izmaiņas';
   el('anketaKarte').classList.remove('paslepts');
   el('pogaPieteiktBernu').classList.add('paslepts');
-  el('anketaKarte').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   el('bernaVards').focus();
 }
 function aizvertAnketu() {
@@ -638,7 +662,7 @@ function aizvertAnketu() {
   rediggamaisIndekss = null;
 }
 
-/* ---------- Bērnu kartītes ---------- */
+/* ---------- Audzēkņu kartītes ---------- */
 function bernaKopsavilkums(b) {
   const dalas = [];
   if (b.berna_vecums) dalas.push(b.berna_vecums);
@@ -660,7 +684,7 @@ function zimetBernuKartes() {
     const kreisa = document.createElement('div');
     const vards = document.createElement('div');
     vards.className = 'bernu-vards';
-    vards.textContent = b.berna_vards || 'Bērns';
+    vards.textContent = b.berna_vards || 'Audzēknis';
     kreisa.appendChild(vards);
 
     const info = document.createElement('div');
@@ -701,7 +725,7 @@ function paradietDzestApstiprinajumu(karte, indekss) {
   apst.className = 'bernu-dzest-apst';
 
   const teksts = document.createElement('span');
-  teksts.textContent = 'Dzēst šo bērnu?';
+  teksts.textContent = 'Dzēst šo audzēkni?';
 
   const ja = document.createElement('button');
   ja.className = 'mini-poga dzest';
@@ -724,17 +748,16 @@ function paradietDzestApstiprinajumu(karte, indekss) {
 
 async function dzestBernu(indekss) {
   const jaunieBerni = berni.filter((_, i) => i !== indekss);
-  const izdevas = await saglabatBernus(jaunieBerni, 'Bērns izdzēsts.');
+  const izdevas = await saglabatBernus(jaunieBerni, 'Audzēknis izdzēsts.');
   if (!izdevas) return;
 
   berni = jaunieBerni;
-  // Ja bija izvēlēts dzēstais bērns, atiestatām izvēli.
   if (izveletaisBernsIdx === indekss) izveletaisBernsIdx = null;
   else if (izveletaisBernsIdx > indekss) izveletaisBernsIdx--;
   pagaiduSaglabat();
 
   zimetBernuKartes();
-  atjaunotSolus();
+  atjaunotStavokli();
 }
 
 /* ---------- Saglabāšana Firestore ---------- */
@@ -749,7 +772,7 @@ async function saglabatBernus(jaunieBerni, veiksmesTeksts) {
     poga.textContent = sak;
     return true;
   } catch (err) {
-    console.error('Kļūda saglabājot bērnus:', err);
+    console.error('Kļūda saglabājot audzēkņus:', err);
     tosts(kludasTeksts(err), 'kluda');
     poga.disabled = false;
     poga.textContent = sak;
@@ -757,7 +780,7 @@ async function saglabatBernus(jaunieBerni, veiksmesTeksts) {
   }
 }
 
-/* ---------- 2. solis: bērna izvēle + laiks ---------- */
+/* ---------- 2. panelis: audzēkņa izvēle + laiks ---------- */
 function zimetBernaIzveli() {
   const konteiners = el('bernsIzvele');
   konteiners.innerHTML = '';
@@ -769,19 +792,14 @@ function zimetBernaIzveli() {
     inp.id = id;
     inp.value = String(i);
     inp.checked = i === izveletaisBernsIdx;
-    inp.onchange = () => {
-      izveletaisBernsIdx = i;
-      pagaiduSaglabat();
-      atjaunotSolus();
-    };
+    inp.onchange = () => { izveletaisBernsIdx = i; pagaiduSaglabat(); atjaunotStavokli(); };
     const lab = document.createElement('label');
     lab.setAttribute('for', id);
-    lab.textContent = b.berna_vards || ('Bērns ' + (i + 1));
+    lab.textContent = b.berna_vards || ('Audzēknis ' + (i + 1));
     konteiners.appendChild(inp);
     konteiners.appendChild(lab);
   });
 }
-
 function zimetLaikaSlotus() {
   const konteiners = el('calSloti');
   konteiners.innerHTML = '';
@@ -793,59 +811,44 @@ function zimetLaikaSlotus() {
     poga.onclick = () => {
       izveletaisLaiks = laiks;
       pagaiduSaglabat();
-      atjaunotSolus();
+      atjaunotStavokli();
       tosts('Laiks izvēlēts: ' + laiks, 'labi');
     };
     konteiners.appendChild(poga);
   });
 }
+el('pogaMainitLaiku').onclick = () => { izveletaisLaiks = ''; pagaiduSaglabat(); atjaunotStavokli(); };
+el('pogaUzAudzekni').onclick = () => { paradietPaneli('panelisAudzeknis'); atvertAnketu(null); };
 
-el('pogaMainitLaiku').onclick = () => {
-  izveletaisLaiks = '';
-  pagaiduSaglabat();
-  atjaunotSolus();
-};
-
-el('pogaSlegtsPievienot').onclick = () => atvertAnketu(null);
-
-/* ---------- Soļu stāvokļu atjaunošana ---------- */
-function atjaunotSolus() {
+/* ---------- Stāvokļa atjaunošana (soļu bloķēšana + apakšnav) ---------- */
+function atjaunotStavokli() {
   const irBerni = berni.length > 0;
   const irIzveletsBerns = izveletaisBernsIdx !== null && !!berni[izveletaisBernsIdx];
   const irLaiks = !!izveletaisLaiks;
 
-  // 2. solis
-  el('solis2').classList.toggle('blokets', !irBerni);
-  el('solis2Slegts').classList.toggle('paslepts', irBerni);
-  el('solis2Saturs').classList.toggle('paslepts', !irBerni);
+  // 2. panelis
+  el('laiksSlegts').classList.toggle('paslepts', irBerni);
+  el('laiksSaturs').classList.toggle('paslepts', !irBerni);
   if (irBerni) {
     zimetBernaIzveli();
-    // Laika sloti / izvēlētais laiks
     el('izveletaisLaiksBloks').classList.toggle('paslepts', !irLaiks);
     el('calendlyKonteiners').classList.toggle('paslepts', irLaiks);
     if (irLaiks) el('izveletaisLaiksTeksts').textContent = izveletaisLaiks;
+    el('pogaTurpinatApmaksa').disabled = !(irIzveletsBerns && irLaiks);
   }
 
-  // 3. solis
-  const var3 = irBerni && irIzveletsBerns && irLaiks;
-  el('solis3').classList.toggle('blokets', !var3);
-  el('solis3Slegts').classList.toggle('paslepts', var3);
-  el('pogaApmaksa').disabled = !var3;
+  // 3. panelis
+  const gatavsApmaksai = irBerni && irIzveletsBerns && irLaiks;
+  el('apmaksaSlegts').classList.toggle('paslepts', gatavsApmaksai);
+  el('apmaksaKopsavilkums').classList.toggle('paslepts', !gatavsApmaksai);
+  el('pogaApmaksa').disabled = !gatavsApmaksai;
+  el('kopsAudzeknis').textContent = irIzveletsBerns ? (berni[izveletaisBernsIdx].berna_vards || 'Audzēknis') : '—';
+  el('kopsLaiks').textContent = irLaiks ? izveletaisLaiks : '—';
 
-  // Soļu josla (breadcrumb)
-  atjaunotCelus(irBerni, irIzveletsBerns && irLaiks, var3);
-}
-
-function atjaunotCelus(solis1Ok, solis2Ok, solis3Aktivs) {
-  const celi = el('celi').querySelectorAll('li');
-  // 1. solis
-  celi[0].classList.toggle('pabeigts', solis1Ok);
-  celi[0].classList.toggle('aktivs', !solis1Ok);
-  // 2. solis
-  celi[1].classList.toggle('pabeigts', solis2Ok);
-  celi[1].classList.toggle('aktivs', solis1Ok && !solis2Ok);
-  // 3. solis
-  celi[2].classList.toggle('aktivs', solis3Aktivs);
+  // Apakšnavigācijas pabeigtības atzīmes
+  const pogas = document.querySelectorAll('.apaks-nav-poga');
+  pogas[0].classList.toggle('pabeigts', irBerni);
+  pogas[1].classList.toggle('pabeigts', irIzveletsBerns && irLaiks);
 }
 
 /* ---------- Notikumi: anketa ---------- */
@@ -865,33 +868,38 @@ el('pogaSaglabatBernu').onclick = async () => {
     velamie_laiki: el('laiki').value.trim(),
   };
 
+  const bijaJauns = rediggamaisIndekss === null;
   const jaunieBerni = [...berni];
-  let janoizvele = null;
-  if (rediggamaisIndekss === null) {
-    jaunieBerni.push(dati);
-    janoizvele = jaunieBerni.length - 1;
-  } else {
-    jaunieBerni[rediggamaisIndekss] = dati;
-  }
+  let janoIzvele = null;
+  if (bijaJauns) { jaunieBerni.push(dati); janoIzvele = jaunieBerni.length - 1; }
+  else { jaunieBerni[rediggamaisIndekss] = dati; }
 
   const izdevas = await saglabatBernus(jaunieBerni,
-    rediggamaisIndekss === null ? 'Bērns pievienots.' : 'Izmaiņas saglabātas.');
+    bijaJauns ? 'Audzēknis pievienots.' : 'Izmaiņas saglabātas.');
   if (!izdevas) return;
 
   berni = jaunieBerni;
-  // Jaunu bērnu uzreiz izvēlamies 2. solim ērtībai.
-  if (janoizvele !== null && izveletaisBernsIdx === null) izveletaisBernsIdx = janoizvele;
+  if (bijaJauns) izveletaisBernsIdx = janoIzvele; // jauno audzēkni uzreiz izvēlamies 2. solim
   pagaiduSaglabat();
 
   aizvertAnketu();
   zimetBernuKartes();
-  atjaunotSolus();
+  atjaunotStavokli();
+
+  // Kā spiež saglabāt (pievienojot jaunu) — automātiski uz nākošo soli.
+  if (bijaJauns) paradietPaneli('panelisLaiks');
+};
+
+/* ---------- Notikumi: 2. solis "Saglabāt un turpināt" ---------- */
+el('pogaTurpinatApmaksa').onclick = () => {
+  if (el('pogaTurpinatApmaksa').disabled) return;
+  paradietPaneli('panelisApmaksa');
 };
 
 /* ---------- Notikumi: apmaksa (vietturis) ---------- */
 el('pogaApmaksa').onclick = () => {
   const berns = berni[izveletaisBernsIdx];
-  tosts(`Apmaksa "${berns?.berna_vards || 'bērnam'}" (${izveletaisLaiks}) — drīzumā pieejama.`, 'labi');
+  tosts(`Apmaksa "${berns?.berna_vards || 'audzēknim'}" (${izveletaisLaiks}) — drīzumā pieejama.`, 'labi');
 };
 
 /* ---------- Notikumi: profils ---------- */
@@ -938,7 +946,7 @@ prasitPieteiksanos(async (user) => {
   el('telefons').value = p?.telefons || '';
   el('epasts').value = user.email;
 
-  // Vecie profili glabāja vienu bērnu tieši profilā — pārceļam to sarakstā.
+  // Vecie profili glabāja vienu audzēkni tieši profilā — pārceļam to sarakstā.
   // Firestore nepieņem "undefined" vērtības, tāpēc trūkstošajiem laukiem tukša virkne.
   berni = p?.berni || (p?.berna_vards ? [{
     berna_vards: p.berna_vards || '', berna_vecums: p.berna_vecums || '',
@@ -956,7 +964,7 @@ prasitPieteiksanos(async (user) => {
 
   zimetLaikaSlotus();
   zimetBernuKartes();
-  atjaunotSolus();
+  atjaunotStavokli();
 
   el('ielade').classList.add('paslepts');
   el('izkartojums').classList.remove('paslepts');
