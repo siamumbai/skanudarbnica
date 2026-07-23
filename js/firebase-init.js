@@ -18,7 +18,6 @@ import {
   doc,
   setDoc,
   getDoc,
-  updateDoc,
   serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
 
@@ -97,8 +96,12 @@ export async function iegutProfilu(uid) {
   return snap.exists() ? snap.data() : null;
 }
 
+// setDoc + merge, nevis updateDoc — ja profila dokuments vēl neeksistē
+// (piem. konts izveidots pirms šī profila koda), updateDoc uz neeksistējošu
+// dokumentu Firestore noteikumos izraisa "permission-denied", jo noteikumi
+// atsaucas uz resource.data. setDoc ar merge izveido dokumentu, ja tāda nav.
 export function saglabatProfilu(uid, dati) {
-  return updateDoc(doc(db, "users", uid), dati);
+  return setDoc(doc(db, "users", uid), dati, { merge: true });
 }
 
 // Aizsargā lapu: ja lietotājs nav pieteicies, aizved uz pieteikšanos.
