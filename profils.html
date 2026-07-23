@@ -22,12 +22,18 @@
     min-height:100vh;
   }
 
+  /* Redzams fokuss visiem interaktīvajiem elementiem (pieejamība) */
+  a:focus-visible, button:focus-visible, input:focus-visible,
+  textarea:focus-visible, select:focus-visible, [tabindex]:focus-visible{
+    outline:2px solid var(--accent-dark); outline-offset:2px; border-radius:6px;
+  }
+
   /* --- Josla --- */
   .josla{
     border-bottom:0.5px solid var(--border);
     padding:18px 32px;
     display:flex; align-items:center; justify-content:space-between;
-    position:sticky; top:0; background:var(--bg); z-index:10;
+    position:sticky; top:0; background:var(--bg); z-index:20;
   }
   .logo{font-size:15px;font-weight:600;letter-spacing:.02em;text-decoration:none;color:var(--text)}
   .josla-labi{display:flex;align-items:center;gap:18px}
@@ -39,40 +45,76 @@
   }
   .izeja:hover{border-color:var(--accent-dark);color:var(--accent-dark)}
 
-  /* --- Izkārtojums --- */
-  main{max-width:1180px;margin:0 auto;padding:44px 32px 90px}
-  .ielade{color:var(--muted);font-size:15px}
+  /* --- Izkārtojums: sānu navigācija + saturs --- */
+  .izkartojums{
+    max-width:1180px;margin:0 auto;padding:36px 32px 90px;
+    display:grid;grid-template-columns:224px 1fr;gap:38px;align-items:start;
+  }
+  .ielade{max-width:1180px;margin:0 auto;padding:44px 32px;color:var(--muted);font-size:15px}
+
+  /* --- Sānu navigācija --- */
+  .sanu-nav{position:sticky;top:92px;display:flex;flex-direction:column;gap:6px}
+  .nav-poga{
+    display:flex;align-items:center;gap:11px;
+    width:100%;text-align:left;
+    background:transparent;border:0.5px solid transparent;border-radius:12px;
+    padding:13px 15px;font-family:inherit;font-size:14px;font-weight:600;
+    color:var(--muted);cursor:pointer;transition:background .15s,color .15s;
+  }
+  .nav-poga:hover{background:var(--bg2);color:var(--text)}
+  .nav-poga.aktiva{background:var(--accent-dark);border-color:var(--accent-dark);color:var(--bg)}
+  .nav-poga .nav-ik{font-size:16px;line-height:1;width:20px;text-align:center;flex-shrink:0}
+
+  /* --- Saturs / sadaļas --- */
+  .sadala{display:none;animation:paradities .2s ease}
+  .sadala.aktiva{display:block}
+  @keyframes paradities{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
   .virsraksts{
-    font-family:Georgia,serif;font-weight:400;font-size:clamp(26px,3.4vw,38px);
+    font-family:Georgia,serif;font-weight:400;font-size:clamp(24px,3vw,34px);
     line-height:1.2;margin-bottom:6px;
   }
   .virsraksts em{font-style:italic;color:var(--accent-dark)}
-  .ievads{font-size:14px;color:var(--muted);margin-bottom:38px;line-height:1.6;max-width:52ch}
-  .rezgis{display:grid;grid-template-columns:1.45fr 1fr;gap:26px;align-items:start}
+  .ievads{font-size:14px;color:var(--muted);margin-bottom:30px;line-height:1.6;max-width:56ch}
 
   /* --- Kartes --- */
   .karte{
     background:var(--bg2);border:0.5px solid var(--border);
-    border-radius:14px;padding:30px 28px;margin-bottom:22px;
+    border-radius:14px;padding:28px 26px;margin-bottom:20px;
   }
-  .karte-uzsvers{background:var(--bg3)}
   h2{
     font-size:12px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;
     color:var(--accent-dark);margin-bottom:6px;
   }
   .h2-piezime{font-size:13px;color:var(--muted);line-height:1.55;margin-bottom:22px}
 
-  /* --- Galvenā poga --- */
+  /* --- Pogas --- */
   .cta{
     display:block;width:100%;text-align:center;
     background:var(--accent-dark);color:var(--bg);
-    border:none;border-radius:100px;padding:17px;
+    border:none;border-radius:100px;padding:16px;
     font-family:inherit;font-size:15px;font-weight:600;letter-spacing:.01em;
-    cursor:pointer;text-decoration:none;
+    cursor:pointer;text-decoration:none;transition:background .15s;
   }
-  .cta:hover{background:var(--accent)}
-  .cta:disabled{opacity:.45;cursor:default}
+  .cta:hover:not(:disabled){background:var(--accent)}
+  .cta:disabled{opacity:.4;cursor:not-allowed}
   .cta-piezime{font-size:12.5px;color:var(--muted);text-align:center;margin-top:12px;line-height:1.5}
+
+  .poga2{
+    display:inline-block;background:transparent;color:var(--accent-dark);
+    border:0.5px solid var(--accent-dark);border-radius:100px;
+    padding:11px 22px;font-family:inherit;font-size:13.5px;font-weight:600;
+    cursor:pointer;text-decoration:none;transition:background .15s,color .15s;
+  }
+  .poga2:hover{background:var(--accent-dark);color:var(--bg)}
+
+  .mini-poga{
+    background:transparent;border:0.5px solid var(--border);border-radius:100px;
+    padding:6px 14px;font-family:inherit;font-size:12px;font-weight:600;
+    color:var(--muted);cursor:pointer;transition:border-color .15s,color .15s;
+  }
+  .mini-poga:hover{border-color:var(--accent-dark);color:var(--accent-dark)}
+  .mini-poga.dzest:hover{border-color:var(--sarkana);color:var(--sarkana)}
 
   /* --- Lauki --- */
   label{
@@ -86,31 +128,118 @@
     color:var(--text);background:var(--bg);
     border:0.5px solid var(--border);border-radius:10px;
   }
-  textarea{resize:vertical;min-height:76px;line-height:1.55}
+  textarea{resize:vertical;min-height:70px;line-height:1.55}
   input:focus,textarea:focus,select:focus{
     outline:none;border-color:var(--accent);background:#FBF6E8;
   }
+  input:focus-visible,textarea:focus-visible{outline:2px solid var(--accent-dark);outline-offset:1px}
   input::placeholder,textarea::placeholder{color:#B3A57F}
+  input:disabled{opacity:.7;cursor:not-allowed}
 
-  /* --- Jautājumi --- */
-  .jautajums{
-    border-top:0.5px solid var(--border);
-    padding-top:22px;margin-top:22px;
-  }
+  /* --- Jautājumi (radio pogas) --- */
+  .jautajums{border-top:0.5px solid var(--border);padding-top:20px;margin-top:20px}
   .jaut-teksts{
-    font-family:Georgia,serif;font-size:16.5px;font-style:italic;
-    line-height:1.45;margin-bottom:14px;color:var(--text);
+    font-family:Georgia,serif;font-size:15.5px;font-style:italic;
+    line-height:1.45;margin-bottom:12px;color:var(--text);
   }
-  .izvele{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:13px}
+  .izvele{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
   .izvele input{position:absolute;opacity:0;pointer-events:none}
   .izvele label{
-    margin:0;padding:8px 17px;border-radius:100px;
+    margin:0;padding:7px 15px;border-radius:100px;
     border:0.5px solid var(--border);background:var(--bg);
     font-size:12.5px;font-weight:600;letter-spacing:.02em;text-transform:none;
     color:var(--muted);cursor:pointer;
   }
   .izvele input:checked + label{
     background:var(--accent-dark);border-color:var(--accent-dark);color:var(--bg);
+  }
+  .izvele input:focus-visible + label{outline:2px solid var(--accent-dark);outline-offset:2px}
+
+  /* --- Soļi (pieteikšanās plūsma) --- */
+  .celi{
+    list-style:none;display:flex;gap:8px;flex-wrap:wrap;margin-bottom:26px;
+  }
+  .celi li{
+    display:flex;align-items:center;gap:8px;
+    font-size:12.5px;font-weight:600;color:var(--muted);
+    background:var(--bg2);border:0.5px solid var(--border);
+    border-radius:100px;padding:7px 14px 7px 8px;
+  }
+  .celi li .celi-nr{
+    width:20px;height:20px;border-radius:50%;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;
+    background:var(--bg3);color:var(--muted);font-size:11px;font-weight:800;
+  }
+  .celi li.aktivs{color:var(--text);border-color:var(--accent-dark)}
+  .celi li.aktivs .celi-nr{background:var(--accent-dark);color:var(--bg)}
+  .celi li.pabeigts .celi-nr{background:var(--zala);color:#fff}
+
+  .solis-blok{margin-bottom:28px}
+  .solis-galva{display:flex;align-items:center;gap:11px;margin-bottom:14px}
+  .solis-nr{
+    width:26px;height:26px;border-radius:50%;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;
+    background:var(--accent-dark);color:var(--bg);font-size:13px;font-weight:800;
+  }
+  .solis-galva h2{margin-bottom:0}
+  .solis-blok.blokets{opacity:.55}
+  .solis-blok.blokets .solis-nr{background:var(--bg3);color:var(--muted)}
+  .slegts-note{
+    font-size:13px;color:var(--muted);line-height:1.55;
+    background:var(--bg2);border:0.5px dashed var(--border);
+    border-radius:12px;padding:16px 18px;margin-top:2px;
+  }
+
+  /* --- Bērnu kartītes --- */
+  .bernu-kartes{margin-top:16px}
+  .bernu-karte{
+    background:var(--bg2);border:0.5px solid var(--border);
+    border-radius:14px;padding:18px 20px;margin-bottom:12px;
+  }
+  .bernu-karte-galva{display:flex;justify-content:space-between;align-items:flex-start;gap:14px}
+  .bernu-vards{font-size:16px;font-weight:800;color:var(--text);line-height:1.2}
+  .bernu-info{font-size:13px;color:var(--muted);margin-top:7px;line-height:1.6}
+  .bernu-info b{color:var(--text);font-weight:600}
+  .bernu-pogas{display:flex;gap:8px;flex-shrink:0}
+  .bernu-dzest-apst{
+    margin-top:14px;padding-top:14px;border-top:0.5px solid var(--border);
+    display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  }
+  .bernu-dzest-apst span{font-size:13px;font-weight:600;color:var(--sarkana)}
+
+  /* --- Bērna izvēle (2. solis) --- */
+  .berns-izvele{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+  .berns-izvele input{position:absolute;opacity:0;pointer-events:none}
+  .berns-izvele label{
+    margin:0;padding:9px 18px;border-radius:100px;
+    border:0.5px solid var(--border);background:var(--bg);
+    font-size:13px;font-weight:600;text-transform:none;letter-spacing:0;
+    color:var(--muted);cursor:pointer;
+  }
+  .berns-izvele input:checked + label{
+    background:var(--accent-dark);border-color:var(--accent-dark);color:var(--bg);
+  }
+  .berns-izvele input:focus-visible + label{outline:2px solid var(--accent-dark);outline-offset:2px}
+
+  /* --- Calendly vietturis --- */
+  .calendly-viet{
+    border:1px dashed var(--accent);border-radius:14px;
+    background:var(--bg3);padding:34px 24px;text-align:center;margin-bottom:6px;
+  }
+  .cal-ik{font-size:34px;line-height:1;margin-bottom:10px}
+  .cal-teksts{font-size:17px;font-weight:800;color:var(--accent-dark);letter-spacing:.02em}
+  .cal-sub{font-size:12.5px;color:var(--muted);margin:6px auto 18px;max-width:36ch;line-height:1.55}
+  .cal-sloti{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:4px}
+  .cal-slots{
+    background:var(--bg);border:0.5px solid var(--accent-dark);border-radius:100px;
+    padding:9px 16px;font-family:inherit;font-size:13px;font-weight:600;
+    color:var(--accent-dark);cursor:pointer;
+  }
+  .cal-slots:hover{background:var(--accent-dark);color:var(--bg)}
+  .izveletais-laiks{
+    display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;
+    background:#E4EDD8;border:0.5px solid rgba(59,109,17,.3);border-radius:12px;
+    padding:14px 18px;font-size:14px;color:var(--zala);font-weight:600;margin-bottom:6px;
   }
 
   /* --- Cenas --- */
@@ -124,48 +253,39 @@
   .cena-sum{font-size:15px;font-weight:800;white-space:nowrap;color:var(--accent-dark)}
   .cena-veca{font-size:12px;color:var(--muted);text-decoration:line-through;font-weight:400;margin-right:5px}
 
-  /* --- Bērnu cilnes --- */
-  .berni-cilnes{display:flex;flex-wrap:wrap;gap:8px;margin:-8px 0 16px}
-  .berni-cilnes:empty{margin:0}
-  .cilne-berns{
-    padding:8px 16px;border-radius:100px;
-    border:0.5px solid var(--border);background:var(--bg2);
-    font-family:inherit;font-size:13px;font-weight:600;
-    color:var(--muted);cursor:pointer;
+  .tukss-note{
+    font-size:13px;color:var(--muted);line-height:1.6;
+    background:var(--bg);border:0.5px dashed var(--border);
+    border-radius:12px;padding:18px 20px;
   }
-  .cilne-berns:hover{border-color:var(--accent-dark);color:var(--accent-dark)}
-  .cilne-berns.aktiva{background:var(--accent-dark);border-color:var(--accent-dark);color:var(--bg)}
 
-  /* --- Kompaktā anketa (uz pusi mazāka) --- */
-  .anketa-forma{padding:15px 14px;margin-top:16px}
-  .anketa-forma h2{font-size:11px;margin-bottom:4px}
-  .anketa-forma .h2-piezime{font-size:11.5px;margin-bottom:14px}
-  .anketa-forma .rinda{gap:10px}
-  .anketa-forma .lauks{margin-bottom:10px}
-  .anketa-forma label{font-size:10px;margin-bottom:5px}
-  .anketa-forma input,.anketa-forma textarea{padding:9px 11px;font-size:13px}
-  .anketa-forma textarea{min-height:46px}
-  .anketa-forma .jautajums{padding-top:12px;margin-top:12px}
-  .anketa-forma .jaut-teksts{font-size:14px;margin-bottom:9px}
-  .anketa-forma .izvele{gap:6px;margin-bottom:9px}
-  .anketa-forma .izvele label{padding:6px 13px;font-size:11.5px}
-  .anketa-forma .cta{padding:12px;font-size:13.5px}
-
-  /* --- Ziņojumi --- */
-  .zinojums{
-    font-size:13.5px;line-height:1.55;padding:13px 15px;border-radius:10px;
-    margin-bottom:20px;display:none;
+  /* --- Tosts (neuzbāzīgs paziņojums) --- */
+  .tosts{
+    position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(18px);
+    background:var(--text);color:var(--bg);padding:13px 22px;border-radius:100px;
+    font-size:13.5px;font-weight:600;box-shadow:0 8px 26px rgba(0,0,0,.2);
+    opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;
+    z-index:60;max-width:90vw;text-align:center;
   }
-  .zinojums.kluda{display:block;background:#F4E2DC;color:var(--sarkana);border:0.5px solid rgba(156,58,34,.25)}
-  .zinojums.labi{display:block;background:#E4EDD8;color:var(--zala);border:0.5px solid rgba(59,109,17,.25)}
-  .paslepts{display:none}
+  .tosts.redzams{opacity:1;transform:translateX(-50%) translateY(0)}
+  .tosts.labi{background:var(--zala)}
+  .tosts.kluda{background:var(--sarkana)}
 
-  @media(max-width:900px){
-    .rezgis{grid-template-columns:1fr}
-    main{padding:32px 20px 70px}
-    .josla{padding:16px 20px}
+  .paslepts{display:none !important}
+
+  /* --- Responsīvi: planšete un telefons --- */
+  @media(max-width:860px){
+    .izkartojums{grid-template-columns:1fr;gap:20px;padding:22px 18px 70px}
+    .sanu-nav{
+      position:static;flex-direction:row;gap:8px;
+      overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;
+    }
+    .nav-poga{white-space:nowrap;padding:10px 14px;font-size:13px;width:auto}
+    .josla{padding:16px 18px}
     .josla-epasts{display:none}
     .rinda{grid-template-columns:1fr}
+    .bernu-karte-galva{flex-direction:column}
+    .bernu-pogas{flex-shrink:0}
   }
 </style>
 </head>
@@ -179,29 +299,77 @@
   </div>
 </header>
 
-<main>
-  <p class="ielade" id="ielade">Ielādē profilu…</p>
+<!-- Ielādes stāvoklis -->
+<p class="ielade" id="ielade">Ielādē profilu…</p>
 
-  <div id="saturs" class="paslepts">
+<!-- Galvenais saturs -->
+<div class="izkartojums paslepts" id="izkartojums">
 
-    <h1 class="virsraksts" style="margin-bottom:28px">Sveiks, <em id="sveiciensVards"></em></h1>
+  <!-- ======== SĀNU NAVIGĀCIJA ======== -->
+  <nav class="sanu-nav" role="tablist" aria-label="Profila sadaļas">
+    <button class="nav-poga aktiva" id="navProfils" role="tab" aria-selected="true" aria-controls="sadalaProfils" data-sadala="Profils">
+      <span class="nav-ik" aria-hidden="true">👤</span> Mans profils
+    </button>
+    <button class="nav-poga" id="navPieteikties" role="tab" aria-selected="false" aria-controls="sadalaPieteikties" data-sadala="Pieteikties">
+      <span class="nav-ik" aria-hidden="true">🎵</span> Pieteikties nodarbībai
+    </button>
+    <button class="nav-poga" id="navMaksajumi" role="tab" aria-selected="false" aria-controls="sadalaMaksajumi" data-sadala="Maksajumi">
+      <span class="nav-ik" aria-hidden="true">💳</span> Maksājumi
+    </button>
+  </nav>
 
-    <div class="zinojums" id="zinojums"></div>
+  <!-- ======== SATURS ======== -->
+  <main>
 
-    <div class="rezgis">
+    <!-- ---------- SADAĻA: MANS PROFILS ---------- -->
+    <section class="sadala aktiva" id="sadalaProfils" role="tabpanel" aria-labelledby="navProfils">
+      <h1 class="virsraksts">Sveiks, <em id="sveiciensVards"></em></h1>
+      <p class="ievads">Šeit vari apskatīt un labot savus kontaktdatus. Ar tiem sazināsimies par nodarbībām.</p>
 
-      <!-- ============ KREISĀ PUSE ============ -->
-      <div>
+      <section class="karte">
+        <h2>Vecāka profils</h2>
+        <p class="h2-piezime">Ar šiem datiem sazināsimies par nodarbībām.</p>
 
-        <section class="karte karte-uzsvers">
-          <button class="cta" id="pogaPieteikt">Pieteikt uz nodarbību</button>
-          <p class="cta-piezime">Sazināsimies 1 darba dienas laikā, lai apstiprinātu laiku.</p>
-        </section>
+        <div class="lauks">
+          <label for="vards">Vārds, uzvārds</label>
+          <input type="text" id="vards" autocomplete="name">
+        </div>
+        <div class="lauks">
+          <label for="telefons">Telefons</label>
+          <input type="tel" id="telefons" autocomplete="tel" placeholder="+371 20 000 000">
+        </div>
+        <div class="lauks">
+          <label for="epasts">E-pasts</label>
+          <input type="email" id="epasts" disabled title="E-pastu maina tikai caur atbalstu">
+        </div>
+        <button class="cta" id="pogaSaglabatProfilu">Saglabāt profilu</button>
+      </section>
+    </section>
 
-        <div class="berni-cilnes" id="berniCilnes"></div>
+    <!-- ---------- SADAĻA: PIETEIKTIES NODARBĪBAI ---------- -->
+    <section class="sadala" id="sadalaPieteikties" role="tabpanel" aria-labelledby="navPieteikties">
+      <h1 class="virsraksts">Pieteikties nodarbībai</h1>
+      <p class="ievads">Pievieno bērnu, izvēlies nodarbības laiku un veic apmaksu — soli pa solim.</p>
 
-        <section class="karte anketa-forma paslepts" id="anketaKarte">
-          <h2>Par bērnu</h2>
+      <!-- Soļu josla -->
+      <ol class="celi" id="celi" aria-hidden="true">
+        <li data-cels="1"><span class="celi-nr">1</span> Pievienot bērnu</li>
+        <li data-cels="2"><span class="celi-nr">2</span> Izvēlēties laiku</li>
+        <li data-cels="3"><span class="celi-nr">3</span> Veikt apmaksu</li>
+      </ol>
+
+      <!-- ===== 1. SOLIS: PIEVIENOT BĒRNU ===== -->
+      <div class="solis-blok">
+        <div class="solis-galva">
+          <span class="solis-nr">1</span>
+          <h2>Pievienot bērnu</h2>
+        </div>
+
+        <button class="cta" id="pogaPieteiktBernu">Pieteikt bērnu nodarbībai</button>
+
+        <!-- Bērna anketa (sākotnēji paslēpta) -->
+        <section class="karte paslepts" id="anketaKarte" style="margin-top:16px" aria-label="Bērna anketa">
+          <h2 id="anketaVirsraksts">Par bērnu</h2>
           <p class="h2-piezime">Šī informācija palīdz pasniedzējam sagatavoties.</p>
 
           <div class="rinda">
@@ -226,7 +394,6 @@
             </div>
           </div>
 
-          <!-- 1. jautājums -->
           <div class="jautajums">
             <p class="jaut-teksts">Vai bērnam jau ir kāda saskarsme ar mūziku?</p>
             <div class="izvele">
@@ -237,7 +404,6 @@
             <textarea id="muzikaPiezime" placeholder="Pastāsti vairāk — cik ilgi, kur, kas patika vai nepatika…"></textarea>
           </div>
 
-          <!-- 2. jautājums -->
           <div class="jautajums">
             <p class="jaut-teksts">Vai mājās ir kāds mūzikas instruments?</p>
             <div class="izvele">
@@ -248,79 +414,125 @@
             <textarea id="instrumentsPiezime" placeholder="Kāds tieši? Klavieres, ģitāra, sintezators, bungas…"></textarea>
           </div>
 
-          <!-- 3. jautājums -->
           <div class="jautajums">
             <p class="jaut-teksts">Kādās dienās vai datumos vēlētos nodarbības?</p>
             <textarea id="laiki" placeholder="Piemēram: otrdienās un ceturtdienās pēc 16:00, vai sestdienu rītos."></textarea>
           </div>
 
-          <button class="cta" id="pogaSaglabatAnketu" style="margin-top:24px">Saglabāt</button>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:22px;align-items:center">
+            <button class="cta" id="pogaSaglabatBernu" style="flex:1;min-width:200px">Saglabāt bērna anketu</button>
+            <button class="poga2" id="pogaAtceltAnketu">Atcelt</button>
+          </div>
         </section>
 
+        <!-- Saglabāto bērnu kartītes -->
+        <div class="bernu-kartes" id="bernuKartes"></div>
       </div>
 
-      <!-- ============ LABĀ PUSE ============ -->
-      <div>
+      <!-- ===== 2. SOLIS: IZVĒLĒTIES NODARBĪBAS LAIKU ===== -->
+      <div class="solis-blok blokets" id="solis2">
+        <div class="solis-galva">
+          <span class="solis-nr">2</span>
+          <h2>Izvēlēties nodarbības laiku</h2>
+        </div>
 
-        <section class="karte">
-          <h2>Vecāka profils</h2>
-          <p class="h2-piezime">Ar šiem datiem sazināsimies par nodarbībām.</p>
+        <!-- Slēgts stāvoklis (kamēr nav neviena bērna) -->
+        <div id="solis2Slegts">
+          <div class="slegts-note" style="margin-bottom:12px">Vispirms pievieno vismaz vienu bērnu, tad varēsi izvēlēties nodarbības laiku.</div>
+          <button class="poga2" id="pogaSlegtsPievienot">+ Pievienot bērnu</button>
+        </div>
 
-          <div class="lauks">
-            <label for="vards">Vārds, uzvārds</label>
-            <input type="text" id="vards">
-          </div>
-          <div class="lauks">
-            <label for="telefons">Telefons</label>
-            <input type="tel" id="telefons" placeholder="+371 20 000 000">
-          </div>
-          <div class="lauks">
-            <label for="epasts">E-pasts</label>
-            <input type="email" id="epasts" disabled title="E-pastu maina tikai caur atbalstu">
-          </div>
-          <button class="cta" id="pogaSaglabatProfilu">Saglabāt profilu</button>
-        </section>
+        <!-- Atvērts stāvoklis -->
+        <div id="solis2Saturs" class="paslepts">
+          <label for="bernsIzvele" id="bernsIzveleLabel">Kuram bērnam?</label>
+          <div class="berns-izvele" id="bernsIzvele" role="radiogroup" aria-labelledby="bernsIzveleLabel"></div>
 
-        <section class="karte">
-          <h2>Cenas un abonementi</h2>
-          <p class="h2-piezime">Nodarbības notiek VEF Kvartālā, Rīgā.</p>
+          <div class="karte" style="margin-bottom:0">
+            <h2>Nodarbības laiks</h2>
+            <p class="h2-piezime">Izvēlies sev ērtu nodarbības laiku.</p>
 
-          <div class="cena">
-            <span class="cena-nos">Iepazīšanās
-              <span class="cena-det">Pirmā nodarbība · 20 min</span>
-            </span>
-            <span class="cena-sum">20&thinsp;€</span>
-          </div>
-          <div class="cena">
-            <span class="cena-nos">Viena nodarbība
-              <span class="cena-det">50 min</span>
-            </span>
-            <span class="cena-sum">80&thinsp;€</span>
-          </div>
-          <div class="cena">
-            <span class="cena-nos">1 nodarbība nedēļā
-              <span class="cena-det">Abonements · 4 nedēļas · 70&thinsp;€ par nodarbību</span>
-            </span>
-            <span class="cena-sum"><span class="cena-veca">320&thinsp;€</span>280&thinsp;€</span>
-          </div>
-          <div class="cena">
-            <span class="cena-nos">2 nodarbības nedēļā
-              <span class="cena-det">Abonements · 4 nedēļas · 70&thinsp;€ par nodarbību</span>
-            </span>
-            <span class="cena-sum"><span class="cena-veca">640&thinsp;€</span>560&thinsp;€</span>
-          </div>
-          <div class="cena">
-            <span class="cena-nos">Dāvanu karte
-              <span class="cena-det">Saņem klātienē, pakomātā vai e-pastā</span>
-            </span>
-            <span class="cena-sum">—</span>
-          </div>
-        </section>
+            <!-- Konteiners Calendly iegulšanai (pagaidām vietturis) -->
+            <div class="calendly-viet" id="calendlyKonteiners">
+              <div class="cal-ik" aria-hidden="true">📅</div>
+              <p class="cal-teksts">Calendly kalendārs</p>
+              <p class="cal-sub">Šeit tiks integrēts Calendly nodarbības laika rezervēšanai. Pagaidām izvēlies vienu no pieejamajiem laikiem.</p>
+              <div class="cal-sloti" id="calSloti"></div>
+            </div>
 
+            <!-- Izvēlētais laiks -->
+            <div class="izveletais-laiks paslepts" id="izveletaisLaiksBloks">
+              <span>✓ Izvēlētais laiks: <strong id="izveletaisLaiksTeksts"></strong></span>
+              <button class="mini-poga" id="pogaMainitLaiku">Mainīt</button>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
-</main>
+
+      <!-- ===== 3. SOLIS: VEIKT APMAKSU ===== -->
+      <div class="solis-blok blokets" id="solis3">
+        <div class="solis-galva">
+          <span class="solis-nr">3</span>
+          <h2>Veikt apmaksu</h2>
+        </div>
+        <div class="slegts-note" id="solis3Slegts" style="margin-bottom:12px">Izvēlies bērnu un nodarbības laiku, lai turpinātu uz apmaksu.</div>
+        <button class="cta" id="pogaApmaksa" disabled>Veikt apmaksu</button>
+        <p class="cta-piezime">Pēc apmaksas sazināsimies, lai apstiprinātu nodarbību.</p>
+      </div>
+    </section>
+
+    <!-- ---------- SADAĻA: MAKSĀJUMI ---------- -->
+    <section class="sadala" id="sadalaMaksajumi" role="tabpanel" aria-labelledby="navMaksajumi">
+      <h1 class="virsraksts">Maksājumi</h1>
+      <p class="ievads">Cenrādis un tavu maksājumu vēsture.</p>
+
+      <section class="karte">
+        <h2>Cenas un abonementi</h2>
+        <p class="h2-piezime">Nodarbības notiek VEF Kvartālā, Rīgā.</p>
+
+        <div class="cena">
+          <span class="cena-nos">Iepazīšanās
+            <span class="cena-det">Pirmā nodarbība · 20 min</span>
+          </span>
+          <span class="cena-sum">20&thinsp;€</span>
+        </div>
+        <div class="cena">
+          <span class="cena-nos">Viena nodarbība
+            <span class="cena-det">50 min</span>
+          </span>
+          <span class="cena-sum">80&thinsp;€</span>
+        </div>
+        <div class="cena">
+          <span class="cena-nos">1 nodarbība nedēļā
+            <span class="cena-det">Abonements · 4 nedēļas · 70&thinsp;€ par nodarbību</span>
+          </span>
+          <span class="cena-sum"><span class="cena-veca">320&thinsp;€</span>280&thinsp;€</span>
+        </div>
+        <div class="cena">
+          <span class="cena-nos">2 nodarbības nedēļā
+            <span class="cena-det">Abonements · 4 nedēļas · 70&thinsp;€ par nodarbību</span>
+          </span>
+          <span class="cena-sum"><span class="cena-veca">640&thinsp;€</span>560&thinsp;€</span>
+        </div>
+        <div class="cena">
+          <span class="cena-nos">Dāvanu karte
+            <span class="cena-det">Saņem klātienē, pakomātā vai e-pastā</span>
+          </span>
+          <span class="cena-sum">—</span>
+        </div>
+      </section>
+
+      <section class="karte">
+        <h2>Maksājumu vēsture</h2>
+        <p class="h2-piezime">Šeit parādīsies tavi veiktie maksājumi un rēķini.</p>
+        <div class="tukss-note">Vēl nav neviena maksājuma. Kad būsi veicis apmaksu, tas parādīsies šeit.</div>
+      </section>
+    </section>
+
+  </main>
+</div>
+
+<!-- Tosts (neuzbāzīgs paziņojums) -->
+<div class="tosts" id="tosts" role="status" aria-live="polite"></div>
 
 <script type="module">
 import {
@@ -328,33 +540,77 @@ import {
   izrakstities, kludasTeksts
 } from './js/firebase-init.js';
 
-const zinojums = document.getElementById('zinojums');
-const anketaKarte = document.getElementById('anketaKarte');
-const berniCilnesEl = document.getElementById('berniCilnes');
-let uid = null;
-let berni = [];
-let rediggamaisIndekss = null;
-
 const el = (id) => document.getElementById(id);
 
-function paradit(teksts, veids = 'kluda') {
-  zinojums.textContent = teksts;
-  zinojums.className = 'zinojums ' + veids;
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+/* ---------- Stāvoklis ---------- */
+let uid = null;
+let berni = [];                 // Firestore users/{uid}.berni
+let rediggamaisIndekss = null;  // kuru bērnu šobrīd rediģē anketā (null = jauns)
+let izveletaisBernsIdx = null;  // 2. solī izvēlētais bērns
+let izveletaisLaiks = '';       // 2. solī izvēlētais nodarbības laiks
+
+// Pagaidu mock laiki, kamēr nav Calendly integrācijas.
+const pieejamieLaiki = [
+  'Pirmdiena 16:00', 'Otrdiena 17:00', 'Trešdiena 15:30',
+  'Ceturtdiena 17:30', 'Sestdiena 10:00',
+];
+
+/* ---------- PAGAIDU localStorage glabātuve ----------
+   Nodarbības laika izvēli un apmaksas soli glabājam lokāli pārlūkā, jo Calendly
+   un maksājumu backend vēl nav integrēts. Kad būs īsts backend, aizvieto šīs
+   funkcijas ar servera izsaukumiem — pārējais kods paliek nemainīgs. */
+const pagaiduAtslega = () => `sd_pieteikums_${uid}`;
+function pagaiduIelasit() {
+  try { return JSON.parse(localStorage.getItem(pagaiduAtslega())) || {}; }
+  catch { return {}; }
+}
+function pagaiduSaglabat() {
+  localStorage.setItem(pagaiduAtslega(), JSON.stringify({
+    izveletaisBernsIdx, izveletaisLaiks,
+  }));
 }
 
+/* ---------- Tosts ---------- */
+let tostsTaimeris;
+function tosts(teksts, veids = 'labi') {
+  const t = el('tosts');
+  t.textContent = teksts;
+  t.className = 'tosts redzams ' + veids;
+  clearTimeout(tostsTaimeris);
+  tostsTaimeris = setTimeout(() => { t.className = 'tosts ' + veids; }, 3400);
+}
+
+/* ---------- Navigācija starp sadaļām ---------- */
+const navPogas = [
+  { poga: 'navProfils', sadala: 'sadalaProfils' },
+  { poga: 'navPieteikties', sadala: 'sadalaPieteikties' },
+  { poga: 'navMaksajumi', sadala: 'sadalaMaksajumi' },
+];
+function paradietSadalu(sadalasId) {
+  navPogas.forEach(({ poga, sadala }) => {
+    const aktivs = sadala === sadalasId;
+    el(poga).classList.toggle('aktiva', aktivs);
+    el(poga).setAttribute('aria-selected', aktivs ? 'true' : 'false');
+    el(sadala).classList.toggle('aktiva', aktivs);
+  });
+}
+navPogas.forEach(({ poga, sadala }) => {
+  el(poga).onclick = () => paradietSadalu(sadala);
+});
+
+/* ---------- Radio pogu palīgfunkcijas ---------- */
 function iestatitRadio(nosaukums, vertiba) {
   document.querySelectorAll(`input[name="${nosaukums}"]`).forEach((r) => (r.checked = false));
   if (!vertiba) return;
   const poga = document.querySelector(`input[name="${nosaukums}"][value="${vertiba}"]`);
   if (poga) poga.checked = true;
 }
-
 function nolasitRadio(nosaukums) {
   const izvelets = document.querySelector(`input[name="${nosaukums}"]:checked`);
   return izvelets ? izvelets.value : '';
 }
 
+/* ---------- Anketas forma ---------- */
 function iestatitAnketasFormu(berns) {
   el('bernaVards').value = berns?.berna_vards || '';
   el('bernaVecums').value = berns?.berna_vecums || '';
@@ -366,84 +622,237 @@ function iestatitAnketasFormu(berns) {
   el('instrumentsPiezime').value = berns?.instrumenta_piezime || '';
   el('laiki').value = berns?.velamie_laiki || '';
 }
+function atvertAnketu(indekss) {
+  rediggamaisIndekss = indekss;
+  iestatitAnketasFormu(indekss === null ? null : berni[indekss]);
+  el('anketaVirsraksts').textContent = indekss === null ? 'Par bērnu' : 'Rediģēt bērnu';
+  el('pogaSaglabatBernu').textContent = indekss === null ? 'Saglabāt bērna anketu' : 'Saglabāt izmaiņas';
+  el('anketaKarte').classList.remove('paslepts');
+  el('pogaPieteiktBernu').classList.add('paslepts');
+  el('anketaKarte').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  el('bernaVards').focus();
+}
+function aizvertAnketu() {
+  el('anketaKarte').classList.add('paslepts');
+  el('pogaPieteiktBernu').classList.remove('paslepts');
+  rediggamaisIndekss = null;
+}
 
-function paradaitCilnes() {
-  berniCilnesEl.innerHTML = '';
-  berni.forEach((berns, i) => {
-    const poga = document.createElement('button');
-    poga.type = 'button';
-    poga.className = 'cilne-berns' + (i === rediggamaisIndekss ? ' aktiva' : '');
-    poga.textContent = berns.berna_vards || 'Bērns';
-    poga.onclick = () => {
-      rediggamaisIndekss = i;
-      iestatitAnketasFormu(berni[i]);
-      anketaKarte.classList.remove('paslepts');
-      paradaitCilnes();
-      anketaKarte.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    };
-    berniCilnesEl.appendChild(poga);
+/* ---------- Bērnu kartītes ---------- */
+function bernaKopsavilkums(b) {
+  const dalas = [];
+  if (b.berna_vecums) dalas.push(b.berna_vecums);
+  if (b.muzikas_pieredze) dalas.push('mūzika: ' + b.muzikas_pieredze.toLowerCase());
+  if (b.velamie_laiki) dalas.push('vēlas: ' + b.velamie_laiki);
+  return dalas;
+}
+function zimetBernuKartes() {
+  const konteiners = el('bernuKartes');
+  konteiners.innerHTML = '';
+
+  berni.forEach((b, i) => {
+    const karte = document.createElement('div');
+    karte.className = 'bernu-karte';
+
+    const galva = document.createElement('div');
+    galva.className = 'bernu-karte-galva';
+
+    const kreisa = document.createElement('div');
+    const vards = document.createElement('div');
+    vards.className = 'bernu-vards';
+    vards.textContent = b.berna_vards || 'Bērns';
+    kreisa.appendChild(vards);
+
+    const info = document.createElement('div');
+    info.className = 'bernu-info';
+    const kops = bernaKopsavilkums(b);
+    info.textContent = kops.length ? kops.join(' · ') : 'Anketa saglabāta';
+    kreisa.appendChild(info);
+    galva.appendChild(kreisa);
+
+    const pogas = document.createElement('div');
+    pogas.className = 'bernu-pogas';
+
+    const rediget = document.createElement('button');
+    rediget.className = 'mini-poga';
+    rediget.type = 'button';
+    rediget.textContent = 'Rediģēt';
+    rediget.onclick = () => atvertAnketu(i);
+
+    const dzest = document.createElement('button');
+    dzest.className = 'mini-poga dzest';
+    dzest.type = 'button';
+    dzest.textContent = 'Dzēst';
+    dzest.onclick = () => paradietDzestApstiprinajumu(karte, i);
+
+    pogas.appendChild(rediget);
+    pogas.appendChild(dzest);
+    galva.appendChild(pogas);
+    karte.appendChild(galva);
+
+    konteiners.appendChild(karte);
   });
 }
 
-prasitPieteiksanos(async (user) => {
-  uid = user.uid;
-  let p = null;
-  try {
-    p = await iegutProfilu(user.uid);
-  } catch (err) {
-    console.error('Kļūda ielādējot profilu:', err);
-    paradit(kludasTeksts(err));
-  }
+// Dzēšanas apstiprinājums tieši kartītē (bez native dialoga)
+function paradietDzestApstiprinajumu(karte, indekss) {
+  if (karte.querySelector('.bernu-dzest-apst')) return;
+  const apst = document.createElement('div');
+  apst.className = 'bernu-dzest-apst';
 
-  el('sveiciensVards').textContent = p?.vards || user.displayName || 'draugs';
-  el('joslaEpasts').textContent = user.email;
+  const teksts = document.createElement('span');
+  teksts.textContent = 'Dzēst šo bērnu?';
 
-  el('vards').value = p?.vards || user.displayName || '';
-  el('telefons').value = p?.telefons || '';
-  el('epasts').value = user.email;
+  const ja = document.createElement('button');
+  ja.className = 'mini-poga dzest';
+  ja.type = 'button';
+  ja.textContent = 'Jā, dzēst';
+  ja.onclick = () => dzestBernu(indekss);
 
-  // Vecie profili glabāja vienu bērnu tieši profilā — pārceļam to sarakstā.
-  // Firestore nepieņem "undefined" vērtības, tāpēc trūkstošajiem laukiem jāliek tukša virkne.
-  berni = p?.berni || (p?.berna_vards ? [{
-    berna_vards: p.berna_vards || '', berna_vecums: p.berna_vecums || '',
-    vecaka_tel: p.vecaka_tel || '', berna_tel: p.berna_tel || '',
-    muzikas_pieredze: p.muzikas_pieredze || '', muzikas_piezime: p.muzikas_piezime || '',
-    instruments_majas: p.instruments_majas || '', instrumenta_piezime: p.instrumenta_piezime || '',
-    velamie_laiki: p.velamie_laiki || '',
-  }] : []);
-  paradaitCilnes();
+  const ne = document.createElement('button');
+  ne.className = 'mini-poga';
+  ne.type = 'button';
+  ne.textContent = 'Atcelt';
+  ne.onclick = () => apst.remove();
 
-  el('ielade').classList.add('paslepts');
-  el('saturs').classList.remove('paslepts');
-});
-
-async function saglabat(poga, dati, teksts) {
-  const sakotnejais = poga.textContent;
-  poga.disabled = true;
-  poga.textContent = 'Saglabā…';
-  let izdevas = false;
-  try {
-    await saglabatProfilu(uid, dati);
-    paradit(teksts, 'labi');
-    izdevas = true;
-  } catch (err) {
-    console.error('Kļūda saglabājot profilu:', err);
-    paradit(kludasTeksts(err));
-  }
-  poga.disabled = false;
-  poga.textContent = sakotnejais;
-  return izdevas;
+  apst.appendChild(teksts);
+  apst.appendChild(ja);
+  apst.appendChild(ne);
+  karte.appendChild(apst);
+  ja.focus();
 }
 
-el('pogaSaglabatProfilu').onclick = async () => {
-  const izdevas = await saglabat(el('pogaSaglabatProfilu'), {
-    vards: el('vards').value.trim(),
-    telefons: el('telefons').value.trim(),
-  }, 'Profils saglabāts.');
-  if (izdevas) el('sveiciensVards').textContent = el('vards').value.trim() || 'draugs';
+async function dzestBernu(indekss) {
+  const jaunieBerni = berni.filter((_, i) => i !== indekss);
+  const izdevas = await saglabatBernus(jaunieBerni, 'Bērns izdzēsts.');
+  if (!izdevas) return;
+
+  berni = jaunieBerni;
+  // Ja bija izvēlēts dzēstais bērns, atiestatām izvēli.
+  if (izveletaisBernsIdx === indekss) izveletaisBernsIdx = null;
+  else if (izveletaisBernsIdx > indekss) izveletaisBernsIdx--;
+  pagaiduSaglabat();
+
+  zimetBernuKartes();
+  atjaunotSolus();
+}
+
+/* ---------- Saglabāšana Firestore ---------- */
+async function saglabatBernus(jaunieBerni, veiksmesTeksts) {
+  const poga = el('pogaSaglabatBernu');
+  const sak = poga.textContent;
+  poga.disabled = true;
+  try {
+    await saglabatProfilu(uid, { berni: jaunieBerni });
+    tosts(veiksmesTeksts, 'labi');
+    poga.disabled = false;
+    poga.textContent = sak;
+    return true;
+  } catch (err) {
+    console.error('Kļūda saglabājot bērnus:', err);
+    tosts(kludasTeksts(err), 'kluda');
+    poga.disabled = false;
+    poga.textContent = sak;
+    return false;
+  }
+}
+
+/* ---------- 2. solis: bērna izvēle + laiks ---------- */
+function zimetBernaIzveli() {
+  const konteiners = el('bernsIzvele');
+  konteiners.innerHTML = '';
+  berni.forEach((b, i) => {
+    const id = 'izvBerns' + i;
+    const inp = document.createElement('input');
+    inp.type = 'radio';
+    inp.name = 'izveletaisBerns';
+    inp.id = id;
+    inp.value = String(i);
+    inp.checked = i === izveletaisBernsIdx;
+    inp.onchange = () => {
+      izveletaisBernsIdx = i;
+      pagaiduSaglabat();
+      atjaunotSolus();
+    };
+    const lab = document.createElement('label');
+    lab.setAttribute('for', id);
+    lab.textContent = b.berna_vards || ('Bērns ' + (i + 1));
+    konteiners.appendChild(inp);
+    konteiners.appendChild(lab);
+  });
+}
+
+function zimetLaikaSlotus() {
+  const konteiners = el('calSloti');
+  konteiners.innerHTML = '';
+  pieejamieLaiki.forEach((laiks) => {
+    const poga = document.createElement('button');
+    poga.type = 'button';
+    poga.className = 'cal-slots';
+    poga.textContent = laiks;
+    poga.onclick = () => {
+      izveletaisLaiks = laiks;
+      pagaiduSaglabat();
+      atjaunotSolus();
+      tosts('Laiks izvēlēts: ' + laiks, 'labi');
+    };
+    konteiners.appendChild(poga);
+  });
+}
+
+el('pogaMainitLaiku').onclick = () => {
+  izveletaisLaiks = '';
+  pagaiduSaglabat();
+  atjaunotSolus();
 };
 
-el('pogaSaglabatAnketu').onclick = async () => {
+el('pogaSlegtsPievienot').onclick = () => atvertAnketu(null);
+
+/* ---------- Soļu stāvokļu atjaunošana ---------- */
+function atjaunotSolus() {
+  const irBerni = berni.length > 0;
+  const irIzveletsBerns = izveletaisBernsIdx !== null && !!berni[izveletaisBernsIdx];
+  const irLaiks = !!izveletaisLaiks;
+
+  // 2. solis
+  el('solis2').classList.toggle('blokets', !irBerni);
+  el('solis2Slegts').classList.toggle('paslepts', irBerni);
+  el('solis2Saturs').classList.toggle('paslepts', !irBerni);
+  if (irBerni) {
+    zimetBernaIzveli();
+    // Laika sloti / izvēlētais laiks
+    el('izveletaisLaiksBloks').classList.toggle('paslepts', !irLaiks);
+    el('calendlyKonteiners').classList.toggle('paslepts', irLaiks);
+    if (irLaiks) el('izveletaisLaiksTeksts').textContent = izveletaisLaiks;
+  }
+
+  // 3. solis
+  const var3 = irBerni && irIzveletsBerns && irLaiks;
+  el('solis3').classList.toggle('blokets', !var3);
+  el('solis3Slegts').classList.toggle('paslepts', var3);
+  el('pogaApmaksa').disabled = !var3;
+
+  // Soļu josla (breadcrumb)
+  atjaunotCelus(irBerni, irIzveletsBerns && irLaiks, var3);
+}
+
+function atjaunotCelus(solis1Ok, solis2Ok, solis3Aktivs) {
+  const celi = el('celi').querySelectorAll('li');
+  // 1. solis
+  celi[0].classList.toggle('pabeigts', solis1Ok);
+  celi[0].classList.toggle('aktivs', !solis1Ok);
+  // 2. solis
+  celi[1].classList.toggle('pabeigts', solis2Ok);
+  celi[1].classList.toggle('aktivs', solis1Ok && !solis2Ok);
+  // 3. solis
+  celi[2].classList.toggle('aktivs', solis3Aktivs);
+}
+
+/* ---------- Notikumi: anketa ---------- */
+el('pogaPieteiktBernu').onclick = () => atvertAnketu(null);
+el('pogaAtceltAnketu').onclick = () => aizvertAnketu();
+
+el('pogaSaglabatBernu').onclick = async () => {
   const dati = {
     berna_vards: el('bernaVards').value.trim(),
     berna_vecums: el('bernaVecums').value.trim(),
@@ -457,33 +866,101 @@ el('pogaSaglabatAnketu').onclick = async () => {
   };
 
   const jaunieBerni = [...berni];
+  let janoizvele = null;
   if (rediggamaisIndekss === null) {
     jaunieBerni.push(dati);
+    janoizvele = jaunieBerni.length - 1;
   } else {
     jaunieBerni[rediggamaisIndekss] = dati;
   }
 
-  const izdevas = await saglabat(el('pogaSaglabatAnketu'), { berni: jaunieBerni }, 'Saglabāts.');
+  const izdevas = await saglabatBernus(jaunieBerni,
+    rediggamaisIndekss === null ? 'Bērns pievienots.' : 'Izmaiņas saglabātas.');
   if (!izdevas) return;
 
   berni = jaunieBerni;
-  rediggamaisIndekss = null;
-  anketaKarte.classList.add('paslepts');
-  paradaitCilnes();
+  // Jaunu bērnu uzreiz izvēlamies 2. solim ērtībai.
+  if (janoizvele !== null && izveletaisBernsIdx === null) izveletaisBernsIdx = janoizvele;
+  pagaiduSaglabat();
+
+  aizvertAnketu();
+  zimetBernuKartes();
+  atjaunotSolus();
 };
 
-el('pogaPieteikt').onclick = () => {
-  rediggamaisIndekss = null;
-  iestatitAnketasFormu(null);
-  anketaKarte.classList.remove('paslepts');
-  paradaitCilnes();
-  anketaKarte.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+/* ---------- Notikumi: apmaksa (vietturis) ---------- */
+el('pogaApmaksa').onclick = () => {
+  const berns = berni[izveletaisBernsIdx];
+  tosts(`Apmaksa "${berns?.berna_vards || 'bērnam'}" (${izveletaisLaiks}) — drīzumā pieejama.`, 'labi');
+};
+
+/* ---------- Notikumi: profils ---------- */
+el('pogaSaglabatProfilu').onclick = async () => {
+  const poga = el('pogaSaglabatProfilu');
+  const sak = poga.textContent;
+  poga.disabled = true;
+  poga.textContent = 'Saglabā…';
+  try {
+    await saglabatProfilu(uid, {
+      vards: el('vards').value.trim(),
+      telefons: el('telefons').value.trim(),
+    });
+    el('sveiciensVards').textContent = el('vards').value.trim() || 'draugs';
+    tosts('Profils saglabāts.', 'labi');
+  } catch (err) {
+    console.error('Kļūda saglabājot profilu:', err);
+    tosts(kludasTeksts(err), 'kluda');
+  }
+  poga.disabled = false;
+  poga.textContent = sak;
 };
 
 el('pogaIzrakstities').onclick = async () => {
   await izrakstities();
   window.location.href = 'index.html';
 };
+
+/* ---------- Ielāde ---------- */
+prasitPieteiksanos(async (user) => {
+  uid = user.uid;
+  let p = null;
+  try {
+    p = await iegutProfilu(user.uid);
+  } catch (err) {
+    console.error('Kļūda ielādējot profilu:', err);
+    tosts(kludasTeksts(err), 'kluda');
+  }
+
+  el('sveiciensVards').textContent = p?.vards || user.displayName || 'draugs';
+  el('joslaEpasts').textContent = user.email;
+
+  el('vards').value = p?.vards || user.displayName || '';
+  el('telefons').value = p?.telefons || '';
+  el('epasts').value = user.email;
+
+  // Vecie profili glabāja vienu bērnu tieši profilā — pārceļam to sarakstā.
+  // Firestore nepieņem "undefined" vērtības, tāpēc trūkstošajiem laukiem tukša virkne.
+  berni = p?.berni || (p?.berna_vards ? [{
+    berna_vards: p.berna_vards || '', berna_vecums: p.berna_vecums || '',
+    vecaka_tel: p.vecaka_tel || '', berna_tel: p.berna_tel || '',
+    muzikas_pieredze: p.muzikas_pieredze || '', muzikas_piezime: p.muzikas_piezime || '',
+    instruments_majas: p.instruments_majas || '', instrumenta_piezime: p.instrumenta_piezime || '',
+    velamie_laiki: p.velamie_laiki || '',
+  }] : []);
+
+  // Atjaunojam pagaidu (localStorage) pieteikšanās stāvokli.
+  const pagaidu = pagaiduIelasit();
+  izveletaisBernsIdx = (pagaidu.izveletaisBernsIdx != null && berni[pagaidu.izveletaisBernsIdx])
+    ? pagaidu.izveletaisBernsIdx : null;
+  izveletaisLaiks = pagaidu.izveletaisLaiks || '';
+
+  zimetLaikaSlotus();
+  zimetBernuKartes();
+  atjaunotSolus();
+
+  el('ielade').classList.add('paslepts');
+  el('izkartojums').classList.remove('paslepts');
+});
 </script>
 </body>
 </html>
