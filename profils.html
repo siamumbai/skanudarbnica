@@ -50,6 +50,8 @@
     max-width:1180px;margin:0 auto;padding:36px 32px 90px;
     display:grid;grid-template-columns:224px 1fr;gap:38px;align-items:start;
   }
+  /* min-width:0 ļauj saturam (dienu ritjoslai) sarukt, nevis izstiept lapu */
+  .izkartojums > main{min-width:0}
   .ielade{max-width:1180px;margin:0 auto;padding:44px 32px;color:var(--muted);font-size:15px}
 
   /* --- Sānu navigācija --- */
@@ -200,9 +202,10 @@
 
   /* --- Rezervācijas: bilances cips hederī, veidi, laiki, saraksti, paketes --- */
   .bilances-cips{
-    display:flex;align-items:center;gap:12px;
+    display:flex;align-items:center;gap:14px;width:max-content;max-width:100%;
     background:var(--bg2);border:0.5px solid var(--border);border-radius:100px;
-    padding:6px 6px 6px 16px;font-size:13px;font-weight:600;color:var(--text);
+    padding:8px 8px 8px 18px;font-size:13px;font-weight:600;color:var(--text);
+    margin-bottom:22px;
   }
   .bilances-cips b{font-family:Georgia,serif;font-size:34px;line-height:1;color:var(--accent-dark)}
   .bilances-cips b.pozitiva{color:var(--zala)}
@@ -233,7 +236,7 @@
   }
   .riti-poga:hover{border-color:var(--accent-dark);color:var(--accent-dark)}
   .dienu-riti{
-    display:flex;gap:10px;overflow-x:auto;flex:1;
+    display:flex;gap:10px;overflow-x:auto;flex:1;min-width:0;
     padding-bottom:6px;-webkit-overflow-scrolling:touch;scroll-behavior:smooth;
   }
   .diena-kolonna{flex:0 0 116px;display:flex;flex-direction:column;gap:8px}
@@ -346,10 +349,6 @@
 <header class="josla">
   <a class="logo" href="index.html">skanudarbnica.lv</a>
   <div class="josla-labi">
-    <div class="bilances-cips paslepts" id="bilanceKarte">
-      <span>Atlikušās nodarbības: <b id="bilanceSkaitlis">–</b></span>
-      <button class="cips-poga" id="bilancePoga">Papildināt</button>
-    </div>
     <span class="josla-epasts" id="joslaEpasts"></span>
     <button class="izeja" id="pogaIzrakstities">Izrakstīties</button>
   </div>
@@ -383,6 +382,12 @@
 
   <!-- ======== SATURS ======== -->
   <main>
+
+    <!-- Atlikušo nodarbību cips (redzams rezervāciju sadaļās, virs virsraksta) -->
+    <div class="bilances-cips paslepts" id="bilanceKarte">
+      <span>Atlikušās nodarbības: <b id="bilanceSkaitlis">–</b></span>
+      <button class="cips-poga" id="bilancePoga">Papildināt</button>
+    </div>
 
     <!-- ---------- SADAĻA: MANS PROFILS ---------- -->
     <section class="sadala aktiva" id="sadalaProfils" role="tabpanel" aria-labelledby="navProfils">
@@ -1233,10 +1238,13 @@ prasitPieteiksanos(async (user) => {
   }
 
   // Vecajiem profiliem (izveidoti pirms rezervāciju sistēmas) dokumentā var
-  // trūkt e-pasta lauka — bez tā admin panelis lietotāju neatrod meklēšanā.
-  // Aizpildām to klusām vienreiz.
-  if (!p?.epasts && user.email) {
-    try { await saglabatProfilu(uid, { epasts: user.email }); } catch { /* nav kritiski */ }
+  // trūkt e-pasta vai vārda lauka — bez tiem admin panelis lietotāju neatrod
+  // vai rāda "—". Aizpildām trūkstošo klusām vienreiz.
+  const trukstosie = {};
+  if (!p?.epasts && user.email) trukstosie.epasts = user.email;
+  if (!p?.vards && user.displayName) trukstosie.vards = user.displayName;
+  if (Object.keys(trukstosie).length) {
+    try { await saglabatProfilu(uid, trukstosie); } catch { /* nav kritiski */ }
   }
 
   el('sveiciensVards').textContent = p?.vards || user.displayName || 'draugs';
