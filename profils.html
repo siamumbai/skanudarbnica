@@ -177,22 +177,41 @@
   }
   .izvele input:focus-visible + label{outline:2px solid var(--accent-dark);outline-offset:2px}
 
+  /* --- Mazā "Pievienot audzēkni" poga (kreisā puse, zem apraksta) --- */
+  .poga-pievienot{
+    display:inline-flex;align-items:center;gap:6px;width:auto;
+    background:var(--accent-dark);color:var(--bg);border:none;border-radius:100px;
+    padding:11px 20px;font-family:inherit;font-size:13.5px;font-weight:600;
+    cursor:pointer;transition:background .15s;
+  }
+  .poga-pievienot:hover{background:var(--accent)}
+
   /* --- Audzēkņu kartītes --- */
-  .bernu-kartes{margin-top:20px}
+  .bernu-kartes{margin-top:22px}
   .bernu-karte{
     background:var(--bg2);border:0.5px solid var(--border);
-    border-radius:14px;padding:18px 20px;margin-bottom:12px;
+    border-radius:14px;padding:16px 20px;margin-bottom:12px;
   }
-  .bernu-karte-galva{display:flex;justify-content:space-between;align-items:flex-start;gap:14px}
-  .bernu-vards{font-size:16px;font-weight:800;color:var(--text);line-height:1.2}
-  .bernu-info{font-size:13px;color:var(--muted);margin-top:7px;line-height:1.6}
-  .bernu-info b{color:var(--text);font-weight:600}
-  .bernu-pogas{display:flex;gap:8px;flex-shrink:0}
-  .bernu-dzest-apst{
-    margin-top:14px;padding-top:14px;border-top:0.5px solid var(--border);
+  .bernu-karte-galva{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+  .bernu-vards-poga{
+    background:none;border:none;padding:0;cursor:pointer;text-align:left;
+    font-family:inherit;font-size:16px;font-weight:800;color:var(--text);line-height:1.2;
+  }
+  .bernu-vards-poga:hover{color:var(--accent-dark);text-decoration:underline}
+  .izvelies-laiku{padding:8px 16px;font-size:12.5px;flex-shrink:0}
+
+  /* --- "Dzēst anketu" rediģēšanas apakšā --- */
+  .dzest-anketu-rinda{
+    margin-top:18px;padding-top:16px;border-top:0.5px solid var(--border);
     display:flex;align-items:center;gap:12px;flex-wrap:wrap;
   }
-  .bernu-dzest-apst span{font-size:13px;font-weight:600;color:var(--sarkana)}
+  .dzest-teksta-poga{
+    background:none;border:none;padding:0;cursor:pointer;
+    font-family:inherit;font-size:13px;font-weight:600;
+    color:var(--sarkana);text-decoration:underline;
+  }
+  .dzest-teksta-poga:hover{opacity:.8}
+  .dzest-anketu-rinda span{font-size:13px;font-weight:600;color:var(--sarkana)}
 
   /* --- Audzēkņa izvēle (2. solis) --- */
   .berns-izvele{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
@@ -311,7 +330,7 @@
       <span class="apaks-nr">1</span> Pievienot audzēkni
     </button>
     <button class="apaks-nav-poga" data-panelis="panelisLaiks" role="tab" aria-selected="false">
-      <span class="apaks-nr">2</span> Izvēlēties nodarbības laiku
+      <span class="apaks-nr">2</span> Nodarbības laiks
     </button>
     <button class="apaks-nav-poga" data-panelis="panelisApmaksa" role="tab" aria-selected="false">
       <span class="apaks-nr">3</span> Veikt apmaksu
@@ -354,7 +373,7 @@
         <h1 class="virsraksts">Pievienot audzēkni</h1>
         <p class="ievads">Pievieno vienu vai vairākus audzēkņus, ko vēlies pieteikt nodarbībām.</p>
 
-        <button class="cta" id="pogaPieteiktBernu">Pieteikt audzēkni nodarbībai</button>
+        <button class="poga-pievienot" id="pogaPieteiktBernu">+ Pievienot audzēkni</button>
 
         <!-- Audzēkņa anketa (sākotnēji paslēpta) -->
         <section class="karte paslepts" id="anketaKarte" style="margin-top:16px" aria-label="Audzēkņa anketa">
@@ -412,6 +431,7 @@
             <button class="cta" id="pogaSaglabatBernu" style="flex:1;min-width:200px">Saglabāt audzēkņa anketu</button>
             <button class="poga2" id="pogaAtceltAnketu">Atcelt</button>
           </div>
+          <div class="dzest-anketu-rinda paslepts" id="dzestAnketuRinda"></div>
         </section>
 
         <!-- Saglabāto audzēkņu kartītes -->
@@ -460,10 +480,6 @@
       <div class="apaks-panelis" id="panelisApmaksa" role="tabpanel">
         <h1 class="virsraksts">Veikt apmaksu</h1>
         <p class="ievads">Pārbaudi izvēli un veic apmaksu, lai apstiprinātu nodarbību.</p>
-
-        <div class="slegts-note paslepts" id="apmaksaSlegts" style="margin-bottom:16px">
-          Vispirms izvēlies audzēkni un nodarbības laiku 2. solī.
-        </div>
 
         <section class="karte" id="apmaksaKopsavilkums">
           <h2>Kopsavilkums</h2>
@@ -652,24 +668,48 @@ function atvertAnketu(indekss) {
   iestatitAnketasFormu(indekss === null ? null : berni[indekss]);
   el('anketaVirsraksts').textContent = indekss === null ? 'Par audzēkni' : 'Rediģēt audzēkni';
   el('pogaSaglabatBernu').textContent = indekss === null ? 'Saglabāt audzēkņa anketu' : 'Saglabāt izmaiņas';
+  // "Dzēst anketu" rādām tikai rediģējot esošu audzēkni.
+  if (indekss === null) el('dzestAnketuRinda').classList.add('paslepts');
+  else { el('dzestAnketuRinda').classList.remove('paslepts'); zimetDzestAnketuPogu(indekss); }
   el('anketaKarte').classList.remove('paslepts');
   el('pogaPieteiktBernu').classList.add('paslepts');
+  el('anketaKarte').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   el('bernaVards').focus();
 }
 function aizvertAnketu() {
   el('anketaKarte').classList.add('paslepts');
+  el('dzestAnketuRinda').classList.add('paslepts');
   el('pogaPieteiktBernu').classList.remove('paslepts');
   rediggamaisIndekss = null;
 }
 
-/* ---------- Audzēkņu kartītes ---------- */
-function bernaKopsavilkums(b) {
-  const dalas = [];
-  if (b.berna_vecums) dalas.push(b.berna_vecums);
-  if (b.muzikas_pieredze) dalas.push('mūzika: ' + b.muzikas_pieredze.toLowerCase());
-  if (b.velamie_laiki) dalas.push('vēlas: ' + b.velamie_laiki);
-  return dalas;
+/* "Dzēst anketu" poga + apstiprinājums (rediģēšanas formā) */
+function zimetDzestAnketuPogu(indekss) {
+  const rinda = el('dzestAnketuRinda');
+  rinda.innerHTML = '';
+  const poga = document.createElement('button');
+  poga.type = 'button';
+  poga.className = 'dzest-teksta-poga';
+  poga.textContent = 'Dzēst anketu';
+  poga.onclick = () => paradietDzestAnketuApstiprinajumu(indekss);
+  rinda.appendChild(poga);
 }
+function paradietDzestAnketuApstiprinajumu(indekss) {
+  const rinda = el('dzestAnketuRinda');
+  rinda.innerHTML = '';
+  const teksts = document.createElement('span');
+  teksts.textContent = 'Dzēst šo audzēkni?';
+  const ja = document.createElement('button');
+  ja.type = 'button'; ja.className = 'mini-poga dzest'; ja.textContent = 'Jā, dzēst';
+  ja.onclick = async () => { const ok = await dzestBernu(indekss); if (ok) aizvertAnketu(); };
+  const ne = document.createElement('button');
+  ne.type = 'button'; ne.className = 'mini-poga'; ne.textContent = 'Atcelt';
+  ne.onclick = () => zimetDzestAnketuPogu(indekss);
+  rinda.appendChild(teksts); rinda.appendChild(ja); rinda.appendChild(ne);
+}
+
+/* ---------- Audzēkņu kartītes ---------- */
+// Kartītē redzams tikai vārds (klikšķis = rediģēt) un poga "Izvēlies laiku".
 function zimetBernuKartes() {
   const konteiners = el('bernuKartes');
   konteiners.innerHTML = '';
@@ -681,75 +721,35 @@ function zimetBernuKartes() {
     const galva = document.createElement('div');
     galva.className = 'bernu-karte-galva';
 
-    const kreisa = document.createElement('div');
-    const vards = document.createElement('div');
-    vards.className = 'bernu-vards';
+    const vards = document.createElement('button');
+    vards.type = 'button';
+    vards.className = 'bernu-vards-poga';
     vards.textContent = b.berna_vards || 'Audzēknis';
-    kreisa.appendChild(vards);
+    vards.title = 'Rediģēt';
+    vards.onclick = () => atvertAnketu(i);
 
-    const info = document.createElement('div');
-    info.className = 'bernu-info';
-    const kops = bernaKopsavilkums(b);
-    info.textContent = kops.length ? kops.join(' · ') : 'Anketa saglabāta';
-    kreisa.appendChild(info);
-    galva.appendChild(kreisa);
+    const laiks = document.createElement('button');
+    laiks.type = 'button';
+    laiks.className = 'poga2 izvelies-laiku';
+    laiks.textContent = 'Izvēlies laiku';
+    laiks.onclick = () => {
+      izveletaisBernsIdx = i;
+      pagaiduSaglabat();
+      atjaunotStavokli();
+      paradietPaneli('panelisLaiks');
+    };
 
-    const pogas = document.createElement('div');
-    pogas.className = 'bernu-pogas';
-
-    const rediget = document.createElement('button');
-    rediget.className = 'mini-poga';
-    rediget.type = 'button';
-    rediget.textContent = 'Rediģēt';
-    rediget.onclick = () => atvertAnketu(i);
-
-    const dzest = document.createElement('button');
-    dzest.className = 'mini-poga dzest';
-    dzest.type = 'button';
-    dzest.textContent = 'Dzēst';
-    dzest.onclick = () => paradietDzestApstiprinajumu(karte, i);
-
-    pogas.appendChild(rediget);
-    pogas.appendChild(dzest);
-    galva.appendChild(pogas);
+    galva.appendChild(vards);
+    galva.appendChild(laiks);
     karte.appendChild(galva);
-
     konteiners.appendChild(karte);
   });
-}
-
-// Dzēšanas apstiprinājums tieši kartītē (bez native dialoga)
-function paradietDzestApstiprinajumu(karte, indekss) {
-  if (karte.querySelector('.bernu-dzest-apst')) return;
-  const apst = document.createElement('div');
-  apst.className = 'bernu-dzest-apst';
-
-  const teksts = document.createElement('span');
-  teksts.textContent = 'Dzēst šo audzēkni?';
-
-  const ja = document.createElement('button');
-  ja.className = 'mini-poga dzest';
-  ja.type = 'button';
-  ja.textContent = 'Jā, dzēst';
-  ja.onclick = () => dzestBernu(indekss);
-
-  const ne = document.createElement('button');
-  ne.className = 'mini-poga';
-  ne.type = 'button';
-  ne.textContent = 'Atcelt';
-  ne.onclick = () => apst.remove();
-
-  apst.appendChild(teksts);
-  apst.appendChild(ja);
-  apst.appendChild(ne);
-  karte.appendChild(apst);
-  ja.focus();
 }
 
 async function dzestBernu(indekss) {
   const jaunieBerni = berni.filter((_, i) => i !== indekss);
   const izdevas = await saglabatBernus(jaunieBerni, 'Audzēknis izdzēsts.');
-  if (!izdevas) return;
+  if (!izdevas) return false;
 
   berni = jaunieBerni;
   if (izveletaisBernsIdx === indekss) izveletaisBernsIdx = null;
@@ -758,6 +758,7 @@ async function dzestBernu(indekss) {
 
   zimetBernuKartes();
   atjaunotStavokli();
+  return true;
 }
 
 /* ---------- Saglabāšana Firestore ---------- */
@@ -837,10 +838,8 @@ function atjaunotStavokli() {
     el('pogaTurpinatApmaksa').disabled = !(irIzveletsBerns && irLaiks);
   }
 
-  // 3. panelis
+  // 3. panelis — kopsavilkums vienmēr redzams, poga aktīva tikai kad gatavs.
   const gatavsApmaksai = irBerni && irIzveletsBerns && irLaiks;
-  el('apmaksaSlegts').classList.toggle('paslepts', gatavsApmaksai);
-  el('apmaksaKopsavilkums').classList.toggle('paslepts', !gatavsApmaksai);
   el('pogaApmaksa').disabled = !gatavsApmaksai;
   el('kopsAudzeknis').textContent = irIzveletsBerns ? (berni[izveletaisBernsIdx].berna_vards || 'Audzēknis') : '—';
   el('kopsLaiks').textContent = irLaiks ? izveletaisLaiks : '—';
@@ -870,24 +869,21 @@ el('pogaSaglabatBernu').onclick = async () => {
 
   const bijaJauns = rediggamaisIndekss === null;
   const jaunieBerni = [...berni];
-  let janoIzvele = null;
-  if (bijaJauns) { jaunieBerni.push(dati); janoIzvele = jaunieBerni.length - 1; }
-  else { jaunieBerni[rediggamaisIndekss] = dati; }
+  if (bijaJauns) jaunieBerni.push(dati);
+  else jaunieBerni[rediggamaisIndekss] = dati;
 
   const izdevas = await saglabatBernus(jaunieBerni,
     bijaJauns ? 'Audzēknis pievienots.' : 'Izmaiņas saglabātas.');
   if (!izdevas) return;
 
   berni = jaunieBerni;
-  if (bijaJauns) izveletaisBernsIdx = janoIzvele; // jauno audzēkni uzreiz izvēlamies 2. solim
   pagaiduSaglabat();
 
+  // Paliekam 1. solī — kartītē redzams vārds un poga "Izvēlies laiku",
+  // ar kuru lietotājs pats pāriet uz 2. soli.
   aizvertAnketu();
   zimetBernuKartes();
   atjaunotStavokli();
-
-  // Kā spiež saglabāt (pievienojot jaunu) — automātiski uz nākošo soli.
-  if (bijaJauns) paradietPaneli('panelisLaiks');
 };
 
 /* ---------- Notikumi: 2. solis "Saglabāt un turpināt" ---------- */
