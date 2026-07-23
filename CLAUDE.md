@@ -13,8 +13,8 @@ Mūzikas nodarbību studijas (bērniem, Rīga) mārketinga lapa + lietotāju kon
 
 - `index.html` — publiskā mārketinga lapa (hero, cenas, atsauksmes, kontakti).
 - `pieteikties.html` — pieteikšanās/reģistrācija (e-pasts + Google), paroles atjaunošana.
-- `profils.html` — vecāka profils un audzēkņu (`berni[]`) anketas; vēsturiskā 3 soļu pieteikšanās plūsma ar mock laikiem (aizstāta ar `rezervacijas.html`, bet vēl nav izņemta).
-- `rezervacijas.html` — studenta panelis: atlikušo nodarbību bilance (realtime), rezervēšana (dienas + laika pogas, ne kalendārs), gaidāmās/notikušās nodarbības, atcelšana, pakešu pirkšana, maksājumu un kredītu vēsture.
+- `profils.html` — viss lietotāja panelis vienā lapā, 5 sadaļas: Mans profils (kontaktdati), Audzēkņi (`berni[]` anketas), Rezervēt (bilance realtime, dienas + laika pogas), Manas nodarbības (gaidāmās/notikušās, atcelšana), Pirkumi un vēsture (paketes, maksājumi, kredītu virsgrāmata). Vecā 3 soļu mock plūsma un statiskā Maksājumu sadaļa izņemtas 2026-07-23.
+- `rezervacijas.html` — tikai pāradresācija uz `profils.html` (saglabāta vecajām saitēm; Stripe atgriešanās adreses tagad rāda uz `profils.html`).
 - `admin.html` — administratora panelis (tikai ar `admin` custom claim): FullCalendar (CDN) ar vilkšanu/pārcelšanu, audzēkņu meklēšana un kredītu korekcijas, nodarbību veidi, paketes, darba laiki, bloķētie periodi, maksājumi, noteikumi, sākuma datu izveide.
 - `js/firebase-init.js` — Firebase inicializācija un koplietotās funkcijas: auth helperi, `izsauktFunkciju(nosaukums, dati)` (callable klients), `funkcijasKluda(e)`, App Check vieta (`APP_CHECK_ATSLEGA`).
 - `functions/` — Cloud Functions (TypeScript, npm projekts ar savu build; `npm test` darbina slotu dzinēja testus):

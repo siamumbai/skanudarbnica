@@ -61,8 +61,8 @@ export const createCheckoutSession = onCall(
         packageName: pakete.name,
         credits: String(pakete.credits),
       },
-      success_url: `${bāze}/rezervacijas.html?maksajums=ok&sesija={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${bāze}/rezervacijas.html?maksajums=atcelts`,
+      success_url: `${bāze}/profils.html?maksajums=ok&sesija={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${bāze}/profils.html?maksajums=atcelts`,
     });
 
     if (!session.url) {

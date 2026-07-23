@@ -50,8 +50,6 @@
     max-width:1180px;margin:0 auto;padding:36px 32px 90px;
     display:grid;grid-template-columns:224px 1fr;gap:38px;align-items:start;
   }
-  /* Ar apakšnavigāciju (3 kolonnas) — tikai sadaļā "Pieteikties nodarbībai" */
-  .izkartojums.ar-apaksnav{grid-template-columns:224px 220px 1fr;gap:30px}
   .ielade{max-width:1180px;margin:0 auto;padding:44px 32px;color:var(--muted);font-size:15px}
 
   /* --- Sānu navigācija --- */
@@ -67,28 +65,9 @@
   .nav-poga.aktiva{background:var(--accent-dark);border-color:var(--accent-dark);color:var(--bg)}
   .nav-poga .nav-ik{font-size:16px;line-height:1;width:20px;text-align:center;flex-shrink:0}
 
-  /* --- Apakšnavigācija (pieteikšanās soļi) --- */
-  .apaks-nav{position:sticky;top:92px;display:flex;flex-direction:column;gap:6px}
-  .apaks-nav-poga{
-    display:flex;align-items:center;gap:11px;width:100%;text-align:left;
-    background:var(--bg2);border:0.5px solid var(--border);border-radius:12px;
-    padding:13px 14px;font-family:inherit;font-size:13.5px;font-weight:600;
-    color:var(--muted);cursor:pointer;transition:background .15s,color .15s,border-color .15s;
-  }
-  .apaks-nav-poga:hover{border-color:var(--accent-dark);color:var(--text)}
-  .apaks-nav-poga.aktiva{background:var(--accent-dark);border-color:var(--accent-dark);color:var(--bg)}
-  .apaks-nr{
-    width:22px;height:22px;border-radius:50%;flex-shrink:0;
-    display:flex;align-items:center;justify-content:center;
-    background:var(--bg3);color:var(--muted);font-size:11px;font-weight:800;
-  }
-  .apaks-nav-poga.aktiva .apaks-nr{background:var(--bg);color:var(--accent-dark)}
-
   /* --- Saturs / sadaļas --- */
   .sadala{display:none}
-  .sadala.aktiva{display:block}
-  .apaks-panelis{display:none}
-  .apaks-panelis.aktiva{display:block;animation:paradities .2s ease}
+  .sadala.aktiva{display:block;animation:paradities .2s ease}
   @keyframes paradities{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 
   .virsraksts{
@@ -200,35 +179,6 @@
   }
   .bernu-karte:hover{border-color:var(--accent-dark);background:var(--bg3)}
   .bernu-vards{font-size:16px;font-weight:800;color:var(--text);line-height:1.2}
-  .bernu-badge{
-    font-size:12px;font-weight:700;padding:4px 12px;border-radius:100px;white-space:nowrap;
-    background:#F5E0C2;color:#B5651D;border:0.5px solid rgba(181,101,29,.4);
-  }
-  .bernu-badge.apmaksats{background:#E4EDD8;color:var(--zala);border-color:rgba(59,109,17,.3)}
-
-  /* --- Nodarbības veida izvēle --- */
-  .veidu-izvele{display:flex;flex-direction:column;gap:10px;margin-bottom:22px}
-  .veids-poga{
-    display:flex;flex-direction:column;gap:3px;text-align:left;width:100%;
-    background:var(--bg);border:0.5px solid var(--border);border-radius:12px;
-    padding:14px 18px;font-family:inherit;cursor:pointer;transition:border-color .15s,background .15s;
-  }
-  .veids-poga:hover{border-color:var(--accent-dark)}
-  .veids-poga.aktiva{border-color:var(--accent-dark);background:var(--bg3)}
-  .veids-nos{font-size:14.5px;font-weight:700;color:var(--text)}
-  .veids-det{font-size:12.5px;color:var(--muted)}
-
-  /* Izvēlētais laika slots (vairākizvēle) */
-  .cal-slots.aktiva{background:var(--accent-dark);color:var(--bg)}
-
-  /* --- Kopsavilkums (3 kolonnas) --- */
-  .kops-rezgis{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap}
-  .kops-kol{min-width:80px}
-  .kops-label{font-size:11.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
-  .kops-vertiba{font-size:15px;font-weight:700;color:var(--text);line-height:1.3}
-  .kops-vidus{text-align:center}
-  .kops-labais{text-align:right}
-
   /* --- "Dzēst anketu" rediģēšanas apakšā --- */
   .dzest-anketu-rinda{
     margin-top:18px;padding-top:16px;border-top:0.5px solid var(--border);
@@ -242,58 +192,96 @@
   .dzest-teksta-poga:hover{opacity:.8}
   .dzest-anketu-rinda span{font-size:13px;font-weight:600;color:var(--sarkana)}
 
-  /* --- Audzēkņa izvēle (2. solis) --- */
-  .berns-izvele{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
-  .berns-izvele input{position:absolute;opacity:0;pointer-events:none}
-  .berns-izvele label{
-    margin:0;padding:9px 18px;border-radius:100px;
-    border:0.5px solid var(--border);background:var(--bg);
-    font-size:13px;font-weight:600;text-transform:none;letter-spacing:0;
-    color:var(--muted);cursor:pointer;
+  /* --- Rezervācijas: bilance, veidi, laiki, saraksti, paketes --- */
+  .bilance{
+    display:flex;align-items:center;justify-content:space-between;gap:18px;
+    background:var(--accent-dark);color:var(--bg);
+    border-radius:16px;padding:20px 24px;margin-bottom:24px;flex-wrap:wrap;
   }
-  .berns-izvele input:checked + label{
-    background:var(--accent-dark);border-color:var(--accent-dark);color:var(--bg);
+  .bilance-teksts{font-size:12.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;opacity:.85}
+  .bilance-skaitlis{font-family:Georgia,serif;font-size:42px;line-height:1}
+  .bilance-poga{
+    background:var(--bg);color:var(--accent-dark);border:none;border-radius:100px;
+    padding:12px 20px;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;
   }
-  .berns-izvele input:focus-visible + label{outline:2px solid var(--accent-dark);outline-offset:2px}
+  .bilance-poga:hover{background:var(--bg2)}
 
-  /* --- Calendly vietturis --- */
-  .calendly-viet{
-    border:1px dashed var(--accent);border-radius:14px;
-    background:var(--bg3);padding:34px 24px;text-align:center;margin-bottom:6px;
+  .veidi{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:6px}
+  .veids{
+    text-align:left;background:var(--bg);border:1.5px solid var(--border);border-radius:13px;
+    padding:16px;cursor:pointer;font-family:inherit;transition:border-color .15s;
   }
-  .cal-ik{font-size:34px;line-height:1;margin-bottom:10px}
-  .cal-teksts{font-size:17px;font-weight:800;color:var(--accent-dark);letter-spacing:.02em}
-  .cal-sub{font-size:12.5px;color:var(--muted);margin:6px auto 18px;max-width:36ch;line-height:1.55}
-  .cal-sloti{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:4px}
-  .cal-slots{
-    background:var(--bg);border:0.5px solid var(--accent-dark);border-radius:100px;
-    padding:9px 16px;font-family:inherit;font-size:13px;font-weight:600;
-    color:var(--accent-dark);cursor:pointer;
-  }
-  .cal-slots:hover{background:var(--accent-dark);color:var(--bg)}
-  .izveletais-laiks{
-    display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;
-    background:#E4EDD8;border:0.5px solid rgba(59,109,17,.3);border-radius:12px;
-    padding:14px 18px;font-size:14px;color:var(--zala);font-weight:600;margin-bottom:6px;
-  }
+  .veids:hover{border-color:var(--accent-light)}
+  .veids.aktivs{border-color:var(--accent-dark);background:#F1E6C8}
+  .veids-nosaukums{font-size:14.5px;font-weight:700;margin-bottom:4px}
+  .veids-info{font-size:12.5px;color:var(--muted)}
 
-  /* --- Cenas --- */
-  .cena{
-    display:flex;justify-content:space-between;align-items:baseline;gap:14px;
-    padding:15px 0;border-bottom:0.5px solid var(--border);
+  .diena{margin-bottom:18px}
+  .diena-virsraksts{font-size:14px;font-weight:800;margin-bottom:9px;text-transform:capitalize}
+  .laiki{display:flex;flex-wrap:wrap;gap:8px}
+  .laiks{
+    background:var(--bg);border:1.5px solid var(--border);border-radius:100px;
+    padding:9px 17px;font-family:inherit;font-size:13.5px;font-weight:700;
+    color:var(--text);cursor:pointer;transition:border-color .15s,background .15s;
   }
-  .cena:last-of-type{border-bottom:none}
-  .cena-nos{font-size:14px;font-weight:600;line-height:1.35}
-  .cena-det{font-size:12px;color:var(--muted);font-weight:400;display:block;margin-top:3px}
-  .cena-sum{font-size:15px;font-weight:800;white-space:nowrap;color:var(--accent-dark)}
-  .cena-veca{font-size:12px;color:var(--muted);text-decoration:line-through;font-weight:400;margin-right:5px}
+  .laiks:hover{border-color:var(--accent-light)}
+  .laiks.aktivs{background:var(--accent-dark);border-color:var(--accent-dark);color:var(--bg)}
+  .tukss{font-size:13.5px;color:var(--muted);line-height:1.6}
 
-  .slegts-note, .tukss-note{
+  .vairak{
+    background:transparent;border:0.5px solid var(--border);border-radius:100px;
+    padding:10px 20px;font-family:inherit;font-size:13px;font-weight:600;
+    color:var(--muted);cursor:pointer;margin-top:4px;
+  }
+  .vairak:hover{border-color:var(--accent-dark);color:var(--accent-dark)}
+
+  .apstiprinat{
+    display:none;position:sticky;bottom:18px;margin-top:20px;
+    background:var(--text);color:var(--bg);border-radius:14px;
+    padding:16px 20px;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
+  }
+  .apstiprinat.redzams{display:flex;animation:paradities .2s ease}
+  .apstiprinat-teksts{font-size:14px;line-height:1.5}
+  .cta-auto{display:inline-block;width:auto;padding:13px 24px}
+
+  .saraksta-rinda{
+    display:flex;align-items:center;justify-content:space-between;gap:14px;
+    padding:14px 2px;border-bottom:0.5px solid var(--border);flex-wrap:wrap;
+  }
+  .saraksta-rinda:last-child{border-bottom:none}
+  .saraksta-galvena{font-size:14px;font-weight:700}
+  .saraksta-apaksa{font-size:12.5px;color:var(--muted);margin-top:3px}
+  .atzime{
+    display:inline-block;font-size:11px;font-weight:800;letter-spacing:.06em;
+    padding:4px 10px;border-radius:100px;border:0.5px solid var(--border);
+    background:var(--bg);color:var(--muted);text-transform:uppercase;
+  }
+  .atzime.zala{background:#E4EDD8;color:var(--zala);border-color:rgba(59,109,17,.3)}
+  .atzime.sarkana{background:#F2DFD8;color:var(--sarkana);border-color:rgba(156,58,34,.3)}
+  .maza-poga{
+    background:transparent;border:0.5px solid var(--border);border-radius:100px;
+    padding:8px 16px;font-family:inherit;font-size:12.5px;font-weight:700;
+    color:var(--sarkana);cursor:pointer;
+  }
+  .maza-poga:hover{border-color:var(--sarkana)}
+  .maza-poga:disabled{opacity:.45;cursor:not-allowed}
+  .plus{color:var(--zala);font-weight:800}
+  .minus{color:var(--sarkana);font-weight:800}
+
+  .paketes{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
+  .pakete{
+    background:var(--bg);border:1.5px solid var(--border);border-radius:14px;
+    padding:20px;display:flex;flex-direction:column;gap:6px;
+  }
+  .pakete-nosaukums{font-size:14.5px;font-weight:700}
+  .pakete-krediti{font-size:12.5px;color:var(--muted)}
+  .pakete-cena{font-family:Georgia,serif;font-size:26px;margin:6px 0 10px}
+
+  .slegts-note{
     font-size:13px;color:var(--muted);line-height:1.6;
     background:var(--bg2);border:0.5px dashed var(--border);
     border-radius:12px;padding:16px 18px;
   }
-  .tukss-note{background:var(--bg)}
 
   /* --- Tosts (neuzbāzīgs paziņojums) --- */
   .tosts{
@@ -311,15 +299,16 @@
 
   /* --- Responsīvi: planšete un telefons --- */
   @media(max-width:860px){
-    .izkartojums, .izkartojums.ar-apaksnav{grid-template-columns:1fr;gap:16px;padding:22px 18px 70px}
-    .sanu-nav, .apaks-nav{
+    .izkartojums{grid-template-columns:1fr;gap:16px;padding:22px 18px 70px}
+    .sanu-nav{
       position:static;flex-direction:row;gap:8px;margin-top:0 !important;
       overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;
     }
-    .nav-poga, .apaks-nav-poga{white-space:nowrap;padding:10px 14px;font-size:13px;width:auto}
+    .nav-poga{white-space:nowrap;padding:10px 14px;font-size:13px;width:auto}
     .josla{padding:16px 18px}
     .josla-epasts{display:none}
     .rinda{grid-template-columns:1fr}
+    .bilance-skaitlis{font-size:34px}
   }
 </style>
 </head>
@@ -345,31 +334,30 @@
       <span class="nav-ik" aria-hidden="true">👤</span> Mans profils
     </button>
     <button class="nav-poga" id="navPieteikties" role="tab" aria-selected="false" aria-controls="sadalaPieteikties">
-      <span class="nav-ik" aria-hidden="true">🎵</span> Pieteikties nodarbībai
+      <span class="nav-ik" aria-hidden="true">🧒</span> Audzēkņi
     </button>
-    <button class="nav-poga" id="navMaksajumi" role="tab" aria-selected="false" aria-controls="sadalaMaksajumi">
-      <span class="nav-ik" aria-hidden="true">💳</span> Maksājumi
+    <button class="nav-poga" id="navRezervet" role="tab" aria-selected="false" aria-controls="sadalaRezervet">
+      <span class="nav-ik" aria-hidden="true">🗓️</span> Rezervēt
     </button>
-    <a class="nav-poga" href="rezervacijas.html" style="text-decoration:none">
-      <span class="nav-ik" aria-hidden="true">🗓️</span> Rezervācijas
-    </a>
-  </nav>
-
-  <!-- ======== APAKŠNAVIGĀCIJA (soļi) — redzama tikai "Pieteikties nodarbībai" ======== -->
-  <nav class="apaks-nav paslepts" id="apaksNav" role="tablist" aria-label="Pieteikšanās soļi">
-    <button class="apaks-nav-poga aktiva" data-panelis="panelisAudzeknis" role="tab" aria-selected="true">
-      <span class="apaks-nr">1</span> Pievienot audzēkni
+    <button class="nav-poga" id="navNodarbibas" role="tab" aria-selected="false" aria-controls="sadalaNodarbibas">
+      <span class="nav-ik" aria-hidden="true">🎵</span> Manas nodarbības
     </button>
-    <button class="apaks-nav-poga" data-panelis="panelisLaiks" role="tab" aria-selected="false">
-      <span class="apaks-nr">2</span> Rezervēt nodarbību
-    </button>
-    <button class="apaks-nav-poga" data-panelis="panelisApmaksa" role="tab" aria-selected="false">
-      <span class="apaks-nr">3</span> Veikt apmaksu
+    <button class="nav-poga" id="navPirkumi" role="tab" aria-selected="false" aria-controls="sadalaPirkumi">
+      <span class="nav-ik" aria-hidden="true">💳</span> Pirkumi un vēsture
     </button>
   </nav>
 
   <!-- ======== SATURS ======== -->
   <main>
+
+    <!-- Bilances kartīte (redzama rezervāciju sadaļās) -->
+    <div class="bilance paslepts" id="bilanceKarte">
+      <div>
+        <div class="bilance-teksts">Atlikušās nodarbības</div>
+        <div class="bilance-skaitlis" id="bilanceSkaitlis">–</div>
+      </div>
+      <button class="bilance-poga" id="bilancePoga">Pirkt nodarbību paketi</button>
+    </div>
 
     <!-- ---------- SADAĻA: MANS PROFILS ---------- -->
     <section class="sadala aktiva" id="sadalaProfils" role="tabpanel" aria-labelledby="navProfils">
@@ -396,12 +384,9 @@
       </section>
     </section>
 
-    <!-- ---------- SADAĻA: PIETEIKTIES NODARBĪBAI (3 apakšpaneļi) ---------- -->
+    <!-- ---------- SADAĻA: AUDZĒKŅI ---------- -->
     <section class="sadala" id="sadalaPieteikties" role="tabpanel" aria-labelledby="navPieteikties">
-
-      <!-- ===== 1. PANELIS: PIEVIENOT AUDZĒKNI ===== -->
-      <div class="apaks-panelis aktiva" id="panelisAudzeknis" role="tabpanel">
-        <h1 class="virsraksts">Pievienot audzēkni</h1>
+        <h1 class="virsraksts">Audzēkņi</h1>
         <p class="ievads">Pievieno vienu vai vairākus audzēkņus, ko vēlies pieteikt nodarbībām.</p>
 
         <button class="poga-pievienot" id="pogaPieteiktBernu">+ Pievienot audzēkni</button>
@@ -462,118 +447,80 @@
 
         <!-- Saglabāto audzēkņu kartītes -->
         <div class="bernu-kartes" id="bernuKartes"></div>
-      </div>
-
-      <!-- ===== 2. PANELIS: REZERVĒT NODARBĪBU ===== -->
-      <div class="apaks-panelis" id="panelisLaiks" role="tabpanel">
-        <h1 class="virsraksts">Rezervēt nodarbību</h1>
-        <p class="ievads">Izvēlies audzēkni, nodarbības veidu un laikus.</p>
-
-        <!-- Slēgts (nav neviena audzēkņa) -->
-        <div id="laiksSlegts">
-          <div class="slegts-note" style="margin-bottom:12px">Vispirms pievieno vismaz vienu audzēkni, tad varēsi rezervēt nodarbību.</div>
-          <button class="poga2" id="pogaUzAudzekni">+ Pievienot audzēkni</button>
-        </div>
-
-        <!-- Atvērts -->
-        <div id="laiksSaturs" class="paslepts">
-          <label id="bernsIzveleLabel">Kuram audzēknim?</label>
-          <div class="berns-izvele" id="bernsIzvele" role="radiogroup" aria-labelledby="bernsIzveleLabel"></div>
-
-          <label>Nodarbības veids</label>
-          <div class="veidu-izvele" id="veiduIzvele"></div>
-
-          <section class="karte paslepts" id="laikuKarte">
-            <h2>Nodarbības laiki</h2>
-            <p class="h2-piezime" id="laikuPiezime">Izvēlies laikus.</p>
-
-            <!-- Konteiners Calendly iegulšanai (pagaidām vietturis) -->
-            <div class="calendly-viet" id="calendlyKonteiners">
-              <div class="cal-ik" aria-hidden="true">📅</div>
-              <p class="cal-teksts">Calendly kalendārs</p>
-              <p class="cal-sub">Šeit tiks integrēts Calendly. Pagaidām izvēlies laikus no pieejamajiem.</p>
-              <div class="cal-sloti" id="calSloti"></div>
-            </div>
-          </section>
-
-          <button class="cta" id="pogaSaglabatRezervaciju" disabled>Saglabāt</button>
-        </div>
-      </div>
-
-      <!-- ===== 3. PANELIS: VEIKT APMAKSU ===== -->
-      <div class="apaks-panelis" id="panelisApmaksa" role="tabpanel">
-        <h1 class="virsraksts">Veikt apmaksu</h1>
-        <p class="ievads">Pārbaudi izvēli un veic apmaksu, lai apstiprinātu nodarbību.</p>
-
-        <section class="karte" id="apmaksaKopsavilkums">
-          <h2>Kopsavilkums</h2>
-          <div class="kops-rezgis">
-            <div class="kops-kol">
-              <div class="kops-label">Audzēknis</div>
-              <div class="kops-vertiba" id="kopsAudzeknis">—</div>
-            </div>
-            <div class="kops-kol kops-vidus">
-              <div class="kops-label">Nodarbības veids</div>
-              <div class="kops-vertiba" id="kopsVeids">—</div>
-            </div>
-            <div class="kops-kol kops-labais">
-              <div class="kops-label">Cena</div>
-              <div class="kops-vertiba" id="kopsCena">—</div>
-            </div>
-          </div>
-        </section>
-
-        <button class="cta" id="pogaApmaksa" disabled>Veikt apmaksu</button>
-        <p class="cta-piezime">Pēc apmaksas sazināsimies, lai apstiprinātu nodarbību.</p>
-      </div>
-
     </section>
 
-    <!-- ---------- SADAĻA: MAKSĀJUMI ---------- -->
-    <section class="sadala" id="sadalaMaksajumi" role="tabpanel" aria-labelledby="navMaksajumi">
-      <h1 class="virsraksts">Maksājumi</h1>
-      <p class="ievads">Cenrādis un tavu maksājumu vēsture.</p>
+    <!-- ---------- SADAĻA: REZERVĒT ---------- -->
+    <section class="sadala" id="sadalaRezervet" role="tabpanel" aria-labelledby="navRezervet">
+      <h1 class="virsraksts">Rezervē <em>nodarbību</em></h1>
+      <p class="ievads">Izvēlies nodarbības veidu un sev ērtu laiku. Rezervācija uzreiz tiek apstiprināta un norakstīta no tavām atlikušajām nodarbībām.</p>
 
       <section class="karte">
-        <h2>Cenas un abonementi</h2>
-        <p class="h2-piezime">Nodarbības notiek VEF Kvartālā, Rīgā.</p>
-
-        <div class="cena">
-          <span class="cena-nos">Iepazīšanās
-            <span class="cena-det">Pirmā nodarbība · 20 min</span>
-          </span>
-          <span class="cena-sum">20&thinsp;€</span>
-        </div>
-        <div class="cena">
-          <span class="cena-nos">Viena nodarbība
-            <span class="cena-det">50 min</span>
-          </span>
-          <span class="cena-sum">80&thinsp;€</span>
-        </div>
-        <div class="cena">
-          <span class="cena-nos">1 nodarbība nedēļā
-            <span class="cena-det">Abonements · 4 nedēļas · 70&thinsp;€ par nodarbību</span>
-          </span>
-          <span class="cena-sum"><span class="cena-veca">320&thinsp;€</span>280&thinsp;€</span>
-        </div>
-        <div class="cena">
-          <span class="cena-nos">2 nodarbības nedēļā
-            <span class="cena-det">Abonements · 4 nedēļas · 70&thinsp;€ par nodarbību</span>
-          </span>
-          <span class="cena-sum"><span class="cena-veca">640&thinsp;€</span>560&thinsp;€</span>
-        </div>
-        <div class="cena">
-          <span class="cena-nos">Dāvanu karte
-            <span class="cena-det">Saņem klātienē, pakomātā vai e-pastā</span>
-          </span>
-          <span class="cena-sum">—</span>
+        <h2>1 · Nodarbības veids</h2>
+        <div class="veidi" id="veiduSaraksts"></div>
+        <div id="audzeknaBloks" class="paslepts">
+          <div class="lauks" style="margin-top:14px;margin-bottom:0">
+            <label for="audzeknaIzvele">Kurš audzēknis apmeklēs nodarbību?</label>
+            <select id="audzeknaIzvele" style="max-width:320px"></select>
+          </div>
         </div>
       </section>
 
+      <section class="karte" id="slotuKarte">
+        <h2>2 · Diena un laiks</h2>
+        <p class="h2-piezime" id="slotuPiezime">Rādīti tuvākie pieejamie laiki.</p>
+        <div id="slotuSaraksts"><p class="tukss">Vispirms izvēlies nodarbības veidu.</p></div>
+        <button class="vairak" id="pogaVairakDienu" hidden>Rādīt vairāk dienu</button>
+      </section>
+
+      <section class="karte paslepts" id="nevarKarte">
+        <h2>Nepietiek nodarbību</h2>
+        <p class="h2-piezime" id="nevarTeksts">Lai rezervētu šo nodarbību, vispirms iegādājies nodarbību paketi.</p>
+        <button class="cta cta-auto" id="pogaUzPaketem">Pirkt nodarbību paketi</button>
+      </section>
+
+      <div class="apstiprinat" id="apstiprinatJosla">
+        <div class="apstiprinat-teksts" id="apstiprinatTeksts"></div>
+        <button class="cta cta-auto" id="pogaApstiprinat" style="background:var(--accent-light);color:var(--text)">Apstiprināt rezervāciju</button>
+      </div>
+    </section>
+
+    <!-- ---------- SADAĻA: MANAS NODARBĪBAS ---------- -->
+    <section class="sadala" id="sadalaNodarbibas" role="tabpanel" aria-labelledby="navNodarbibas">
+      <h1 class="virsraksts">Manas <em>nodarbības</em></h1>
+      <p class="ievads" id="atcelsanasPiezime"></p>
+
       <section class="karte">
-        <h2>Maksājumu vēsture</h2>
-        <p class="h2-piezime">Šeit parādīsies tavi veiktie maksājumi un rēķini.</p>
-        <div class="tukss-note">Vēl nav neviena maksājuma. Kad būsi veicis apmaksu, tas parādīsies šeit.</div>
+        <h2>Gaidāmās nodarbības</h2>
+        <div id="gaidamoSaraksts"><p class="tukss">Ielādē…</p></div>
+      </section>
+
+      <section class="karte">
+        <h2>Notikušās un atceltās</h2>
+        <div id="pagatnesSaraksts"><p class="tukss">Ielādē…</p></div>
+        <button class="vairak" id="pogaVairakPagatnes" hidden>Ielādēt vairāk</button>
+      </section>
+    </section>
+
+    <!-- ---------- SADAĻA: PIRKUMI UN VĒSTURE ---------- -->
+    <section class="sadala" id="sadalaPirkumi" role="tabpanel" aria-labelledby="navPirkumi">
+      <h1 class="virsraksts">Pirkumi un <em>vēsture</em></h1>
+      <p class="ievads">Nodarbību paketes, maksājumu vēsture un visas izmaiņas tavā nodarbību bilancē.</p>
+
+      <section class="karte">
+        <h2>Nodarbību paketes</h2>
+        <p class="h2-piezime">Apmaksa notiek drošā Stripe vidē. Nodarbības tiek ieskaitītas uzreiz pēc apmaksas.</p>
+        <div class="paketes" id="paketuSaraksts"><p class="tukss">Ielādē…</p></div>
+      </section>
+
+      <section class="karte">
+        <h2>Maksājumi</h2>
+        <div id="pirkumuSaraksts"><p class="tukss">Ielādē…</p></div>
+      </section>
+
+      <section class="karte">
+        <h2>Bilances izmaiņas</h2>
+        <div id="kreditusSaraksts"><p class="tukss">Ielādē…</p></div>
+        <button class="vairak" id="pogaVairakKreditu" hidden>Ielādēt vairāk</button>
       </section>
     </section>
 
@@ -585,48 +532,46 @@
 
 <script type="module">
 import {
-  prasitPieteiksanos, iegutProfilu, saglabatProfilu,
-  izrakstities, kludasTeksts
+  db, prasitPieteiksanos, iegutProfilu, saglabatProfilu,
+  izrakstities, kludasTeksts, izsauktFunkciju, funkcijasKluda,
 } from './js/firebase-init.js';
+import {
+  doc, getDoc, onSnapshot, collection, query, where, orderBy,
+  limit, startAfter, getDocs,
+} from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js';
 
 const el = (id) => document.getElementById(id);
+const LAIKA_ZONA = 'Europe/Riga';
 
 /* ---------- Stāvoklis ---------- */
 let uid = null;
-let berni = [];                 // Firestore users/{uid}.berni; katram audzēknim sava rezervācija
+let berni = [];                 // Firestore users/{uid}.berni
 let rediggamaisIndekss = null;  // kuru audzēkni šobrīd rediģē anketā (null = jauns)
-let izveletaisBernsIdx = null;  // 2. solī izvēlētais audzēknis
 
-// 2. soļa darba stāvoklis (rezervācija izvēlētajam audzēknim, pirms saglabāšanas)
-let izveletaisVeids = null;     // 'privat' | 'abon4' | 'abon8'
-let izveletieLaiki = [];        // izvēlētie laika slotu virknes
+// Rezervāciju stāvoklis
+let bilance = 0;                // atlikušās nodarbības (users.creditBalance, realtime)
+let nodarbibuVeidi = [];        // aktīvie nodarbību veidi no Firestore
+let izveletaisVeids = null;
+let izveletaisSlots = null;     // { startMillis, teacherId }
+let slotuDienuSkaits = 14;      // cik dienu uz priekšu rādām; "vairāk" pievieno 14
+let atcelsanasStundas = 24;
+let pagatnesKursors = null;
+let kreditusKursors = null;
 
-// Nodarbību veidi (cena un cik datumu jāizvēlas).
-const veidi = {
-  privat: { isais: 'Nodarbība',  nosaukums: 'Privātnodarbība',        apraksts: '1 nodarbība · 50 min',            skaits: 1, cena: 80 },
-  abon4:  { isais: 'Abonements', nosaukums: 'Abonements · 4 nodarbības', apraksts: '1 nodarbība nedēļā · 4 nedēļas', skaits: 4, cena: 280 },
-  abon8:  { isais: 'Abonements', nosaukums: 'Abonements · 8 nodarbības', apraksts: '2 nodarbības nedēļā · 4 nedēļas', skaits: 8, cena: 560 },
-};
+/* ---------- Formatēšanas palīgi ---------- */
+const fmtDiena = new Intl.DateTimeFormat('lv-LV', { timeZone: LAIKA_ZONA, weekday: 'long', day: 'numeric', month: 'long' });
+const fmtDatums = new Intl.DateTimeFormat('lv-LV', { timeZone: LAIKA_ZONA, day: 'numeric', month: 'long', year: 'numeric' });
+const fmtLaiks = new Intl.DateTimeFormat('lv-LV', { timeZone: LAIKA_ZONA, hour: '2-digit', minute: '2-digit' });
+const eiro = (centi) => (centi / 100).toLocaleString('lv-LV', { maximumFractionDigits: 2 }) + ' €';
 
-// Pagaidu mock laiki, kamēr nav Calendly integrācijas (pietiek arī 8 nodarbībām).
-const pieejamieLaiki = [
-  'Pirmdiena 16:00', 'Pirmdiena 17:00', 'Otrdiena 16:00', 'Otrdiena 17:00',
-  'Trešdiena 15:30', 'Trešdiena 16:30', 'Ceturtdiena 17:00', 'Ceturtdiena 17:30',
-  'Piektdiena 16:00', 'Sestdiena 10:00', 'Sestdiena 11:00', 'Svētdiena 12:00',
-];
-
-/* ---------- PAGAIDU localStorage glabātuve ----------
-   Šeit glabājam tikai to, kurš audzēknis 2. solī pēdējais bija atvērts (UI
-   ērtībai). Rezervācija (veids + laiki + apmaksats) glabājas pie katra
-   audzēkņa Firestore. Kad būs Calendly/maksājumu backend, šos laukus
-   aizpildīs īstā rezervācija un apmaksa. */
-const pagaiduAtslega = () => `sd_pieteikums_${uid}`;
-function pagaiduIelasit() {
-  try { return JSON.parse(localStorage.getItem(pagaiduAtslega())) || {}; }
-  catch { return {}; }
+// Šodienas datums Rīgas laika joslā kā "GGGG-MM-DD".
+function sodienISO(nobide = 0) {
+  const d = new Date(Date.now() + nobide * 86_400_000);
+  return new Intl.DateTimeFormat('en-CA', { timeZone: LAIKA_ZONA, year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
 }
-function pagaiduSaglabat() {
-  localStorage.setItem(pagaiduAtslega(), JSON.stringify({ izveletaisBernsIdx }));
+
+function escapeHTML(s) {
+  return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
 /* ---------- Tosts ---------- */
@@ -643,8 +588,12 @@ function tosts(teksts, veids = 'labi') {
 const navPogas = [
   { poga: 'navProfils', sadala: 'sadalaProfils' },
   { poga: 'navPieteikties', sadala: 'sadalaPieteikties' },
-  { poga: 'navMaksajumi', sadala: 'sadalaMaksajumi' },
+  { poga: 'navRezervet', sadala: 'sadalaRezervet' },
+  { poga: 'navNodarbibas', sadala: 'sadalaNodarbibas' },
+  { poga: 'navPirkumi', sadala: 'sadalaPirkumi' },
 ];
+// Bilances kartīti rādām tikai rezervāciju sadaļās.
+const bilancesSadalas = ['sadalaRezervet', 'sadalaNodarbibas', 'sadalaPirkumi'];
 function paradietSadalu(sadalasId) {
   navPogas.forEach(({ poga, sadala }) => {
     const aktivs = sadala === sadalasId;
@@ -652,40 +601,10 @@ function paradietSadalu(sadalasId) {
     el(poga).setAttribute('aria-selected', aktivs ? 'true' : 'false');
     el(sadala).classList.toggle('aktiva', aktivs);
   });
-
-  // Apakšnavigāciju rādām tikai pieteikšanās sadaļā.
-  const pieteikties = sadalasId === 'sadalaPieteikties';
-  el('izkartojums').classList.toggle('ar-apaksnav', pieteikties);
-  el('apaksNav').classList.toggle('paslepts', !pieteikties);
-  if (pieteikties) {
-    // Apakšnav sākas tajā pašā augstumā, kur galvenās nav 2. poga "Pieteikties nodarbībai".
-    el('apaksNav').style.marginTop = el('navPieteikties').offsetTop + 'px';
-  }
+  el('bilanceKarte').classList.toggle('paslepts', !bilancesSadalas.includes(sadalasId));
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 navPogas.forEach(({ poga, sadala }) => { el(poga).onclick = () => paradietSadalu(sadala); });
-
-/* ---------- Apakšnavigācija (soļi) ---------- */
-const paneli = ['panelisAudzeknis', 'panelisLaiks', 'panelisApmaksa'];
-function paradietPaneli(panelisId) {
-  // Ienākot rezervācijas solī bez izvēlēta audzēkņa — izvēlamies pirmo un ielādējam viņa rezervāciju.
-  if (panelisId === 'panelisLaiks') {
-    if (izveletaisBernsIdx === null && berni.length) izveletaisBernsIdx = 0;
-    if (izveletaisBernsIdx !== null) ieladetRezervaciju(izveletaisBernsIdx);
-    pagaiduSaglabat();
-  }
-  paneli.forEach((id) => el(id).classList.toggle('aktiva', id === panelisId));
-  document.querySelectorAll('.apaks-nav-poga').forEach((b) => {
-    const aktivs = b.dataset.panelis === panelisId;
-    b.classList.toggle('aktiva', aktivs);
-    b.setAttribute('aria-selected', aktivs ? 'true' : 'false');
-  });
-  if (panelisId === 'panelisLaiks' || panelisId === 'panelisApmaksa') atjaunotStavokli();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-document.querySelectorAll('.apaks-nav-poga').forEach((b) => {
-  b.onclick = () => paradietPaneli(b.dataset.panelis);
-});
 
 /* ---------- Radio pogu palīgfunkcijas ---------- */
 function iestatitRadio(nosaukums, vertiba) {
@@ -774,7 +693,7 @@ function paradietDzestAnketuApstiprinajumu(indekss) {
 
 /* ---------- Audzēkņu kartītes ----------
    Visa kartīte ir klikšķināma un atver rediģēšanu (bez atsevišķas "Rediģēt"
-   pogas). Aiz vārda — rezervētā veida atzīme oranžā krāsā (neapmaksāts). */
+   pogas). */
 function zimetBernuKartes() {
   const konteiners = el('bernuKartes');
   konteiners.innerHTML = '';
@@ -792,23 +711,8 @@ function zimetBernuKartes() {
     vards.textContent = b.berna_vards || 'Audzēknis';
     karte.appendChild(vards);
 
-    // Rezervētā veida atzīme (oranža, kamēr nav apmaksāts).
-    if (b.nodarbibas_veids && veidi[b.nodarbibas_veids]) {
-      const badge = document.createElement('span');
-      badge.className = 'bernu-badge' + (b.apmaksats ? ' apmaksats' : '');
-      badge.textContent = veidi[b.nodarbibas_veids].isais;
-      karte.appendChild(badge);
-    }
-
     konteiners.appendChild(karte);
   });
-}
-
-// Ielādē izvēlētā audzēkņa saglabāto rezervāciju darba stāvoklī.
-function ieladetRezervaciju(indekss) {
-  const b = berni[indekss];
-  izveletaisVeids = b?.nodarbibas_veids || null;
-  izveletieLaiki = Array.isArray(b?.nodarbibas_laiki) ? [...b.nodarbibas_laiki] : [];
 }
 
 async function dzestBernu(indekss) {
@@ -817,13 +721,8 @@ async function dzestBernu(indekss) {
   if (!izdevas) return false;
 
   berni = jaunieBerni;
-  if (izveletaisBernsIdx === indekss) izveletaisBernsIdx = null;
-  else if (izveletaisBernsIdx > indekss) izveletaisBernsIdx--;
-  if (izveletaisBernsIdx !== null) ieladetRezervaciju(izveletaisBernsIdx);
-  pagaiduSaglabat();
-
   zimetBernuKartes();
-  atjaunotStavokli();
+  atjaunotAudzeknuIzveli();
   return true;
 }
 
@@ -844,100 +743,379 @@ async function saglabatBernus(jaunieBerni, veiksmesTeksts, poga) {
   }
 }
 
-/* ---------- 2. panelis: audzēknis + veids + laiki ---------- */
-function zimetBernaIzveli() {
-  const konteiners = el('bernsIzvele');
-  konteiners.innerHTML = '';
-  berni.forEach((b, i) => {
-    const id = 'izvBerns' + i;
-    const inp = document.createElement('input');
-    inp.type = 'radio';
-    inp.name = 'izveletaisBerns';
-    inp.id = id;
-    inp.value = String(i);
-    inp.checked = i === izveletaisBernsIdx;
-    inp.onchange = () => {
-      izveletaisBernsIdx = i;
-      ieladetRezervaciju(i);   // katram audzēknim sava rezervācija
-      pagaiduSaglabat();
-      atjaunotStavokli();
-    };
-    const lab = document.createElement('label');
-    lab.setAttribute('for', id);
-    lab.textContent = b.berna_vards || ('Audzēknis ' + (i + 1));
-    konteiners.appendChild(inp);
-    konteiners.appendChild(lab);
-  });
+/* ---------- Bilance (realtime) ---------- */
+function atjaunotBilanci() {
+  el('bilanceSkaitlis').textContent = String(bilance);
+  atjaunotSlotuPieejamibu();
 }
-function zimetVeiduIzveli() {
-  const konteiners = el('veiduIzvele');
-  konteiners.innerHTML = '';
-  Object.entries(veidi).forEach(([atsl, v]) => {
-    const poga = document.createElement('button');
-    poga.type = 'button';
-    poga.className = 'veids-poga' + (izveletaisVeids === atsl ? ' aktiva' : '');
-    poga.innerHTML = `<span class="veids-nos">${v.nosaukums}</span>`
-      + `<span class="veids-det">${v.apraksts} · ${v.cena}&thinsp;€</span>`;
-    poga.onclick = () => {
-      if (izveletaisVeids !== atsl) { izveletaisVeids = atsl; izveletieLaiki = []; }
-      atjaunotStavokli();
-    };
-    konteiners.appendChild(poga);
-  });
-}
-function zimetLaikaSlotus() {
-  const konteiners = el('calSloti');
-  konteiners.innerHTML = '';
-  const limits = izveletaisVeids ? veidi[izveletaisVeids].skaits : 0;
-  pieejamieLaiki.forEach((laiks) => {
-    const izv = izveletieLaiki.includes(laiks);
-    const poga = document.createElement('button');
-    poga.type = 'button';
-    poga.className = 'cal-slots' + (izv ? ' aktiva' : '');
-    poga.textContent = laiks;
-    poga.onclick = () => {
-      if (izv) izveletieLaiki = izveletieLaiki.filter((l) => l !== laiks);
-      else if (izveletieLaiki.length < limits) izveletieLaiki.push(laiks);
-      else { tosts(`Šim veidam jāizvēlas ${limits} laiki.`, 'kluda'); return; }
-      atjaunotStavokli();
-    };
-    konteiners.appendChild(poga);
-  });
-}
-el('pogaUzAudzekni').onclick = () => { paradietPaneli('panelisAudzeknis'); atvertAnketu(null); };
+el('bilancePoga').onclick = () => paradietSadalu('sadalaPirkumi');
+el('pogaUzPaketem').onclick = () => paradietSadalu('sadalaPirkumi');
 
-/* ---------- Stāvokļa atjaunošana ---------- */
-function atjaunotStavokli() {
-  const irBerni = berni.length > 0;
+/* ---------- Audzēkņa izvēle rezervācijai ---------- */
+function atjaunotAudzeknuIzveli() {
+  const vardi = berni.map((b) => b.berna_vards).filter(Boolean);
+  el('audzeknaBloks').classList.toggle('paslepts', vardi.length === 0);
+  el('audzeknaIzvele').innerHTML =
+    vardi.map((v) => `<option value="${escapeHTML(v)}">${escapeHTML(v)}</option>`).join('');
+  atjaunotApstiprinatJoslu();
+}
 
-  // 2. panelis — rezervācija izvēlētajam audzēknim.
-  el('laiksSlegts').classList.toggle('paslepts', irBerni);
-  el('laiksSaturs').classList.toggle('paslepts', !irBerni);
-  if (irBerni) {
-    zimetBernaIzveli();
-    zimetVeiduIzveli();
-    const veidsInfo = izveletaisVeids ? veidi[izveletaisVeids] : null;
-    el('laikuKarte').classList.toggle('paslepts', !veidsInfo);
-    if (veidsInfo) {
-      el('laikuPiezime').textContent =
-        `Izvēlies ${veidsInfo.skaits} nodarbību laiku${veidsInfo.skaits > 1 ? 's' : ''}. `
-        + `Izvēlēts: ${izveletieLaiki.length} no ${veidsInfo.skaits}.`;
-      zimetLaikaSlotus();
-    }
-    const gatavs = !!(veidsInfo && izveletieLaiki.length === veidsInfo.skaits);
-    el('pogaSaglabatRezervaciju').disabled = !gatavs;
+/* ---------- Nodarbību veidi ---------- */
+function renderVeidi() {
+  const k = el('veiduSaraksts');
+  if (nodarbibuVeidi.length === 0) {
+    k.innerHTML = '<p class="tukss">Šobrīd nav pieejamu nodarbību veidu. Lūdzu, mēģini vēlāk.</p>';
+    return;
   }
-
-  // 3. panelis — kopsavilkums (audzēknis, veids, cena).
-  const izv = (izveletaisBernsIdx !== null && berni[izveletaisBernsIdx]) ? berni[izveletaisBernsIdx] : null;
-  const rezVeids = izv && izv.nodarbibas_veids ? veidi[izv.nodarbibas_veids] : null;
-  const gatavsApmaksai = !!(izv && rezVeids
-    && Array.isArray(izv.nodarbibas_laiki) && izv.nodarbibas_laiki.length === rezVeids.skaits);
-  el('pogaApmaksa').disabled = !gatavsApmaksai;
-  el('kopsAudzeknis').textContent = izv ? (izv.berna_vards || 'Audzēknis') : '—';
-  el('kopsVeids').textContent = rezVeids ? rezVeids.nosaukums : '—';
-  el('kopsCena').textContent = rezVeids ? (rezVeids.cena + ' €') : '—';
+  k.innerHTML = nodarbibuVeidi.map((v) => `
+    <button class="veids${izveletaisVeids?.id === v.id ? ' aktivs' : ''}" data-id="${v.id}" type="button">
+      <div class="veids-nosaukums">${escapeHTML(v.name)}</div>
+      <div class="veids-info">${v.durationMinutes} min · ${v.creditsRequired} nodarbība${v.creditsRequired === 1 ? '' : 's'} no bilances</div>
+    </button>
+  `).join('');
+  k.querySelectorAll('.veids').forEach((poga) => {
+    poga.addEventListener('click', () => {
+      izveletaisVeids = nodarbibuVeidi.find((v) => v.id === poga.dataset.id) ?? null;
+      izveletaisSlots = null;
+      slotuDienuSkaits = 14;
+      renderVeidi();
+      atjaunotApstiprinatJoslu();
+      ieladetSlotus();
+    });
+  });
 }
+
+function atjaunotSlotuPieejamibu() {
+  if (!izveletaisVeids) return;
+  const nepietiek = bilance < izveletaisVeids.creditsRequired;
+  el('slotuKarte').classList.toggle('paslepts', nepietiek);
+  el('nevarKarte').classList.toggle('paslepts', !nepietiek);
+  if (nepietiek) {
+    el('apstiprinatJosla').classList.remove('redzams');
+    el('nevarTeksts').textContent =
+      `Šai nodarbībai vajag ${izveletaisVeids.creditsRequired} nodarbību bilancē (tev ir ${bilance}). Iegādājies paketi, un varēsi rezervēt.`;
+  }
+}
+
+/* ---------- Brīvie laiki ---------- */
+async function ieladetSlotus() {
+  if (!izveletaisVeids) return;
+  atjaunotSlotuPieejamibu();
+  if (bilance < izveletaisVeids.creditsRequired) return;
+
+  const k = el('slotuSaraksts');
+  k.innerHTML = '<p class="tukss">Meklē brīvos laikus…</p>';
+  el('pogaVairakDienu').hidden = true;
+
+  try {
+    const atbilde = await izsauktFunkciju('getAvailableSlots', {
+      lessonTypeId: izveletaisVeids.id,
+      fromISO: sodienISO(),
+      toISO: sodienISO(slotuDienuSkaits),
+    });
+    atcelsanasStundas = atbilde.cancellationHours ?? atcelsanasStundas;
+
+    if (!atbilde.days.length) {
+      k.innerHTML = '<p class="tukss">Tuvākajās dienās brīvu laiku nav. Pamēģini paskatīties tālāk uz priekšu.</p>';
+    } else {
+      k.innerHTML = atbilde.days.map((diena) => `
+        <div class="diena">
+          <div class="diena-virsraksts">${fmtDiena.format(new Date(diena.slots[0].startMillis))}</div>
+          <div class="laiki">
+            ${diena.slots.map((s) => `
+              <button class="laiks${izveletaisSlots?.startMillis === s.startMillis ? ' aktivs' : ''}"
+                      data-start="${s.startMillis}" data-teacher="${s.teacherId}" type="button">
+                ${fmtLaiks.format(new Date(s.startMillis))}
+              </button>`).join('')}
+          </div>
+        </div>
+      `).join('');
+      k.querySelectorAll('.laiks').forEach((poga) => {
+        poga.addEventListener('click', () => {
+          izveletaisSlots = {
+            startMillis: Number(poga.dataset.start),
+            teacherId: poga.dataset.teacher,
+          };
+          k.querySelectorAll('.laiks').forEach((p) => p.classList.toggle('aktivs', p === poga));
+          atjaunotApstiprinatJoslu();
+        });
+      });
+    }
+    el('pogaVairakDienu').hidden = false;
+  } catch (err) {
+    console.error('getAvailableSlots kļūda:', err);
+    k.innerHTML = `<p class="tukss">${escapeHTML(funkcijasKluda(err))}</p>`;
+  }
+}
+
+el('pogaVairakDienu').onclick = () => {
+  slotuDienuSkaits += 14;
+  ieladetSlotus();
+};
+
+function atjaunotApstiprinatJoslu() {
+  const josla = el('apstiprinatJosla');
+  if (!izveletaisVeids || !izveletaisSlots) {
+    josla.classList.remove('redzams');
+    return;
+  }
+  const kad = new Date(izveletaisSlots.startMillis);
+  const audzeknis = el('audzeknaIzvele').value;
+  josla.classList.add('redzams');
+  el('apstiprinatTeksts').innerHTML =
+    `<strong>${escapeHTML(izveletaisVeids.name)}</strong> · ${fmtDiena.format(kad)} plkst. ${fmtLaiks.format(kad)}`
+    + (audzeknis ? ` · ${escapeHTML(audzeknis)}` : '');
+}
+el('audzeknaIzvele').onchange = atjaunotApstiprinatJoslu;
+
+el('pogaApstiprinat').onclick = async () => {
+  if (!izveletaisVeids || !izveletaisSlots) return;
+  const poga = el('pogaApstiprinat');
+  poga.disabled = true;
+  poga.textContent = 'Rezervē…';
+  try {
+    await izsauktFunkciju('createBooking', {
+      lessonTypeId: izveletaisVeids.id,
+      startMillis: izveletaisSlots.startMillis,
+      teacherId: izveletaisSlots.teacherId,
+      childName: el('audzeknaIzvele').value || null,
+    });
+    tosts('Nodarbība rezervēta! 🎵', 'labi');
+    izveletaisSlots = null;
+    el('apstiprinatJosla').classList.remove('redzams');
+    await Promise.all([ieladetSlotus(), ieladetGaidamas()]);
+  } catch (err) {
+    console.error('createBooking kļūda:', err);
+    tosts(funkcijasKluda(err), 'kluda');
+    ieladetSlotus(); // laiks varēja tikt aizņemts — atsvaidzinām
+  } finally {
+    poga.disabled = false;
+    poga.textContent = 'Apstiprināt rezervāciju';
+  }
+};
+
+/* ---------- Manas nodarbības ---------- */
+function nodarbibasRinda(b, id, { arAtceltPogu = false } = {}) {
+  const sakums = b.startAt.toMillis();
+  const varAtcelt = arAtceltPogu && Date.now() < sakums - atcelsanasStundas * 3_600_000;
+  const statuss =
+    b.status === 'cancelled'
+      ? '<span class="atzime sarkana">Atcelta</span>'
+      : sakums < Date.now()
+        ? '<span class="atzime zala">Notikusi</span>'
+        : '<span class="atzime zala">Apstiprināta</span>';
+  return `
+    <div class="saraksta-rinda">
+      <div>
+        <div class="saraksta-galvena">${fmtDiena.format(new Date(sakums))} · ${fmtLaiks.format(new Date(sakums))}</div>
+        <div class="saraksta-apaksa">${escapeHTML(b.lessonTypeName || 'Nodarbība')}${b.childName ? ' · ' + escapeHTML(b.childName) : ''}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        ${statuss}
+        ${arAtceltPogu ? `<button class="maza-poga" data-atcelt="${id}" ${varAtcelt ? '' : `disabled title="Atcelt var ne vēlāk kā ${atcelsanasStundas}h pirms nodarbības"`}>Atcelt</button>` : ''}
+      </div>
+    </div>`;
+}
+
+async function ieladetGaidamas() {
+  const k = el('gaidamoSaraksts');
+  try {
+    const snap = await getDocs(query(
+      collection(db, 'bookings'),
+      where('userId', '==', uid),
+      where('status', '==', 'confirmed'),
+      where('startAt', '>=', new Date()),
+      orderBy('startAt', 'asc'),
+      limit(20),
+    ));
+    k.innerHTML = snap.empty
+      ? '<p class="tukss">Nav gaidāmu nodarbību. Rezervē nākamo sadaļā "Rezervēt"!</p>'
+      : snap.docs.map((d) => nodarbibasRinda(d.data(), d.id, { arAtceltPogu: true })).join('');
+    k.querySelectorAll('[data-atcelt]').forEach((poga) => {
+      poga.addEventListener('click', () => atceltNodarbibu(poga));
+    });
+  } catch (err) {
+    console.error('Gaidāmo ielādes kļūda:', err);
+    k.innerHTML = '<p class="tukss">Neizdevās ielādēt. Mēģini vēlreiz.</p>';
+  }
+}
+
+async function atceltNodarbibu(poga) {
+  if (poga.dataset.apstiprinats !== '1') {
+    poga.dataset.apstiprinats = '1';
+    poga.textContent = 'Tiešām atcelt?';
+    setTimeout(() => {
+      poga.dataset.apstiprinats = '';
+      poga.textContent = 'Atcelt';
+    }, 4000);
+    return;
+  }
+  poga.disabled = true;
+  try {
+    const r = await izsauktFunkciju('cancelBooking', { bookingId: poga.dataset.atcelt });
+    tosts(r.creditsReturned > 0 ? 'Nodarbība atcelta, bilance atjaunota.' : 'Nodarbība atcelta.', 'labi');
+    await Promise.all([ieladetGaidamas(), ieladetPagatni(true)]);
+    if (izveletaisVeids) ieladetSlotus();
+  } catch (err) {
+    console.error('cancelBooking kļūda:', err);
+    tosts(funkcijasKluda(err), 'kluda');
+    poga.disabled = false;
+  }
+}
+
+async function ieladetPagatni(nosakuma = false) {
+  const k = el('pagatnesSaraksts');
+  if (nosakuma) {
+    pagatnesKursors = null;
+    k.innerHTML = '<p class="tukss">Ielādē…</p>';
+  }
+  try {
+    const dalas = [
+      collection(db, 'bookings'),
+      where('userId', '==', uid),
+      orderBy('startAt', 'desc'),
+      limit(10),
+    ];
+    if (pagatnesKursors) dalas.push(startAfter(pagatnesKursors));
+    const snap = await getDocs(query(...dalas));
+
+    // Rādām tikai pagātnes vai atceltās (gaidāmās ir savā sarakstā).
+    const rindas = snap.docs
+      .filter((d) => d.data().status === 'cancelled' || d.data().startAt.toMillis() < Date.now())
+      .map((d) => nodarbibasRinda(d.data(), d.id));
+
+    if (nosakuma) k.innerHTML = '';
+    if (nosakuma && rindas.length === 0 && snap.docs.length < 10) {
+      k.innerHTML = '<p class="tukss">Vēl nav notikušu nodarbību.</p>';
+    } else {
+      k.insertAdjacentHTML('beforeend', rindas.join(''));
+    }
+    pagatnesKursors = snap.docs.at(-1) ?? pagatnesKursors;
+    el('pogaVairakPagatnes').hidden = snap.docs.length < 10;
+  } catch (err) {
+    console.error('Vēstures ielādes kļūda:', err);
+    k.innerHTML = '<p class="tukss">Neizdevās ielādēt. Mēģini vēlreiz.</p>';
+  }
+}
+el('pogaVairakPagatnes').onclick = () => ieladetPagatni();
+
+/* ---------- Paketes un maksājumi ---------- */
+async function ieladetPaketes() {
+  const k = el('paketuSaraksts');
+  try {
+    const snap = await getDocs(query(collection(db, 'lessonPackages'), where('active', '==', true)));
+    const paketes = snap.docs
+      .map((d) => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+    k.innerHTML = paketes.length === 0
+      ? '<p class="tukss">Šobrīd nav pieejamu pakešu.</p>'
+      : paketes.map((p) => `
+        <div class="pakete">
+          <div class="pakete-nosaukums">${escapeHTML(p.name)}</div>
+          <div class="pakete-krediti">${p.credits} nodarbība${p.credits === 1 ? '' : 's'}</div>
+          <div class="pakete-cena">${eiro(p.priceCents)}</div>
+          <button class="cta" data-pakete="${p.id}">Pirkt</button>
+        </div>`).join('');
+    k.querySelectorAll('[data-pakete]').forEach((poga) => {
+      poga.addEventListener('click', async () => {
+        poga.disabled = true;
+        poga.textContent = 'Atver apmaksu…';
+        try {
+          const r = await izsauktFunkciju('createCheckoutSession', { packageId: poga.dataset.pakete });
+          window.location.href = r.url;
+        } catch (err) {
+          console.error('createCheckoutSession kļūda:', err);
+          tosts(funkcijasKluda(err), 'kluda');
+          poga.disabled = false;
+          poga.textContent = 'Pirkt';
+        }
+      });
+    });
+  } catch (err) {
+    console.error('Pakešu ielādes kļūda:', err);
+    k.innerHTML = '<p class="tukss">Neizdevās ielādēt paketes.</p>';
+  }
+}
+
+async function ieladetPirkumus() {
+  const k = el('pirkumuSaraksts');
+  try {
+    const snap = await getDocs(query(
+      collection(db, 'payments'),
+      where('userId', '==', uid),
+      orderBy('createdAt', 'desc'),
+      limit(10),
+    ));
+    k.innerHTML = snap.empty
+      ? '<p class="tukss">Vēl nav maksājumu.</p>'
+      : snap.docs.map((d) => {
+          const p = d.data();
+          const statuss = p.status === 'succeeded'
+            ? '<span class="atzime zala">Apmaksāts</span>'
+            : '<span class="atzime sarkana">Neizdevās</span>';
+          return `
+            <div class="saraksta-rinda">
+              <div>
+                <div class="saraksta-galvena">${escapeHTML(p.packageName || 'Pakete')}</div>
+                <div class="saraksta-apaksa">${p.createdAt ? fmtDatums.format(p.createdAt.toDate()) : ''} · ${eiro(p.amountCents)}</div>
+              </div>
+              ${statuss}
+            </div>`;
+        }).join('');
+  } catch (err) {
+    console.error('Maksājumu ielādes kļūda:', err);
+    k.innerHTML = '<p class="tukss">Neizdevās ielādēt.</p>';
+  }
+}
+
+const TIPU_NOSAUKUMI = {
+  PURCHASE: 'Pirkums',
+  BOOKING: 'Rezervācija',
+  CANCELLATION: 'Atcelšana',
+  MANUAL_ADMIN: 'Korekcija',
+  REFUND: 'Atmaksa',
+};
+
+async function ieladetKreditus(nosakuma = false) {
+  const k = el('kreditusSaraksts');
+  if (nosakuma) {
+    kreditusKursors = null;
+    k.innerHTML = '<p class="tukss">Ielādē…</p>';
+  }
+  try {
+    const dalas = [
+      collection(db, 'creditTransactions'),
+      where('userId', '==', uid),
+      orderBy('createdAt', 'desc'),
+      limit(15),
+    ];
+    if (kreditusKursors) dalas.push(startAfter(kreditusKursors));
+    const snap = await getDocs(query(...dalas));
+    const rindas = snap.docs.map((d) => {
+      const t = d.data();
+      return `
+        <div class="saraksta-rinda">
+          <div>
+            <div class="saraksta-galvena">${TIPU_NOSAUKUMI[t.type] || t.type}</div>
+            <div class="saraksta-apaksa">${t.createdAt ? fmtDatums.format(t.createdAt.toDate()) : ''}${t.note ? ' · ' + escapeHTML(t.note) : ''}</div>
+          </div>
+          <div class="${t.amount > 0 ? 'plus' : 'minus'}">${t.amount > 0 ? '+' : ''}${t.amount}</div>
+        </div>`;
+    });
+    if (nosakuma) k.innerHTML = '';
+    if (nosakuma && rindas.length === 0) {
+      k.innerHTML = '<p class="tukss">Vēl nav bilances izmaiņu.</p>';
+    } else {
+      k.insertAdjacentHTML('beforeend', rindas.join(''));
+    }
+    kreditusKursors = snap.docs.at(-1) ?? kreditusKursors;
+    el('pogaVairakKreditu').hidden = snap.docs.length < 15;
+  } catch (err) {
+    console.error('Kredītu vēstures kļūda:', err);
+    k.innerHTML = '<p class="tukss">Neizdevās ielādēt.</p>';
+  }
+}
+el('pogaVairakKreditu').onclick = () => ieladetKreditus();
 
 /* ---------- Notikumi: anketa ---------- */
 el('pogaPieteiktBernu').onclick = () => atvertAnketu(null);
@@ -965,42 +1143,9 @@ el('pogaSaglabatBernu').onclick = async () => {
   if (!izdevas) return;
 
   berni = jaunieBerni;
-  pagaiduSaglabat();
-
-  // Paliekam 1. solī — kartītē redzams vārds un poga "Izvēlies laiku",
-  // ar kuru lietotājs pats pāriet uz 2. soli.
   aizvertAnketu();
   zimetBernuKartes();
-  atjaunotStavokli();
-};
-
-/* ---------- Notikumi: 2. solis "Saglabāt" rezervāciju ---------- */
-el('pogaSaglabatRezervaciju').onclick = async () => {
-  if (izveletaisBernsIdx == null || !izveletaisVeids) return;
-  const info = veidi[izveletaisVeids];
-  if (izveletieLaiki.length !== info.skaits) return;
-
-  const jaunieBerni = berni.map((b, i) => (i === izveletaisBernsIdx ? {
-    ...b,
-    nodarbibas_veids: izveletaisVeids,
-    nodarbibas_laiki: [...izveletieLaiki],
-    apmaksats: false,          // vēl nav apmaksāts → oranža atzīme
-  } : b));
-
-  const izdevas = await saglabatBernus(jaunieBerni, 'Rezervācija saglabāta.', el('pogaSaglabatRezervaciju'));
-  if (!izdevas) return;
-
-  berni = jaunieBerni;
-  zimetBernuKartes();
-  atjaunotStavokli();
-  paradietPaneli('panelisApmaksa');   // uz apmaksas soli
-};
-
-/* ---------- Notikumi: apmaksa (vietturis) ---------- */
-el('pogaApmaksa').onclick = () => {
-  const b = berni[izveletaisBernsIdx];
-  const v = b && b.nodarbibas_veids ? veidi[b.nodarbibas_veids] : null;
-  tosts(`Apmaksa "${b?.berna_vards || 'audzēknim'}" (${v ? v.nosaukums + ', ' + v.cena + ' €' : ''}) — drīzumā pieejama.`, 'labi');
+  atjaunotAudzeknuIzveli();
 };
 
 /* ---------- Notikumi: profils ---------- */
@@ -1057,20 +1202,58 @@ prasitPieteiksanos(async (user) => {
     velamie_laiki: p.velamie_laiki || '',
   }] : []);
 
-  // Atjaunojam pēdējo atvērto audzēkni 2. solī (rezervācija katram sava — Firestore).
-  const pagaidu = pagaiduIelasit();
-  izveletaisBernsIdx = (pagaidu.izveletaisBernsIdx != null && berni[pagaidu.izveletaisBernsIdx])
-    ? pagaidu.izveletaisBernsIdx : null;
-  if (izveletaisBernsIdx !== null) ieladetRezervaciju(izveletaisBernsIdx);
-
   zimetBernuKartes();
-  atjaunotStavokli();
+  atjaunotAudzeknuIzveli();
+
+  // Bilance realtime — atjaunojas arī tad, kad webhook ieskaita pirkumu.
+  onSnapshot(doc(db, 'users', uid), (snap) => {
+    bilance = typeof snap.data()?.creditBalance === 'number' ? snap.data().creditBalance : 0;
+    atjaunotBilanci();
+  });
+
+  // Atcelšanas noteikumi paziņojumam.
+  try {
+    const iestatijumi = await getDoc(doc(db, 'settings', 'booking'));
+    atcelsanasStundas = iestatijumi.data()?.cancellationHours ?? atcelsanasStundas;
+  } catch { /* noklusējums paliek */ }
+  el('atcelsanasPiezime').textContent =
+    `Nodarbību var atcelt ne vēlāk kā ${atcelsanasStundas} stundas pirms tās sākuma — nodarbība atgriežas tavā bilancē.`;
+
+  // Nodarbību veidi.
+  try {
+    const veiduSnap = await getDocs(query(collection(db, 'lessonTypes'), where('active', '==', true)));
+    nodarbibuVeidi = veiduSnap.docs.map((d) => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => a.name.localeCompare(b.name, 'lv'));
+  } catch (err) {
+    console.error('Veidu ielādes kļūda:', err);
+  }
+  if (nodarbibuVeidi.length === 1) izveletaisVeids = nodarbibuVeidi[0];
+  renderVeidi();
+  if (izveletaisVeids) ieladetSlotus();
 
   el('ielade').classList.add('paslepts');
   el('izkartojums').classList.remove('paslepts');
 
-  // Lapa atveras ar "Pieteikties nodarbībai" sadaļu (nevis "Mans profils").
-  paradietSadalu('sadalaPieteikties');
+  ieladetGaidamas();
+  ieladetPagatni(true);
+  ieladetPaketes();
+  ieladetPirkumus();
+  ieladetKreditus(true);
+
+  // Atgriešanās no Stripe apmaksas.
+  const parametri = new URLSearchParams(window.location.search);
+  if (parametri.get('maksajums') === 'ok') {
+    paradietSadalu('sadalaPirkumi');
+    tosts('Paldies! Maksājums saņemts — nodarbības tiks ieskaitītas dažu sekunžu laikā.', 'labi');
+    history.replaceState(null, '', 'profils.html');
+  } else if (parametri.get('maksajums') === 'atcelts') {
+    paradietSadalu('sadalaPirkumi');
+    tosts('Maksājums netika pabeigts.', 'kluda');
+    history.replaceState(null, '', 'profils.html');
+  } else {
+    // Atveras ar rezervēšanu; ja vēl nav neviena audzēkņa — ar to pievienošanu.
+    paradietSadalu(berni.length ? 'sadalaRezervet' : 'sadalaPieteikties');
+  }
 });
 </script>
 </body>
