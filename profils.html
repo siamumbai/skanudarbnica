@@ -83,7 +83,6 @@
     background:var(--bg3);color:var(--muted);font-size:11px;font-weight:800;
   }
   .apaks-nav-poga.aktiva .apaks-nr{background:var(--bg);color:var(--accent-dark)}
-  .apaks-nav-poga.pabeigts .apaks-nr{background:var(--zala);color:#fff}
 
   /* --- Saturs / sadaļas --- */
   .sadala{display:none}
@@ -186,19 +185,16 @@
   }
   .poga-pievienot:hover{background:var(--accent)}
 
-  /* --- Audzēkņu kartītes --- */
+  /* --- Audzēkņu kartītes (visa kartīte klikšķināma = rediģēt) --- */
   .bernu-kartes{margin-top:22px}
   .bernu-karte{
+    display:flex;align-items:center;gap:14px;width:100%;text-align:left;
     background:var(--bg2);border:0.5px solid var(--border);
-    border-radius:14px;padding:16px 20px;margin-bottom:12px;
+    border-radius:14px;padding:18px 20px;margin-bottom:12px;
+    font-family:inherit;cursor:pointer;transition:background .15s,border-color .15s;
   }
-  .bernu-karte-galva{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
-  .bernu-vards-poga{
-    background:none;border:none;padding:0;cursor:pointer;text-align:left;
-    font-family:inherit;font-size:16px;font-weight:800;color:var(--text);line-height:1.2;
-  }
-  .bernu-vards-poga:hover{color:var(--accent-dark);text-decoration:underline}
-  .izvelies-laiku{padding:8px 16px;font-size:12.5px;flex-shrink:0}
+  .bernu-karte:hover{border-color:var(--accent-dark);background:var(--bg3)}
+  .bernu-vards{font-size:16px;font-weight:800;color:var(--text);line-height:1.2}
 
   /* --- "Dzēst anketu" rediģēšanas apakšā --- */
   .dzest-anketu-rinda{
@@ -291,7 +287,6 @@
     .josla{padding:16px 18px}
     .josla-epasts{display:none}
     .rinda{grid-template-columns:1fr}
-    .bernu-karte-galva{flex-direction:column}
   }
 </style>
 </head>
@@ -343,7 +338,7 @@
     <!-- ---------- SADAĻA: MANS PROFILS ---------- -->
     <section class="sadala aktiva" id="sadalaProfils" role="tabpanel" aria-labelledby="navProfils">
       <h1 class="virsraksts">Sveiks, <em id="sveiciensVards"></em></h1>
-      <p class="ievads">Šeit vari apskatīt un labot savus kontaktdatus. Ar tiem sazināsimies par nodarbībām.</p>
+      <p class="ievads">Šeit vari apskatīt un labot savus kontaktdatus.<br>Ar tiem sazināsimies par nodarbībām.</p>
 
       <section class="karte">
         <h2>Vecāka profils</h2>
@@ -409,7 +404,7 @@
               <input type="radio" name="muzika" id="mMazliet" value="Mazliet"><label for="mMazliet">Mazliet</label>
               <input type="radio" name="muzika" id="mMacas" value="Mācās"><label for="mMacas">Jau mācās</label>
             </div>
-            <textarea id="muzikaPiezime" placeholder="Pastāsti vairāk — cik ilgi, kur, kas patika vai nepatika…"></textarea>
+            <textarea id="muzikaPiezime" class="paslepts" placeholder="pastāstiet vairāk"></textarea>
           </div>
 
           <div class="jautajums">
@@ -419,12 +414,7 @@
               <input type="radio" name="instruments" id="iIr" value="Ir"><label for="iIr">Ir</label>
               <input type="radio" name="instruments" id="iPlano" value="Plānojam"><label for="iPlano">Plānojam iegādāties</label>
             </div>
-            <textarea id="instrumentsPiezime" placeholder="Kāds tieši? Klavieres, ģitāra, sintezators, bungas…"></textarea>
-          </div>
-
-          <div class="jautajums">
-            <p class="jaut-teksts">Kādās dienās vai datumos vēlētos nodarbības?</p>
-            <textarea id="laiki" placeholder="Piemēram: otrdienās un ceturtdienās pēc 16:00, vai sestdienu rītos."></textarea>
+            <textarea id="instrumentsPiezime" class="paslepts" placeholder="Kāds instruments?"></textarea>
           </div>
 
           <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:22px;align-items:center">
@@ -653,16 +643,32 @@ function nolasitRadio(nosaukums) {
 
 /* ---------- Anketas forma ---------- */
 function iestatitAnketasFormu(berns) {
+  // Jaunam audzēknim visi lauki tukši, bez iepriekš aizpildītas informācijas.
   el('bernaVards').value = berns?.berna_vards || '';
   el('bernaVecums').value = berns?.berna_vecums || '';
-  el('vecakaTel').value = berns?.vecaka_tel || el('telefons').value || '';
+  el('vecakaTel').value = berns?.vecaka_tel || '';
   el('bernaTel').value = berns?.berna_tel || '';
   iestatitRadio('muzika', berns?.muzikas_pieredze);
   iestatitRadio('instruments', berns?.instruments_majas);
   el('muzikaPiezime').value = berns?.muzikas_piezime || '';
   el('instrumentsPiezime').value = berns?.instrumenta_piezime || '';
-  el('laiki').value = berns?.velamie_laiki || '';
+  atjaunotPiezimes();
 }
+
+// Piezīmju lauks parādās tikai pie noteiktām atbildēm.
+function atjaunotPiezimes() {
+  const mv = nolasitRadio('muzika');
+  const mRada = mv === 'Mazliet' || mv === 'Mācās';
+  el('muzikaPiezime').classList.toggle('paslepts', !mRada);
+  if (!mRada) el('muzikaPiezime').value = '';
+
+  const iv = nolasitRadio('instruments');
+  const iRada = iv === 'Ir' || iv === 'Plānojam';
+  el('instrumentsPiezime').classList.toggle('paslepts', !iRada);
+  if (!iRada) el('instrumentsPiezime').value = '';
+}
+document.querySelectorAll('input[name="muzika"], input[name="instruments"]')
+  .forEach((r) => r.addEventListener('change', atjaunotPiezimes));
 function atvertAnketu(indekss) {
   rediggamaisIndekss = indekss;
   iestatitAnketasFormu(indekss === null ? null : berni[indekss]);
@@ -709,39 +715,24 @@ function paradietDzestAnketuApstiprinajumu(indekss) {
 }
 
 /* ---------- Audzēkņu kartītes ---------- */
-// Kartītē redzams tikai vārds (klikšķis = rediģēt) un poga "Izvēlies laiku".
+// Visa kartīte ir klikšķināma un atver rediģēšanu.
 function zimetBernuKartes() {
   const konteiners = el('bernuKartes');
   konteiners.innerHTML = '';
 
   berni.forEach((b, i) => {
-    const karte = document.createElement('div');
+    const karte = document.createElement('button');
+    karte.type = 'button';
     karte.className = 'bernu-karte';
+    karte.title = 'Rediģēt';
+    karte.setAttribute('aria-label', 'Rediģēt: ' + (b.berna_vards || 'Audzēknis'));
+    karte.onclick = () => atvertAnketu(i);
 
-    const galva = document.createElement('div');
-    galva.className = 'bernu-karte-galva';
-
-    const vards = document.createElement('button');
-    vards.type = 'button';
-    vards.className = 'bernu-vards-poga';
+    const vards = document.createElement('span');
+    vards.className = 'bernu-vards';
     vards.textContent = b.berna_vards || 'Audzēknis';
-    vards.title = 'Rediģēt';
-    vards.onclick = () => atvertAnketu(i);
 
-    const laiks = document.createElement('button');
-    laiks.type = 'button';
-    laiks.className = 'poga2 izvelies-laiku';
-    laiks.textContent = 'Izvēlies laiku';
-    laiks.onclick = () => {
-      izveletaisBernsIdx = i;
-      pagaiduSaglabat();
-      atjaunotStavokli();
-      paradietPaneli('panelisLaiks');
-    };
-
-    galva.appendChild(vards);
-    galva.appendChild(laiks);
-    karte.appendChild(galva);
+    karte.appendChild(vards);
     konteiners.appendChild(karte);
   });
 }
@@ -843,11 +834,6 @@ function atjaunotStavokli() {
   el('pogaApmaksa').disabled = !gatavsApmaksai;
   el('kopsAudzeknis').textContent = irIzveletsBerns ? (berni[izveletaisBernsIdx].berna_vards || 'Audzēknis') : '—';
   el('kopsLaiks').textContent = irLaiks ? izveletaisLaiks : '—';
-
-  // Apakšnavigācijas pabeigtības atzīmes
-  const pogas = document.querySelectorAll('.apaks-nav-poga');
-  pogas[0].classList.toggle('pabeigts', irBerni);
-  pogas[1].classList.toggle('pabeigts', irIzveletsBerns && irLaiks);
 }
 
 /* ---------- Notikumi: anketa ---------- */
@@ -864,7 +850,6 @@ el('pogaSaglabatBernu').onclick = async () => {
     muzikas_piezime: el('muzikaPiezime').value.trim(),
     instruments_majas: nolasitRadio('instruments'),
     instrumenta_piezime: el('instrumentsPiezime').value.trim(),
-    velamie_laiki: el('laiki').value.trim(),
   };
 
   const bijaJauns = rediggamaisIndekss === null;
