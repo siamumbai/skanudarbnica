@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="lv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>skanudarbnica.lv/admin/</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,300;0,400;0,600;0,800;1,300;1,600&display=swap&subset=latin,latin-ext" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/locales-all.global.min.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#F5EDD8; --bg2:#EDE0C4; --bg3:#E3D0A8;
+    --accent:#B8860B; --accent-light:#D4A843; --accent-dark:#7A5800;
+    --text:#2A1F08; --muted:#7A6840; --border:rgba(120,90,20,0.18);
+    --zala:#3B6D11; --sarkana:#9C3A22;
+  }
+  body{
+    background:var(--bg); color:var(--text);
+    font-family:'Raleway',sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  a:focus-visible, button:focus-visible, input:focus-visible,
+  select:focus-visible, textarea:focus-visible{
+    outline:2px solid var(--accent-dark); outline-offset:2px; border-radius:6px;
+  }
+
+  .josla{
+    border-bottom:0.5px solid var(--border);
+    padding:16px 28px;
+    display:flex; align-items:center; justify-content:space-between; gap:16px;
+    position:sticky; top:0; background:var(--bg); z-index:30;
+  }
+  .logo{font-size:15px;font-weight:600;text-decoration:none;color:var(--text)}
+  .logo b{color:var(--accent-dark)}
+  .izeja{
+    background:transparent;border:0.5px solid var(--border);border-radius:100px;
+    padding:8px 16px;font-family:inherit;font-size:13px;font-weight:600;
+    color:var(--muted);cursor:pointer;
+  }
+  .izeja:hover{border-color:var(--accent-dark);color:var(--accent-dark)}
+
+  .ielade{max-width:1380px;margin:0 auto;padding:44px 28px;color:var(--muted);font-size:15px}
+
+  .konteiners{max-width:1380px;margin:0 auto;padding:20px 28px 80px}
+
+  /* Sekciju navigācija */
+  .sekciju-nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:22px}
+  .nav-poga{
+    background:transparent;border:0.5px solid var(--border);border-radius:100px;
+    padding:10px 17px;font-family:inherit;font-size:13.5px;font-weight:600;
+    color:var(--muted);cursor:pointer;transition:background .15s,color .15s;
+  }
+  .nav-poga:hover{background:var(--bg2);color:var(--text)}
+  .nav-poga.aktiva{background:var(--accent-dark);border-color:var(--accent-dark);color:var(--bg)}
+
+  .sadala{display:none}
+  .sadala.aktiva{display:block;animation:paradities .18s ease}
+  @keyframes paradities{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+  .karte{
+    background:var(--bg2);border:0.5px solid var(--border);
+    border-radius:14px;padding:24px;margin-bottom:18px;
+  }
+  h2{
+    font-size:12px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;
+    color:var(--accent-dark);margin-bottom:6px;
+  }
+  .h2-piezime{font-size:13px;color:var(--muted);line-height:1.55;margin-bottom:16px}
+
+  label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin:10px 0 5px}
+  input, select, textarea{
+    width:100%;background:var(--bg);border:0.5px solid var(--border);
+    border-radius:10px;padding:10px 12px;font-family:inherit;font-size:13.5px;color:var(--text);
+  }
+  input[type="checkbox"]{width:auto}
+  .rinda-forma{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+  .rinda-forma > div{flex:1;min-width:130px}
+
+  .cta{
+    background:var(--accent-dark);color:var(--bg);
+    border:none;border-radius:100px;padding:11px 22px;
+    font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;transition:background .15s;
+  }
+  .cta:hover:not(:disabled){background:var(--accent)}
+  .cta:disabled{opacity:.6;cursor:not-allowed}
+  .maza-poga{
+    background:transparent;border:0.5px solid var(--border);border-radius:100px;
+    padding:7px 14px;font-family:inherit;font-size:12.5px;font-weight:700;
+    color:var(--muted);cursor:pointer;
+  }
+  .maza-poga:hover{border-color:var(--accent-dark);color:var(--accent-dark)}
+  .maza-poga.dzest{color:var(--sarkana)}
+  .maza-poga.dzest:hover{border-color:var(--sarkana)}
+  .maza-poga:disabled{opacity:.45;cursor:not-allowed}
+
+  /* Filtri virs kalendāra */
+  .filtri{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px}
+  .filtri > div{min-width:170px}
+  .filtri .atzimes-lauks{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);padding-bottom:10px}
+
+  #kalendars{background:var(--bg);border:0.5px solid var(--border);border-radius:14px;padding:14px}
+  .fc .fc-toolbar-title{font-family:Georgia,serif;font-weight:400;font-size:20px}
+  .fc .fc-button{
+    background:var(--bg2);border:0.5px solid var(--border);color:var(--muted);
+    font-family:inherit;font-weight:600;text-transform:none;
+  }
+  .fc .fc-button:hover, .fc .fc-button-active{background:var(--accent-dark) !important;color:var(--bg) !important}
+  .fc-event{cursor:pointer;font-size:12px}
+
+  /* Tabulas */
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th{
+    text-align:left;font-size:11px;font-weight:800;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--muted);padding:8px 10px;
+    border-bottom:0.5px solid var(--border);
+  }
+  td{padding:10px;border-bottom:0.5px solid var(--border);vertical-align:middle}
+  tr:last-child td{border-bottom:none}
+  td input, td select{padding:8px 10px;font-size:13px}
+  .tabula-riti{overflow-x:auto}
+
+  .atzime{
+    display:inline-block;font-size:11px;font-weight:800;letter-spacing:.05em;
+    padding:3px 10px;border-radius:100px;border:0.5px solid var(--border);
+    background:var(--bg);color:var(--muted);text-transform:uppercase;white-space:nowrap;
+  }
+  .atzime.zala{background:#E4EDD8;color:var(--zala);border-color:rgba(59,109,17,.3)}
+  .atzime.sarkana{background:#F2DFD8;color:var(--sarkana);border-color:rgba(156,58,34,.3)}
+  .plus{color:var(--zala);font-weight:800}
+  .minus{color:var(--sarkana);font-weight:800}
+  .tukss{font-size:13.5px;color:var(--muted);line-height:1.6;padding:8px 0}
+
+  /* Darba laiku režģis */
+  .nedelas-diena{padding:12px 0;border-bottom:0.5px solid var(--border)}
+  .nedelas-diena:last-child{border-bottom:none}
+  .nedelas-nosaukums{font-size:13.5px;font-weight:800;margin-bottom:8px}
+  .intervals{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
+  .intervals input[type="time"]{width:110px}
+
+  /* Modālis */
+  .modalis-fons{
+    display:none;position:fixed;inset:0;background:rgba(42,31,8,.45);
+    z-index:50;align-items:center;justify-content:center;padding:18px;
+  }
+  .modalis-fons.redzams{display:flex}
+  .modalis{
+    background:var(--bg);border-radius:16px;padding:26px;
+    width:100%;max-width:480px;max-height:90vh;overflow-y:auto;
+  }
+  .modalis h3{font-family:Georgia,serif;font-weight:400;font-size:22px;margin-bottom:14px}
+  .modalis-pogas{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
+  .meklesanas-rezultati{margin-top:6px}
+  .meklesanas-rinda{
+    padding:9px 12px;border:0.5px solid var(--border);border-radius:10px;
+    margin-bottom:6px;cursor:pointer;font-size:13px;background:var(--bg2);
+  }
+  .meklesanas-rinda:hover{border-color:var(--accent-dark)}
+  .meklesanas-rinda.izvelets{border-color:var(--accent-dark);background:#F1E6C8}
+
+  .tosts{
+    position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(16px);
+    background:var(--text);color:var(--bg);border-radius:100px;
+    padding:13px 24px;font-size:14px;font-weight:600;opacity:0;
+    pointer-events:none;transition:opacity .25s,transform .25s;z-index:70;
+    max-width:min(92vw,560px);text-align:center;
+  }
+  .tosts.redzams{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  code{background:var(--bg3);border-radius:6px;padding:2px 7px;font-size:12.5px}
+
+  @media (max-width:760px){
+    .josla{padding:12px 16px}
+    .konteiners{padding:14px 14px 70px}
+  }
+</style>
+</head>
+<body>
+
+<header class="josla">
+  <a class="logo" href="index.html">Skaņu Darbnīca · <b>Administrēšana</b></a>
+  <button class="izeja" id="pogaIziet">Iziet</button>
+</header>
+
+<p class="ielade" id="ielade">Pārbauda piekļuvi…</p>
+
+<div class="konteiners" id="konteiners" hidden>
+
+  <nav class="sekciju-nav" role="tablist">
+    <button class="nav-poga aktiva" data-sadala="sadalaKalendars">🗓️ Kalendārs</button>
+    <button class="nav-poga" data-sadala="sadalaAudzekni">👥 Audzēkņi</button>
+    <button class="nav-poga" data-sadala="sadalaVeidi">🎵 Veidi un paketes</button>
+    <button class="nav-poga" data-sadala="sadalaLaiki">⏰ Darba laiki</button>
+    <button class="nav-poga" data-sadala="sadalaBrivdienas">🌴 Brīvdienas</button>
+    <button class="nav-poga" data-sadala="sadalaMaksajumi">💳 Maksājumi</button>
+    <button class="nav-poga" data-sadala="sadalaIestatijumi">⚙️ Iestatījumi</button>
+  </nav>
+
+  <!-- ============ KALENDĀRS ============ -->
+  <section class="sadala aktiva" id="sadalaKalendars">
+    <div class="filtri">
+      <div>
+        <label for="filtrsSkolotajs">Skolotājs</label>
+        <select id="filtrsSkolotajs"><option value="">Visi</option></select>
+      </div>
+      <div>
+        <label for="filtrsVeids">Nodarbības veids</label>
+        <select id="filtrsVeids"><option value="">Visi</option></select>
+      </div>
+      <div>
+        <label for="filtrsMeklet">Meklēt audzēkni</label>
+        <input id="filtrsMeklet" type="search" placeholder="Vārds vai e-pasts">
+      </div>
+      <div class="atzimes-lauks">
+        <input type="checkbox" id="filtrsAtceltas">
+        <label for="filtrsAtceltas" style="margin:0">Rādīt atceltās</label>
+      </div>
+    </div>
+    <div id="kalendars"></div>
+    <p class="h2-piezime" style="margin-top:10px">
+      Velc nodarbību uz citu laiku, lai to pārceltu; velc malu, lai mainītu ilgumu.
+      Klikšķis uz brīvas vietas izveido jaunu nodarbību, klikšķis uz nodarbības — atver detaļas.
+      Sarkanās joslas ir bloķētie periodi.
+    </p>
+  </section>
+
+  <!-- ============ AUDZĒKŅI ============ -->
+  <section class="sadala" id="sadalaAudzekni">
+    <div class="karte">
+      <h2>Audzēkņu meklēšana</h2>
+      <div class="rinda-forma">
+        <div style="flex:2"><input id="audzeknuMeklet" type="search" placeholder="E-pasta sākums, piem. anna@"></div>
+        <button class="cta" id="pogaAudzeknuMeklet">Meklēt</button>
+      </div>
+      <div class="tabula-riti" style="margin-top:14px">
+        <table>
+          <thead><tr><th>Vārds</th><th>E-pasts</th><th>Bilance</th><th></th></tr></thead>
+          <tbody id="audzeknuTabula"></tbody>
+        </table>
+      </div>
+      <button class="maza-poga" id="pogaVairakAudzeknu" style="margin-top:10px" hidden>Ielādēt vairāk</button>
+    </div>
+
+    <div class="karte" id="audzeknaKarte" hidden>
+      <h2 id="audzeknaVirsraksts">Audzēknis</h2>
+      <p class="h2-piezime" id="audzeknaInfo"></p>
+
+      <div class="rinda-forma" style="margin-bottom:18px">
+        <div>
+          <label for="kreditsSkaits">Kredītu izmaiņa (+/−)</label>
+          <input id="kreditsSkaits" type="number" step="1" placeholder="piem. 4 vai -1">
+        </div>
+        <div style="flex:2">
+          <label for="kreditsPiezime">Piezīme</label>
+          <input id="kreditsPiezime" type="text" placeholder="piem. Skaidras naudas maksājums">
+        </div>
+        <button class="cta" id="pogaKredits">Mainīt bilanci</button>
+      </div>
+
+      <h2>Bilances vēsture</h2>
+      <div id="audzeknaKrediti" class="tabula-riti"></div>
+
+      <h2 style="margin-top:20px">Rezervācijas</h2>
+      <div id="audzeknaRezervacijas" class="tabula-riti"></div>
+    </div>
+  </section>
+
+  <!-- ============ VEIDI UN PAKETES ============ -->
+  <section class="sadala" id="sadalaVeidi">
+    <div class="karte">
+      <h2>Nodarbību veidi</h2>
+      <p class="h2-piezime">Ilgums un buferi nosaka, kā tiek ģenerēti brīvie laiki. Kredīti — cik nodarbību no bilances maksā viena rezervācija.</p>
+      <div class="tabula-riti">
+        <table>
+          <thead><tr><th>Nosaukums</th><th>Ilgums (min)</th><th>Buferis pirms</th><th>Buferis pēc</th><th>Kredīti</th><th>Aktīvs</th><th></th></tr></thead>
+          <tbody id="veiduTabula"></tbody>
+        </table>
+      </div>
+      <button class="maza-poga" id="pogaJaunsVeids" style="margin-top:10px">+ Pievienot veidu</button>
+    </div>
+
+    <div class="karte">
+      <h2>Nodarbību paketes</h2>
+      <p class="h2-piezime">Paketes, ko studenti var iegādāties. Cena — eiro. Pirkums automātiski ieskaita kredītus pēc apmaksas.</p>
+      <div class="tabula-riti">
+        <table>
+          <thead><tr><th>Nosaukums</th><th>Kredīti</th><th>Cena (€)</th><th>Secība</th><th>Aktīva</th><th></th></tr></thead>
+          <tbody id="paketuTabula"></tbody>
+        </table>
+      </div>
+      <button class="maza-poga" id="pogaJaunaPakete" style="margin-top:10px">+ Pievienot paketi</button>
+    </div>
+  </section>
+
+  <!-- ============ DARBA LAIKI ============ -->
+  <section class="sadala" id="sadalaLaiki">
+    <div class="karte">
+      <h2>Skolotāji</h2>
+      <div class="rinda-forma">
+        <div style="flex:2"><input id="jaunsSkolotajs" type="text" placeholder="Skolotāja vārds"></div>
+        <button class="cta" id="pogaJaunsSkolotajs">Pievienot</button>
+      </div>
+      <div class="tabula-riti" style="margin-top:12px">
+        <table><tbody id="skolotajuTabula"></tbody></table>
+      </div>
+    </div>
+
+    <div class="karte">
+      <h2>Darba laiki</h2>
+      <p class="h2-piezime">Vairāki intervāli vienā dienā ir atbalstīti (piem. 10:00–13:00 un 14:00–18:00). Diena bez intervāliem = brīvdiena.</p>
+      <label for="laikuSkolotajs">Skolotājs</label>
+      <select id="laikuSkolotajs" style="max-width:280px"></select>
+      <div id="laikuRezgis" style="margin-top:14px"></div>
+    </div>
+  </section>
+
+  <!-- ============ BRĪVDIENAS ============ -->
+  <section class="sadala" id="sadalaBrivdienas">
+    <div class="karte">
+      <h2>Pievienot bloķētu periodu</h2>
+      <p class="h2-piezime">Atvaļinājums, svētku diena vai aizņemts laiks — šajos periodos studenti neredzēs brīvus laikus.</p>
+      <div class="rinda-forma">
+        <div>
+          <label for="blokaSakums">No</label>
+          <input id="blokaSakums" type="datetime-local">
+        </div>
+        <div>
+          <label for="blokaBeigas">Līdz</label>
+          <input id="blokaBeigas" type="datetime-local">
+        </div>
+        <div>
+          <label for="blokaSkolotajs">Skolotājs</label>
+          <select id="blokaSkolotajs"><option value="">Visi</option></select>
+        </div>
+        <div style="flex:2">
+          <label for="blokaIemesls">Iemesls</label>
+          <input id="blokaIemesls" type="text" placeholder="piem. Atvaļinājums">
+        </div>
+        <button class="cta" id="pogaJaunsBloks">Pievienot</button>
+      </div>
+    </div>
+    <div class="karte">
+      <h2>Bloķētie periodi</h2>
+      <div class="tabula-riti">
+        <table>
+          <thead><tr><th>No</th><th>Līdz</th><th>Skolotājs</th><th>Iemesls</th><th></th></tr></thead>
+          <tbody id="blokuTabula"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ MAKSĀJUMI ============ -->
+  <section class="sadala" id="sadalaMaksajumi">
+    <div class="karte">
+      <h2>Maksājumu vēsture</h2>
+      <div class="tabula-riti">
+        <table>
+          <thead><tr><th>Datums</th><th>Lietotājs</th><th>Pakete</th><th>Summa</th><th>Kredīti</th><th>Statuss</th></tr></thead>
+          <tbody id="maksajumuTabula"></tbody>
+        </table>
+      </div>
+      <button class="maza-poga" id="pogaVairakMaksajumu" style="margin-top:10px" hidden>Ielādēt vairāk</button>
+    </div>
+  </section>
+
+  <!-- ============ IESTATĪJUMI ============ -->
+  <section class="sadala" id="sadalaIestatijumi">
+    <div class="karte">
+      <h2>Rezervāciju noteikumi</h2>
+      <div class="rinda-forma">
+        <div>
+          <label for="iestLogs">Rezervāciju logs (dienas)</label>
+          <input id="iestLogs" type="number" min="1" max="365">
+        </div>
+        <div>
+          <label for="iestBridinajums">Min. brīdinājums (stundas)</label>
+          <input id="iestBridinajums" type="number" min="0" max="720">
+        </div>
+        <div>
+          <label for="iestAtcelsana">Atcelšanas termiņš (stundas)</label>
+          <input id="iestAtcelsana" type="number" min="0" max="720">
+        </div>
+      </div>
+      <div class="rinda-forma" style="margin-top:8px">
+        <div>
+          <label for="iestDiena">Maks. nodarbības dienā</label>
+          <input id="iestDiena" type="number" min="1" max="20">
+        </div>
+        <div>
+          <label for="iestAktivas">Maks. aktīvās rezervācijas</label>
+          <input id="iestAktivas" type="number" min="1" max="100">
+        </div>
+        <div>
+          <label for="iestSolis">Laiku solis (min, 0 = automātiski)</label>
+          <input id="iestSolis" type="number" min="0" max="240">
+        </div>
+      </div>
+      <button class="cta" id="pogaIestatijumi" style="margin-top:16px">Saglabāt noteikumus</button>
+    </div>
+
+    <div class="karte">
+      <h2>Sākuma dati</h2>
+      <p class="h2-piezime">Ja sistēma vēl ir tukša, šī poga izveido noklusēto skolotāju, nodarbības veidu, paketes, darba laikus un noteikumus. Neko esošu tā nepārraksta.</p>
+      <button class="cta" id="pogaSakumaDati">Izveidot sākuma datus</button>
+    </div>
+
+    <div class="karte">
+      <h2>Administratora tiesības</h2>
+      <p class="h2-piezime">
+        Administratorus pievieno ar skriptu (drošības apsvērumu dēļ to nevar izdarīt no pārlūka):<br>
+        <code>cd functions && node scripts/set-admin.mjs epasts@example.com</code><br>
+        Pēc tam lietotājam jāizlogojas un jāielogojas vēlreiz.
+      </p>
+    </div>
+  </section>
+</div>
+
+<!-- Modālis: rezervācijas detaļas -->
+<div class="modalis-fons" id="detaluModalis">
+  <div class="modalis">
+    <h3>Nodarbības detaļas</h3>
+    <div id="detaluSaturs" style="font-size:14px;line-height:1.7"></div>
+    <div class="modalis-pogas">
+      <button class="cta" id="pogaAtceltArAtmaksu" style="background:var(--sarkana)">Atcelt + atgriezt bilancē</button>
+      <button class="maza-poga dzest" id="pogaAtceltBezAtmaksas">Atcelt bez atmaksas</button>
+      <button class="maza-poga" id="pogaAizvertDetalas">Aizvērt</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modālis: jauna rezervācija -->
+<div class="modalis-fons" id="jaunaModalis">
+  <div class="modalis">
+    <h3>Jauna nodarbība</h3>
+    <label for="jaunaMeklet">Audzēknis (meklē pēc e-pasta)</label>
+    <input id="jaunaMeklet" type="search" placeholder="piem. anna@">
+    <div class="meklesanas-rezultati" id="jaunaRezultati"></div>
+    <label for="jaunaVeids">Nodarbības veids</label>
+    <select id="jaunaVeids"></select>
+    <label for="jaunaSkolotajs">Skolotājs</label>
+    <select id="jaunaSkolotajs"></select>
+    <label for="jaunaLaiks">Sākuma laiks</label>
+    <input id="jaunaLaiks" type="datetime-local">
+    <label for="jaunaAudzeknis">Audzēkņa vārds (neobligāti)</label>
+    <input id="jaunaAudzeknis" type="text">
+    <div class="atzimes-lauks" style="margin-top:12px;display:flex;align-items:center;gap:8px">
+      <input type="checkbox" id="jaunaMaksas" checked>
+      <label for="jaunaMaksas" style="margin:0">Norakstīt no bilances</label>
+    </div>
+    <div class="modalis-pogas">
+      <button class="cta" id="pogaIzveidotRezervaciju">Izveidot</button>
+      <button class="maza-poga" id="pogaAizvertJauno">Atcelt</button>
+    </div>
+  </div>
+</div>
+
+<div class="tosts" id="tosts" role="status" aria-live="polite"></div>
+
+<script type="module">
+import { auth, db, izrakstities, izsauktFunkciju, funkcijasKluda, onAuthStateChanged } from "./js/firebase-init.js";
+import { getIdTokenResult } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js";
+import {
+  doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, collection, query,
+  where, orderBy, limit, startAfter, getDocs, Timestamp, serverTimestamp,
+} from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
+
+/* ---------- Palīgi ---------- */
+const el = (id) => document.getElementById(id);
+const tosts = (teksts) => {
+  const t = el("tosts");
+  t.textContent = teksts;
+  t.classList.add("redzams");
+  clearTimeout(tosts._t);
+  tosts._t = setTimeout(() => t.classList.remove("redzams"), 4200);
+};
+const eiro = (centi) => ((centi ?? 0) / 100).toLocaleString("lv-LV", { maximumFractionDigits: 2 }) + " €";
+const fmtDatumsLaiks = new Intl.DateTimeFormat("lv-LV", {
+  day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit",
+});
+function escapeHTML(s) {
+  return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+function datetimeLocalVertiba(datums) {
+  const d = new Date(datums.getTime() - datums.getTimezoneOffset() * 60000);
+  return d.toISOString().slice(0, 16);
+}
+
+/* ---------- Stāvoklis ---------- */
+let kalendars = null;
+let skolotaji = [];
+let veidi = [];
+let atvertaisAudzeknis = null; // { id, dati }
+let audzeknuKursors = null;
+let maksajumuKursors = null;
+let detaluRezervacija = null;
+let jaunaIzveletaisLietotajs = null;
+const lietotajuKese = new Map();
+
+/* ---------- Navigācija ---------- */
+document.querySelectorAll(".sekciju-nav .nav-poga").forEach((poga) => {
+  poga.addEventListener("click", () => {
+    document.querySelectorAll(".sekciju-nav .nav-poga").forEach((p) => p.classList.toggle("aktiva", p === poga));
+    document.querySelectorAll(".sadala").forEach((s) => s.classList.toggle("aktiva", s.id === poga.dataset.sadala));
+    if (poga.dataset.sadala === "sadalaKalendars" && kalendars) kalendars.updateSize();
+  });
+});
+el("pogaIziet").addEventListener("click", async () => {
+  await izrakstities();
+  window.location.href = "index.html";
+});
+
+/* ---------- Kopīgie dati ---------- */
+async function ieladetSkolotajus() {
+  const snap = await getDocs(collection(db, "teachers"));
+  skolotaji = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  const opcijas = skolotaji.filter((s) => s.active).map((s) => `<option value="${s.id}">${escapeHTML(s.name)}</option>`).join("");
+  el("filtrsSkolotajs").innerHTML = '<option value="">Visi</option>' + opcijas;
+  el("blokaSkolotajs").innerHTML = '<option value="">Visi</option>' + opcijas;
+  el("jaunaSkolotajs").innerHTML = opcijas;
+  el("laikuSkolotajs").innerHTML = skolotaji.map((s) => `<option value="${s.id}">${escapeHTML(s.name)}${s.active ? "" : " (neaktīvs)"}</option>`).join("");
+  renderSkolotajuTabulu();
+}
+
+async function ieladetVeidus() {
+  const snap = await getDocs(collection(db, "lessonTypes"));
+  veidi = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  const opcijas = veidi.filter((v) => v.active).map((v) => `<option value="${v.id}">${escapeHTML(v.name)}</option>`).join("");
+  el("filtrsVeids").innerHTML = '<option value="">Visi</option>' + opcijas;
+  el("jaunaVeids").innerHTML = opcijas;
+  renderVeiduTabulu();
+}
+
+function skolotajaVards(id) {
+  return skolotaji.find((s) => s.id === id)?.name ?? "—";
+}
+
+async function lietotajaDati(uid) {
+  if (!lietotajuKese.has(uid)) {
+    try {
+      const snap = await getDoc(doc(db, "users", uid));
+      lietotajuKese.set(uid, snap.exists() ? snap.data() : null);
+    } catch {
+      lietotajuKese.set(uid, null);
+    }
+  }
+  return lietotajuKese.get(uid);
+}
+
+/* ---------- Kalendārs ---------- */
+function initKalendaru() {
+  kalendars = new FullCalendar.Calendar(el("kalendars"), {
+    initialView: "timeGridWeek",
+    locale: "lv",
+    firstDay: 1,
+    nowIndicator: true,
+    allDaySlot: false,
+    slotMinTime: "08:00:00",
+    slotMaxTime: "21:00:00",
+    height: "auto",
+    editable: true,
+    eventOverlap: false,
+    headerToolbar: { left: "prev,next today", center: "title", right: "timeGridWeek,timeGridDay,dayGridMonth" },
+    events: ieladetNotikumus,
+    eventDrop: parvietotNotikumu,
+    eventResize: parvietotNotikumu,
+    eventClick: (info) => {
+      if (info.event.display === "background") return;
+      atvertDetalas(info.event);
+    },
+    dateClick: (info) => atvertJauno(info.date),
+  });
+  kalendars.render();
+
+  ["filtrsSkolotajs", "filtrsVeids", "filtrsAtceltas"].forEach((id) =>
+    el(id).addEventListener("change", () => kalendars.refetchEvents()));
+  el("filtrsMeklet").addEventListener("input", () => {
+    clearTimeout(initKalendaru._t);
+    initKalendaru._t = setTimeout(() => kalendars.refetchEvents(), 350);
+  });
+}
+
+async function ieladetNotikumus(info, success, failure) {
+  try {
+    const [rezSnap, blokuSnap] = await Promise.all([
+      getDocs(query(
+        collection(db, "bookings"),
+        where("startAt", ">=", Timestamp.fromDate(info.start)),
+        where("startAt", "<", Timestamp.fromDate(info.end)),
+      )),
+      getDocs(query(
+        collection(db, "blockedPeriods"),
+        where("endAt", ">", Timestamp.fromDate(info.start)),
+        limit(300),
+      )),
+    ]);
+
+    const fSkolotajs = el("filtrsSkolotajs").value;
+    const fVeids = el("filtrsVeids").value;
+    const fAtceltas = el("filtrsAtceltas").checked;
+    const fMeklet = el("filtrsMeklet").value.trim().toLowerCase();
+
+    const notikumi = [];
+    for (const d of rezSnap.docs) {
+      const b = d.data();
+      if (b.status === "cancelled" && !fAtceltas) continue;
+      if (fSkolotajs && b.teacherId !== fSkolotajs) continue;
+      if (fVeids && b.lessonTypeId !== fVeids) continue;
+      if (fMeklet) {
+        const teksts = `${b.studentName} ${b.studentEmail} ${b.childName ?? ""}`.toLowerCase();
+        if (!teksts.includes(fMeklet)) continue;
+      }
+      const atcelta = b.status === "cancelled";
+      notikumi.push({
+        id: d.id,
+        title: `${b.childName || b.studentName || b.studentEmail || "?"} · ${b.lessonTypeName ?? ""}`,
+        start: b.startAt.toDate(),
+        end: b.endAt.toDate(),
+        backgroundColor: atcelta ? "transparent" : "#7A5800",
+        borderColor: atcelta ? "#9C3A22" : "#7A5800",
+        textColor: atcelta ? "#9C3A22" : "#F5EDD8",
+        startEditable: !atcelta,
+        durationEditable: !atcelta,
+        extendedProps: { rezervacija: b },
+      });
+    }
+
+    for (const d of blokuSnap.docs) {
+      const b = d.data();
+      if (b.startAt.toDate() >= info.end) continue;
+      if (fSkolotajs && b.teacherId && b.teacherId !== fSkolotajs) continue;
+      notikumi.push({
+        id: "bloks_" + d.id,
+        start: b.startAt.toDate(),
+        end: b.endAt.toDate(),
+        display: "background",
+        backgroundColor: "rgba(156,58,34,.18)",
+      });
+    }
+
+    success(notikumi);
+  } catch (e) {
+    console.error("Kalendāra ielādes kļūda:", e);
+    failure(e);
+  }
+}
+
+async function parvietotNotikumu(info) {
+  try {
+    const dati = {
+      bookingId: info.event.id,
+      newStartMillis: info.event.start.getTime(),
+    };
+    if (info.event.end) {
+      dati.durationMinutes = Math.round((info.event.end.getTime() - info.event.start.getTime()) / 60000);
+    }
+    await izsauktFunkciju("adminMoveBooking", dati);
+    tosts("Nodarbība pārcelta.");
+  } catch (e) {
+    console.error("adminMoveBooking kļūda:", e);
+    tosts(funkcijasKluda(e));
+    info.revert();
+  }
+}
+
+/* ---------- Detaļu modālis ---------- */
+function atvertDetalas(notikums) {
+  const b = notikums.extendedProps.rezervacija;
+  detaluRezervacija = { id: notikums.id, dati: b };
+  const atcelta = b.status === "cancelled";
+  el("detaluSaturs").innerHTML = `
+    <strong>${escapeHTML(b.childName || b.studentName || "—")}</strong>
+    ${b.childName && b.studentName ? `<br>Vecāks: ${escapeHTML(b.studentName)}` : ""}
+    <br>${escapeHTML(b.studentEmail ?? "")}
+    <br><br>${escapeHTML(b.lessonTypeName ?? "")} · ${skolotajaVards(b.teacherId)}
+    <br>${fmtDatumsLaiks.format(b.startAt.toDate())} – ${new Intl.DateTimeFormat("lv-LV", { hour: "2-digit", minute: "2-digit" }).format(b.endAt.toDate())}
+    <br>Kredīti: ${b.creditsUsed ?? 0}
+    <br>Statuss: ${atcelta ? "Atcelta" : "Apstiprināta"}
+  `;
+  el("pogaAtceltArAtmaksu").hidden = atcelta;
+  el("pogaAtceltBezAtmaksas").hidden = atcelta;
+  el("detaluModalis").classList.add("redzams");
+}
+el("pogaAizvertDetalas").addEventListener("click", () => el("detaluModalis").classList.remove("redzams"));
+el("pogaAtceltArAtmaksu").addEventListener("click", () => atceltRezervaciju(true));
+el("pogaAtceltBezAtmaksas").addEventListener("click", () => atceltRezervaciju(false));
+
+async function atceltRezervaciju(atmaksat) {
+  if (!detaluRezervacija) return;
+  try {
+    await izsauktFunkciju("adminCancelBooking", {
+      bookingId: detaluRezervacija.id,
+      refundCredits: atmaksat,
+    });
+    tosts(atmaksat ? "Atcelta; kredīti atgriezti." : "Atcelta bez atmaksas.");
+    el("detaluModalis").classList.remove("redzams");
+    kalendars.refetchEvents();
+  } catch (e) {
+    console.error("adminCancelBooking kļūda:", e);
+    tosts(funkcijasKluda(e));
+  }
+}
+
+/* ---------- Jaunas rezervācijas modālis ---------- */
+function atvertJauno(datums) {
+  jaunaIzveletaisLietotajs = null;
+  el("jaunaRezultati").innerHTML = "";
+  el("jaunaMeklet").value = "";
+  el("jaunaAudzeknis").value = "";
+  el("jaunaMaksas").checked = true;
+  el("jaunaLaiks").value = datetimeLocalVertiba(datums);
+  if (el("filtrsSkolotajs").value) el("jaunaSkolotajs").value = el("filtrsSkolotajs").value;
+  el("jaunaModalis").classList.add("redzams");
+}
+el("pogaAizvertJauno").addEventListener("click", () => el("jaunaModalis").classList.remove("redzams"));
+
+el("jaunaMeklet").addEventListener("input", () => {
+  clearTimeout(el("jaunaMeklet")._t);
+  el("jaunaMeklet")._t = setTimeout(async () => {
+    const teksts = el("jaunaMeklet").value.trim().toLowerCase();
+    if (teksts.length < 2) { el("jaunaRezultati").innerHTML = ""; return; }
+    try {
+      const snap = await getDocs(query(
+        collection(db, "users"), orderBy("epasts"),
+        where("epasts", ">=", teksts), where("epasts", "<=", teksts + ""),
+        limit(8),
+      ));
+      el("jaunaRezultati").innerHTML = snap.docs.map((d) => `
+        <div class="meklesanas-rinda" data-uid="${d.id}">
+          <strong>${escapeHTML(d.data().vards || "—")}</strong> · ${escapeHTML(d.data().epasts ?? "")}
+        </div>`).join("") || '<p class="tukss">Nekas nav atrasts.</p>';
+      el("jaunaRezultati").querySelectorAll("[data-uid]").forEach((rinda) => {
+        rinda.addEventListener("click", () => {
+          jaunaIzveletaisLietotajs = rinda.dataset.uid;
+          el("jaunaRezultati").querySelectorAll(".meklesanas-rinda").forEach((r) => r.classList.toggle("izvelets", r === rinda));
+        });
+      });
+    } catch (e) {
+      console.error("Lietotāju meklēšanas kļūda:", e);
+    }
+  }, 300);
+});
+
+el("pogaIzveidotRezervaciju").addEventListener("click", async () => {
+  if (!jaunaIzveletaisLietotajs) { tosts("Vispirms izvēlies audzēkni."); return; }
+  if (!el("jaunaVeids").value) { tosts("Izvēlies nodarbības veidu."); return; }
+  if (!el("jaunaLaiks").value) { tosts("Norādi laiku."); return; }
+  const poga = el("pogaIzveidotRezervaciju");
+  poga.disabled = true;
+  try {
+    await izsauktFunkciju("adminCreateBooking", {
+      userId: jaunaIzveletaisLietotajs,
+      lessonTypeId: el("jaunaVeids").value,
+      teacherId: el("jaunaSkolotajs").value || null,
+      startMillis: new Date(el("jaunaLaiks").value).getTime(),
+      childName: el("jaunaAudzeknis").value || null,
+      chargeCredits: el("jaunaMaksas").checked,
+    });
+    tosts("Nodarbība izveidota.");
+    el("jaunaModalis").classList.remove("redzams");
+    kalendars.refetchEvents();
+  } catch (e) {
+    console.error("adminCreateBooking kļūda:", e);
+    tosts(funkcijasKluda(e));
+  } finally {
+    poga.disabled = false;
+  }
+});
+
+/* ---------- Audzēkņi ---------- */
+async function ieladetAudzeknus(nosakuma = true) {
+  const teksts = el("audzeknuMeklet").value.trim().toLowerCase();
+  if (nosakuma) {
+    audzeknuKursors = null;
+    el("audzeknuTabula").innerHTML = "";
+  }
+  try {
+    const dalas = [collection(db, "users"), orderBy("epasts")];
+    if (teksts) {
+      dalas.push(where("epasts", ">=", teksts), where("epasts", "<=", teksts + ""));
+    }
+    dalas.push(limit(20));
+    if (audzeknuKursors) dalas.push(startAfter(audzeknuKursors));
+    const snap = await getDocs(query(...dalas));
+    const rindas = snap.docs.map((d) => {
+      const u = d.data();
+      return `
+        <tr>
+          <td>${escapeHTML(u.vards || "—")}</td>
+          <td>${escapeHTML(u.epasts ?? "")}</td>
+          <td><strong>${typeof u.creditBalance === "number" ? u.creditBalance : 0}</strong></td>
+          <td><button class="maza-poga" data-atvert="${d.id}">Atvērt</button></td>
+        </tr>`;
+    }).join("");
+    el("audzeknuTabula").insertAdjacentHTML("beforeend", rindas || (nosakuma ? '<tr><td colspan="4" class="tukss">Nekas nav atrasts.</td></tr>' : ""));
+    el("audzeknuTabula").querySelectorAll("[data-atvert]").forEach((poga) => {
+      if (poga._klausas) return;
+      poga._klausas = true;
+      poga.addEventListener("click", () => atvertAudzekni(poga.dataset.atvert));
+    });
+    audzeknuKursors = snap.docs.at(-1) ?? audzeknuKursors;
+    el("pogaVairakAudzeknu").hidden = snap.docs.length < 20;
+  } catch (e) {
+    console.error("Audzēkņu ielādes kļūda:", e);
+    tosts("Neizdevās ielādēt audzēkņus.");
+  }
+}
+el("pogaAudzeknuMeklet").addEventListener("click", () => ieladetAudzeknus(true));
+el("audzeknuMeklet").addEventListener("keydown", (e) => { if (e.key === "Enter") ieladetAudzeknus(true); });
+el("pogaVairakAudzeknu").addEventListener("click", () => ieladetAudzeknus(false));
+
+async function atvertAudzekni(uid) {
+  const snap = await getDoc(doc(db, "users", uid));
+  if (!snap.exists()) return;
+  const u = snap.data();
+  atvertaisAudzeknis = { id: uid, dati: u };
+  el("audzeknaKarte").hidden = false;
+  el("audzeknaVirsraksts").textContent = u.vards || u.epasts || uid;
+  const berni = (u.berni ?? []).map((b) => b.berna_vards).filter(Boolean).join(", ");
+  el("audzeknaInfo").innerHTML =
+    `${escapeHTML(u.epasts ?? "")}${u.telefons ? " · " + escapeHTML(u.telefons) : ""}` +
+    `${berni ? "<br>Audzēkņi: " + escapeHTML(berni) : ""}` +
+    `<br>Bilance: <strong>${typeof u.creditBalance === "number" ? u.creditBalance : 0}</strong> nodarbības`;
+  el("audzeknaKarte").scrollIntoView({ behavior: "smooth", block: "start" });
+  await Promise.all([ieladetAudzeknaKreditus(uid), ieladetAudzeknaRezervacijas(uid)]);
+}
+
+const TIPU_NOSAUKUMI = {
+  PURCHASE: "Pirkums", BOOKING: "Rezervācija", CANCELLATION: "Atcelšana",
+  MANUAL_ADMIN: "Korekcija", REFUND: "Atmaksa",
+};
+
+async function ieladetAudzeknaKreditus(uid) {
+  const snap = await getDocs(query(
+    collection(db, "creditTransactions"),
+    where("userId", "==", uid), orderBy("createdAt", "desc"), limit(15),
+  ));
+  el("audzeknaKrediti").innerHTML = snap.empty
+    ? '<p class="tukss">Nav ierakstu.</p>'
+    : `<table>${snap.docs.map((d) => {
+        const t = d.data();
+        return `<tr>
+          <td>${t.createdAt ? fmtDatumsLaiks.format(t.createdAt.toDate()) : ""}</td>
+          <td>${TIPU_NOSAUKUMI[t.type] ?? t.type}${t.note ? " · " + escapeHTML(t.note) : ""}</td>
+          <td class="${t.amount > 0 ? "plus" : "minus"}">${t.amount > 0 ? "+" : ""}${t.amount}</td>
+          <td>= ${t.balanceAfter}</td>
+        </tr>`;
+      }).join("")}</table>`;
+}
+
+async function ieladetAudzeknaRezervacijas(uid) {
+  const snap = await getDocs(query(
+    collection(db, "bookings"),
+    where("userId", "==", uid), orderBy("startAt", "desc"), limit(15),
+  ));
+  el("audzeknaRezervacijas").innerHTML = snap.empty
+    ? '<p class="tukss">Nav rezervāciju.</p>'
+    : `<table>${snap.docs.map((d) => {
+        const b = d.data();
+        return `<tr>
+          <td>${fmtDatumsLaiks.format(b.startAt.toDate())}</td>
+          <td>${escapeHTML(b.lessonTypeName ?? "")}${b.childName ? " · " + escapeHTML(b.childName) : ""}</td>
+          <td>${b.status === "cancelled" ? '<span class="atzime sarkana">Atcelta</span>' : '<span class="atzime zala">Apstiprināta</span>'}</td>
+        </tr>`;
+      }).join("")}</table>`;
+}
+
+el("pogaKredits").addEventListener("click", async () => {
+  if (!atvertaisAudzeknis) return;
+  const skaits = Number.parseInt(el("kreditsSkaits").value, 10);
+  if (!Number.isInteger(skaits) || skaits === 0) { tosts("Ievadi veselu skaitli, piem. 4 vai -1."); return; }
+  const poga = el("pogaKredits");
+  poga.disabled = true;
+  try {
+    await izsauktFunkciju("adminAdjustCredits", {
+      userId: atvertaisAudzeknis.id,
+      amount: skaits,
+      note: el("kreditsPiezime").value || null,
+    });
+    tosts("Bilance atjaunota.");
+    el("kreditsSkaits").value = "";
+    el("kreditsPiezime").value = "";
+    await atvertAudzekni(atvertaisAudzeknis.id);
+    ieladetAudzeknus(true);
+  } catch (e) {
+    console.error("adminAdjustCredits kļūda:", e);
+    tosts(funkcijasKluda(e));
+  } finally {
+    poga.disabled = false;
+  }
+});
+
+/* ---------- Nodarbību veidi ---------- */
+function renderVeiduTabulu() {
+  el("veiduTabula").innerHTML = veidi.map((v) => `
+    <tr data-id="${v.id}">
+      <td><input data-lauks="name" value="${escapeHTML(v.name)}"></td>
+      <td><input data-lauks="durationMinutes" type="number" min="15" max="480" value="${v.durationMinutes}" style="width:80px"></td>
+      <td><input data-lauks="bufferBeforeMinutes" type="number" min="0" max="120" value="${v.bufferBeforeMinutes}" style="width:80px"></td>
+      <td><input data-lauks="bufferAfterMinutes" type="number" min="0" max="120" value="${v.bufferAfterMinutes}" style="width:80px"></td>
+      <td><input data-lauks="creditsRequired" type="number" min="1" max="10" value="${v.creditsRequired}" style="width:70px"></td>
+      <td><input data-lauks="active" type="checkbox" ${v.active ? "checked" : ""}></td>
+      <td><button class="maza-poga" data-saglabat>Saglabāt</button></td>
+    </tr>`).join("") || '<tr><td colspan="7" class="tukss">Vēl nav nodarbību veidu.</td></tr>';
+  el("veiduTabula").querySelectorAll("[data-saglabat]").forEach((poga) => {
+    poga.addEventListener("click", async () => {
+      const rinda = poga.closest("tr");
+      const lauki = {};
+      rinda.querySelectorAll("[data-lauks]").forEach((ievade) => {
+        lauki[ievade.dataset.lauks] = ievade.type === "checkbox" ? ievade.checked
+          : ievade.type === "number" ? Number(ievade.value) : ievade.value.trim();
+      });
+      if (!lauki.name) { tosts("Nosaukums nevar būt tukšs."); return; }
+      try {
+        await setDoc(doc(db, "lessonTypes", rinda.dataset.id), lauki, { merge: true });
+        tosts("Saglabāts.");
+        ieladetVeidus();
+      } catch (e) {
+        console.error("Veida saglabāšanas kļūda:", e);
+        tosts("Neizdevās saglabāt.");
+      }
+    });
+  });
+}
+el("pogaJaunsVeids").addEventListener("click", async () => {
+  try {
+    await addDoc(collection(db, "lessonTypes"), {
+      name: "Jauna nodarbība", durationMinutes: 45, bufferBeforeMinutes: 0,
+      bufferAfterMinutes: 15, creditsRequired: 1, active: false, createdAt: serverTimestamp(),
+    });
+    ieladetVeidus();
+  } catch (e) {
+    console.error(e);
+    tosts("Neizdevās pievienot.");
+  }
+});
+
+/* ---------- Paketes ---------- */
+async function ieladetPaketes() {
+  const snap = await getDocs(collection(db, "lessonPackages"));
+  const paketes = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+    .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+  el("paketuTabula").innerHTML = paketes.map((p) => `
+    <tr data-id="${p.id}">
+      <td><input data-lauks="name" value="${escapeHTML(p.name)}"></td>
+      <td><input data-lauks="credits" type="number" min="1" max="100" value="${p.credits}" style="width:70px"></td>
+      <td><input data-lauks="cena" type="number" min="0" step="0.01" value="${(p.priceCents / 100).toFixed(2)}" style="width:100px"></td>
+      <td><input data-lauks="sortOrder" type="number" value="${p.sortOrder ?? 0}" style="width:60px"></td>
+      <td><input data-lauks="active" type="checkbox" ${p.active ? "checked" : ""}></td>
+      <td><button class="maza-poga" data-saglabat>Saglabāt</button></td>
+    </tr>`).join("") || '<tr><td colspan="6" class="tukss">Vēl nav pakešu.</td></tr>';
+  el("paketuTabula").querySelectorAll("[data-saglabat]").forEach((poga) => {
+    poga.addEventListener("click", async () => {
+      const rinda = poga.closest("tr");
+      const v = (lauks) => rinda.querySelector(`[data-lauks="${lauks}"]`);
+      const dati = {
+        name: v("name").value.trim(),
+        credits: Number(v("credits").value),
+        priceCents: Math.round(Number(v("cena").value) * 100),
+        sortOrder: Number(v("sortOrder").value),
+        active: v("active").checked,
+        currency: "EUR",
+      };
+      if (!dati.name || !(dati.priceCents >= 0)) { tosts("Pārbaudi nosaukumu un cenu."); return; }
+      try {
+        await setDoc(doc(db, "lessonPackages", rinda.dataset.id), dati, { merge: true });
+        tosts("Saglabāts.");
+        ieladetPaketes();
+      } catch (e) {
+        console.error("Paketes saglabāšanas kļūda:", e);
+        tosts("Neizdevās saglabāt.");
+      }
+    });
+  });
+}
+el("pogaJaunaPakete").addEventListener("click", async () => {
+  try {
+    await addDoc(collection(db, "lessonPackages"), {
+      name: "Jauna pakete", credits: 4, priceCents: 28000, currency: "EUR",
+      sortOrder: 99, active: false, createdAt: serverTimestamp(),
+    });
+    ieladetPaketes();
+  } catch (e) {
+    console.error(e);
+    tosts("Neizdevās pievienot.");
+  }
+});
+
+/* ---------- Skolotāji un darba laiki ---------- */
+function renderSkolotajuTabulu() {
+  el("skolotajuTabula").innerHTML = skolotaji.map((s) => `
+    <tr>
+      <td>${escapeHTML(s.name)}</td>
+      <td>${s.active ? '<span class="atzime zala">Aktīvs</span>' : '<span class="atzime">Neaktīvs</span>'}</td>
+      <td><button class="maza-poga" data-parslegt="${s.id}" data-aktivs="${s.active ? "1" : ""}">${s.active ? "Deaktivizēt" : "Aktivizēt"}</button></td>
+    </tr>`).join("") || '<tr><td class="tukss">Vēl nav skolotāju.</td></tr>';
+  el("skolotajuTabula").querySelectorAll("[data-parslegt]").forEach((poga) => {
+    poga.addEventListener("click", async () => {
+      try {
+        await updateDoc(doc(db, "teachers", poga.dataset.parslegt), { active: !poga.dataset.aktivs });
+        await ieladetSkolotajus();
+        renderDarbaLaikus();
+      } catch (e) {
+        console.error(e);
+        tosts("Neizdevās mainīt.");
+      }
+    });
+  });
+}
+el("pogaJaunsSkolotajs").addEventListener("click", async () => {
+  const vards = el("jaunsSkolotajs").value.trim();
+  if (!vards) { tosts("Ievadi skolotāja vārdu."); return; }
+  try {
+    await addDoc(collection(db, "teachers"), { name: vards, active: true, createdAt: serverTimestamp() });
+    el("jaunsSkolotajs").value = "";
+    await ieladetSkolotajus();
+    renderDarbaLaikus();
+  } catch (e) {
+    console.error(e);
+    tosts("Neizdevās pievienot.");
+  }
+});
+
+const DIENU_NOSAUKUMI = ["Pirmdiena", "Otrdiena", "Trešdiena", "Ceturtdiena", "Piektdiena", "Sestdiena", "Svētdiena"];
+
+async function renderDarbaLaikus() {
+  const skolotajsId = el("laikuSkolotajs").value;
+  const rezgis = el("laikuRezgis");
+  if (!skolotajsId) { rezgis.innerHTML = '<p class="tukss">Vispirms pievieno skolotāju.</p>'; return; }
+  const snap = await getDocs(query(collection(db, "availabilityRules"), where("teacherId", "==", skolotajsId)));
+  const noteikumi = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+
+  rezgis.innerHTML = DIENU_NOSAUKUMI.map((nosaukums, i) => {
+    const diena = i + 1;
+    const dienasNoteikumi = noteikumi.filter((n) => n.weekday === diena)
+      .sort((a, b) => a.startTime.localeCompare(b.startTime));
+    return `
+      <div class="nedelas-diena">
+        <div class="nedelas-nosaukums">${nosaukums}${dienasNoteikumi.length === 0 ? ' <span class="atzime">Brīvs</span>' : ""}</div>
+        ${dienasNoteikumi.map((n) => `
+          <div class="intervals" data-id="${n.id}">
+            <input type="time" data-lauks="startTime" value="${n.startTime}">
+            <span>–</span>
+            <input type="time" data-lauks="endTime" value="${n.endTime}">
+            <button class="maza-poga dzest" data-dzest>Dzēst</button>
+          </div>`).join("")}
+        <button class="maza-poga" data-pievienot="${diena}">+ Intervāls</button>
+      </div>`;
+  }).join("");
+
+  rezgis.querySelectorAll("[data-pievienot]").forEach((poga) => {
+    poga.addEventListener("click", async () => {
+      try {
+        await addDoc(collection(db, "availabilityRules"), {
+          teacherId: skolotajsId, weekday: Number(poga.dataset.pievienot),
+          startTime: "10:00", endTime: "18:00", active: true,
+        });
+        renderDarbaLaikus();
+      } catch (e) {
+        console.error(e);
+        tosts("Neizdevās pievienot.");
+      }
+    });
+  });
+  rezgis.querySelectorAll(".intervals").forEach((rinda) => {
+    rinda.querySelectorAll("[data-lauks]").forEach((ievade) => {
+      ievade.addEventListener("change", async () => {
+        const sakums = rinda.querySelector('[data-lauks="startTime"]').value;
+        const beigas = rinda.querySelector('[data-lauks="endTime"]').value;
+        if (!sakums || !beigas || sakums >= beigas) { tosts("Sākumam jābūt pirms beigām."); return; }
+        try {
+          await updateDoc(doc(db, "availabilityRules", rinda.dataset.id), { startTime: sakums, endTime: beigas });
+          tosts("Darba laiks saglabāts.");
+        } catch (e) {
+          console.error(e);
+          tosts("Neizdevās saglabāt.");
+        }
+      });
+    });
+    rinda.querySelector("[data-dzest]").addEventListener("click", async () => {
+      try {
+        await deleteDoc(doc(db, "availabilityRules", rinda.dataset.id));
+        renderDarbaLaikus();
+      } catch (e) {
+        console.error(e);
+        tosts("Neizdevās dzēst.");
+      }
+    });
+  });
+}
+el("laikuSkolotajs").addEventListener("change", renderDarbaLaikus);
+
+/* ---------- Brīvdienas / bloķētie periodi ---------- */
+async function ieladetBlokus() {
+  const snap = await getDocs(query(
+    collection(db, "blockedPeriods"),
+    where("endAt", ">", Timestamp.now()),
+    orderBy("endAt"), limit(100),
+  ));
+  el("blokuTabula").innerHTML = snap.empty
+    ? '<tr><td colspan="5" class="tukss">Nav bloķētu periodu.</td></tr>'
+    : snap.docs.map((d) => {
+        const b = d.data();
+        return `<tr>
+          <td>${fmtDatumsLaiks.format(b.startAt.toDate())}</td>
+          <td>${fmtDatumsLaiks.format(b.endAt.toDate())}</td>
+          <td>${b.teacherId ? escapeHTML(skolotajaVards(b.teacherId)) : "Visi"}</td>
+          <td>${escapeHTML(b.reason ?? "")}</td>
+          <td><button class="maza-poga dzest" data-dzest="${d.id}">Dzēst</button></td>
+        </tr>`;
+      }).join("");
+  el("blokuTabula").querySelectorAll("[data-dzest]").forEach((poga) => {
+    poga.addEventListener("click", async () => {
+      try {
+        await deleteDoc(doc(db, "blockedPeriods", poga.dataset.dzest));
+        ieladetBlokus();
+        if (kalendars) kalendars.refetchEvents();
+      } catch (e) {
+        console.error(e);
+        tosts("Neizdevās dzēst.");
+      }
+    });
+  });
+}
+el("pogaJaunsBloks").addEventListener("click", async () => {
+  const sakums = el("blokaSakums").value;
+  const beigas = el("blokaBeigas").value;
+  if (!sakums || !beigas || new Date(sakums) >= new Date(beigas)) {
+    tosts("Pārbaudi periodu — sākumam jābūt pirms beigām.");
+    return;
+  }
+  try {
+    await addDoc(collection(db, "blockedPeriods"), {
+      startAt: Timestamp.fromDate(new Date(sakums)),
+      endAt: Timestamp.fromDate(new Date(beigas)),
+      teacherId: el("blokaSkolotajs").value || null,
+      reason: el("blokaIemesls").value.trim() || "Bloķēts",
+    });
+    el("blokaIemesls").value = "";
+    tosts("Periods pievienots.");
+    ieladetBlokus();
+    if (kalendars) kalendars.refetchEvents();
+  } catch (e) {
+    console.error(e);
+    tosts("Neizdevās pievienot.");
+  }
+});
+
+/* ---------- Maksājumi ---------- */
+async function ieladetMaksajumus(nosakuma = true) {
+  if (nosakuma) {
+    maksajumuKursors = null;
+    el("maksajumuTabula").innerHTML = "";
+  }
+  const dalas = [collection(db, "payments"), orderBy("createdAt", "desc"), limit(20)];
+  if (maksajumuKursors) dalas.push(startAfter(maksajumuKursors));
+  try {
+    const snap = await getDocs(query(...dalas));
+    const rindas = [];
+    for (const d of snap.docs) {
+      const p = d.data();
+      const u = await lietotajaDati(p.userId);
+      const statuss = p.status === "succeeded" ? '<span class="atzime zala">Apmaksāts</span>'
+        : p.status === "failed" ? '<span class="atzime sarkana">Neizdevās</span>'
+        : '<span class="atzime sarkana">Kļūda</span>';
+      rindas.push(`<tr>
+        <td>${p.createdAt ? fmtDatumsLaiks.format(p.createdAt.toDate()) : ""}</td>
+        <td>${escapeHTML(u?.epasts ?? p.userId)}</td>
+        <td>${escapeHTML(p.packageName ?? "")}</td>
+        <td>${eiro(p.amountCents)}</td>
+        <td>${p.credits}</td>
+        <td>${statuss}</td>
+      </tr>`);
+    }
+    el("maksajumuTabula").insertAdjacentHTML("beforeend",
+      rindas.join("") || (nosakuma ? '<tr><td colspan="6" class="tukss">Vēl nav maksājumu.</td></tr>' : ""));
+    maksajumuKursors = snap.docs.at(-1) ?? maksajumuKursors;
+    el("pogaVairakMaksajumu").hidden = snap.docs.length < 20;
+  } catch (e) {
+    console.error("Maksājumu ielādes kļūda:", e);
+    tosts("Neizdevās ielādēt maksājumus.");
+  }
+}
+el("pogaVairakMaksajumu").addEventListener("click", () => ieladetMaksajumus(false));
+
+/* ---------- Iestatījumi ---------- */
+async function ieladetIestatijumus() {
+  const snap = await getDoc(doc(db, "settings", "booking"));
+  const d = snap.data() ?? {};
+  el("iestLogs").value = d.bookingWindowDays ?? 30;
+  el("iestBridinajums").value = d.minimumNoticeHours ?? 12;
+  el("iestAtcelsana").value = d.cancellationHours ?? 24;
+  el("iestDiena").value = d.maxBookingsPerDay ?? 2;
+  el("iestAktivas").value = d.maxActiveBookings ?? 12;
+  el("iestSolis").value = d.slotStepMinutes ?? 0;
+}
+el("pogaIestatijumi").addEventListener("click", async () => {
+  try {
+    await setDoc(doc(db, "settings", "booking"), {
+      bookingWindowDays: Number(el("iestLogs").value),
+      minimumNoticeHours: Number(el("iestBridinajums").value),
+      cancellationHours: Number(el("iestAtcelsana").value),
+      maxBookingsPerDay: Number(el("iestDiena").value),
+      maxActiveBookings: Number(el("iestAktivas").value),
+      slotStepMinutes: Number(el("iestSolis").value),
+      timezone: "Europe/Riga",
+    }, { merge: true });
+    tosts("Noteikumi saglabāti.");
+  } catch (e) {
+    console.error(e);
+    tosts("Neizdevās saglabāt.");
+  }
+});
+el("pogaSakumaDati").addEventListener("click", async () => {
+  const poga = el("pogaSakumaDati");
+  poga.disabled = true;
+  try {
+    const r = await izsauktFunkciju("seedDefaults");
+    tosts(r.izveidots.length ? `Izveidots: ${r.izveidots.join(", ")}` : "Viss jau ir izveidots.");
+    await Promise.all([ieladetSkolotajus(), ieladetVeidus(), ieladetPaketes(), ieladetIestatijumus()]);
+    renderDarbaLaikus();
+    if (kalendars) kalendars.refetchEvents();
+  } catch (e) {
+    console.error("seedDefaults kļūda:", e);
+    tosts(funkcijasKluda(e));
+  } finally {
+    poga.disabled = false;
+  }
+});
+
+/* ---------- Starts un piekļuves pārbaude ---------- */
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    window.location.href = "pieteikties.html";
+    return;
+  }
+  // Atsvaidzinām tokenu, lai tikko piešķirtās admin tiesības būtu redzamas.
+  const tokens = await getIdTokenResult(user, true);
+  if (tokens.claims.admin !== true) {
+    el("ielade").textContent = "Šī lapa ir pieejama tikai administratoriem.";
+    return;
+  }
+
+  el("ielade").hidden = true;
+  el("konteiners").hidden = false;
+
+  await Promise.all([ieladetSkolotajus(), ieladetVeidus()]);
+  initKalendaru();
+  renderDarbaLaikus();
+  ieladetPaketes();
+  ieladetAudzeknus(true);
+  ieladetBlokus();
+  ieladetMaksajumus(true);
+  ieladetIestatijumus();
+});
+</script>
+</body>
+</html>

@@ -20,6 +20,14 @@ import {
   getDoc,
   serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
+import {
+  getFunctions,
+  httpsCallable,
+} from "https://www.gstatic.com/firebasejs/12.16.0/firebase-functions.js";
+import {
+  initializeAppCheck,
+  ReCaptchaV3Provider,
+} from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app-check.js";
 
 // Šī konfigurācija ir publiska pēc dizaina — to redz katrs pārlūks.
 // Datus aizsargā Firestore drošības noteikumi, nevis šo vērtību slēpšana.
@@ -38,6 +46,38 @@ export const db = getFirestore(app);
 
 // Latviešu valoda Google pieteikšanās logā un e-pastos
 auth.languageCode = "lv";
+
+// App Check — aizsargā Firestore un Cloud Functions pret svešām lietotnēm.
+// Ieslēgšana (skat. DEPLOY.md): 1) Firebase konsolē reģistrē reCAPTCHA v3,
+// 2) ieliec vietnes atslēgu šeit, 3) kad telemetrija rāda derīgus
+// pieprasījumus, funkcijām uzstāda ENFORCE_APP_CHECK=true.
+const APP_CHECK_ATSLEGA = "";
+if (APP_CHECK_ATSLEGA) {
+  initializeAppCheck(app, {
+    provider: new ReCaptchaV3Provider(APP_CHECK_ATSLEGA),
+    isTokenAutoRefreshEnabled: true,
+  });
+}
+
+// Cloud Functions klients — visas mūsu funkcijas darbojas europe-west1.
+export const funkcijas = getFunctions(app, "europe-west1");
+
+// Izsauc callable Cloud Function un atgriež tās atbildes datus.
+export async function izsauktFunkciju(nosaukums, dati = {}) {
+  const fn = httpsCallable(funkcijas, nosaukums);
+  const rezultats = await fn(dati);
+  return rezultats.data;
+}
+
+// Kļūdas teksts funkciju izsaukumiem: servera HttpsError ziņojumi jau ir
+// latviski, pārējām kļūdām — vispārīgais tulkojums.
+export function funkcijasKluda(error) {
+  const kods = error?.code || "";
+  if (kods.startsWith("functions/") && error.message && !/^(internal|INTERNAL)$/.test(error.message)) {
+    return error.message;
+  }
+  return kludasTeksts(error);
+}
 
 /* ---------- Profila palīgfunkcijas ---------- */
 

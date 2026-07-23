@@ -1,0 +1,91 @@
+rules_version = '2';
+
+// Skaņu Darbnīca — Firestore drošības noteikumi.
+//
+// Principi:
+//  * Students lasa tikai savus dokumentus; svešiem piekļuves nav.
+//  * Rezervācijas, kredītu virsgrāmatu un maksājumus klients NEKAD neraksta —
+//    tos raksta tikai Cloud Functions (Admin SDK noteikumus apiet).
+//  * Admins = Firebase Auth custom claim `admin: true`
+//    (uzstāda functions/scripts/set-admin.mjs).
+//  * users.creditBalance un users.loma klients nevar mainīt nekad.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function autorizets() {
+      return request.auth != null;
+    }
+    function irAdmins() {
+      return autorizets() && request.auth.token.admin == true;
+    }
+    function irPats(uid) {
+      return autorizets() && request.auth.uid == uid;
+    }
+
+    /* ---------- Lietotāji ---------- */
+    match /users/{uid} {
+      allow get: if irPats(uid) || irAdmins();
+      allow list: if irAdmins();
+      // Profilu izveido pats lietotājs; bilanci izveidot nedrīkst,
+      // loma drīkst būt tikai noklusētā.
+      allow create: if irPats(uid)
+        && !request.resource.data.keys().hasAny(['creditBalance'])
+        && (!request.resource.data.keys().hasAny(['loma'])
+            || request.resource.data.loma == 'vecaks');
+      // Rediģēt drīkst pats vai admins, bet aizsargātos laukus — neviens.
+      allow update: if (irPats(uid) || irAdmins())
+        && !request.resource.data.diff(resource.data)
+             .affectedKeys().hasAny(['creditBalance', 'loma']);
+      allow delete: if false;
+    }
+
+    /* ---------- Publiskā konfigurācija (lasa pieteikušies) ---------- */
+    match /lessonTypes/{id} {
+      allow read: if autorizets();
+      allow write: if irAdmins();
+    }
+    match /lessonPackages/{id} {
+      allow read: if autorizets();
+      allow write: if irAdmins();
+    }
+    match /teachers/{id} {
+      allow read: if autorizets();
+      allow write: if irAdmins();
+    }
+    match /settings/{id} {
+      allow read: if autorizets();
+      allow write: if irAdmins();
+    }
+
+    /* ---------- Administratora konfigurācija ---------- */
+    // Studenti brīvos laikus saņem tikai caur getAvailableSlots funkciju.
+    match /availabilityRules/{id} {
+      allow read, write: if irAdmins();
+    }
+    match /blockedPeriods/{id} {
+      allow read, write: if irAdmins();
+    }
+
+    /* ---------- Tikai Cloud Functions raksta ---------- */
+    match /bookings/{id} {
+      allow read: if irAdmins()
+        || (autorizets() && resource.data.userId == request.auth.uid);
+      allow write: if false;
+    }
+    match /creditTransactions/{id} {
+      allow read: if irAdmins()
+        || (autorizets() && resource.data.userId == request.auth.uid);
+      allow write: if false;
+    }
+    match /payments/{id} {
+      allow read: if irAdmins()
+        || (autorizets() && resource.data.userId == request.auth.uid);
+      allow write: if false;
+    }
+
+    /* ---------- Viss pārējais aizliegts ---------- */
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

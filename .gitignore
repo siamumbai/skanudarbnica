@@ -1,0 +1,17 @@
+# Claude Code lokālie iestatījumi
+.claude/
+
+# Obsidian piezīmju vault (privāts darba žurnāls)
+skanudarbnica/
+
+# Firebase
+.firebase/
+firebase-debug.log
+functions/node_modules/
+functions/lib/
+
+# Servisa konta atslēgas nekad nedrīkst nonākt repo
+service-account*.json
+*-service-account.json
+
+.DS_Store

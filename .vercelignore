@@ -1,0 +1,12 @@
+# Vercel izvieto tikai statisko frontend — backend un konfigurācijas
+# faili nedrīkst būt publiski pieejami kā vietnes faili.
+functions
+firestore.rules
+firestore.indexes.json
+firebase.json
+.firebaserc
+skanudarbnica
+CLAUDE.md
+DEPLOY.md
+README.md
+.claude
