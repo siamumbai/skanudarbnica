@@ -64,6 +64,12 @@
   .nav-poga:hover{background:var(--bg2);color:var(--text)}
   .nav-poga.aktiva{background:var(--accent-dark);border-color:var(--accent-dark);color:var(--bg)}
   .nav-poga .nav-ik{font-size:16px;line-height:1;width:20px;text-align:center;flex-shrink:0}
+  /* Zaļais gaidāmo nodarbību skaitītājs navigācijā */
+  .nav-skaits{
+    margin-left:auto;flex-shrink:0;
+    background:var(--zala);color:#fff;border-radius:100px;
+    font-size:11px;font-weight:800;padding:3px 9px;line-height:1.3;
+  }
 
   /* --- Saturs / sadaļas --- */
   .sadala{display:none}
@@ -198,7 +204,8 @@
     background:var(--bg2);border:0.5px solid var(--border);border-radius:100px;
     padding:6px 6px 6px 16px;font-size:13px;font-weight:600;color:var(--text);
   }
-  .bilances-cips b{font-family:Georgia,serif;font-size:17px;color:var(--accent-dark)}
+  .bilances-cips b{font-family:Georgia,serif;font-size:34px;line-height:1;color:var(--accent-dark)}
+  .bilances-cips b.pozitiva{color:var(--zala)}
   .cips-poga{
     background:var(--accent-dark);color:var(--bg);border:none;border-radius:100px;
     padding:8px 16px;font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer;
@@ -329,7 +336,7 @@
     .josla-epasts{display:none}
     .rinda{grid-template-columns:1fr}
     .bilances-cips{padding:5px 5px 5px 12px;font-size:12px;gap:8px}
-    .bilances-cips b{font-size:15px}
+    .bilances-cips b{font-size:22px}
     .cips-poga{padding:7px 12px;font-size:11.5px}
   }
 </style>
@@ -367,6 +374,7 @@
     </button>
     <button class="nav-poga" id="navNodarbibas" role="tab" aria-selected="false" aria-controls="sadalaNodarbibas">
       <span class="nav-ik" aria-hidden="true">🎵</span> Manas nodarbības
+      <span class="nav-skaits paslepts" id="navNodarbibasSkaits" aria-label="Gaidāmās nodarbības"></span>
     </button>
     <button class="nav-poga" id="navPirkumi" role="tab" aria-selected="false" aria-controls="sadalaPirkumi">
       <span class="nav-ik" aria-hidden="true">💳</span> Pirkumi un vēsture
@@ -764,7 +772,9 @@ async function saglabatBernus(jaunieBerni, veiksmesTeksts, poga) {
 
 /* ---------- Bilance (realtime) ---------- */
 function atjaunotBilanci() {
-  el('bilanceSkaitlis').textContent = String(bilance);
+  const skaitlis = el('bilanceSkaitlis');
+  skaitlis.textContent = String(bilance);
+  skaitlis.classList.toggle('pozitiva', bilance > 0); // zaļš, kad ir nodarbības
   atjaunotSlotuPieejamibu();
 }
 el('bilancePoga').onclick = () => paradietSadalu('sadalaPirkumi');
@@ -967,6 +977,10 @@ async function ieladetGaidamas() {
     k.querySelectorAll('[data-atcelt]').forEach((poga) => {
       poga.addEventListener('click', () => atceltNodarbibu(poga));
     });
+    // Zaļais skaitītājs navigācijā — cik nodarbību gaidāms.
+    const skaititajs = el('navNodarbibasSkaits');
+    skaititajs.textContent = String(snap.size);
+    skaititajs.classList.toggle('paslepts', snap.size === 0);
   } catch (err) {
     console.error('Gaidāmo ielādes kļūda:', err);
     k.innerHTML = '<p class="tukss">Neizdevās ielādēt. Mēģini vēlreiz.</p>';
