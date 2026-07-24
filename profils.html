@@ -293,6 +293,16 @@
     cursor:not-allowed;text-decoration:line-through;font-weight:600;
   }
   /* Brīvdienas kolonna — aizkrāsota, tāpat kā bloķētie periodi */
+  /* Audzēkņa izvēle — pogas vietnes stilā, nevis pārlūka izvēlne */
+  .audzeknu-pogas{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .audzekna-poga{
+    background:var(--bg);border:1.5px solid var(--border);border-radius:100px;
+    padding:9px 18px;font-family:inherit;font-size:13.5px;font-weight:700;
+    color:var(--text);cursor:pointer;transition:border-color .15s,background .15s;
+  }
+  .audzekna-poga:hover{border-color:var(--accent-light)}
+  .audzekna-poga.aktivs{background:var(--accent-dark);border-color:var(--accent-dark);color:var(--bg)}
+
   .brivs-bloks{
     flex:1;min-height:100px;
     background:rgba(70,62,42,.12);border:1.5px dashed var(--border);border-radius:13px;
@@ -487,22 +497,22 @@
           <div class="rinda">
             <div class="lauks">
               <label for="bernaVards">Audzēkņa vārds, uzvārds</label>
-              <input type="text" id="bernaVards" placeholder="Emīls Bērziņš">
+              <input type="text" id="bernaVards">
             </div>
             <div class="lauks">
               <label for="bernaVecums">Audzēkņa vecums</label>
-              <input type="text" id="bernaVecums" placeholder="6 gadi">
+              <input type="text" id="bernaVecums">
             </div>
           </div>
 
           <div class="rinda">
             <div class="lauks">
               <label for="vecakaTel">Vecāka telefons</label>
-              <input type="tel" id="vecakaTel" placeholder="+371 20 000 000">
+              <input type="tel" id="vecakaTel">
             </div>
             <div class="lauks">
               <label for="bernaTel">Audzēkņa telefons</label>
-              <input type="tel" id="bernaTel" placeholder="ja ir">
+              <input type="tel" id="bernaTel">
             </div>
           </div>
 
@@ -547,9 +557,9 @@
         <div class="veidi" id="veiduSaraksts"></div>
         <div id="audzeknaBloks">
           <div class="lauks" style="margin-top:14px;margin-bottom:0">
-            <label for="audzeknaIzvele">Kurš audzēknis apmeklēs nodarbību?</label>
+            <label>Kurš audzēknis apmeklēs nodarbību?</label>
             <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-              <select id="audzeknaIzvele" style="flex:1;min-width:180px;max-width:320px"></select>
+              <div class="audzeknu-pogas" id="audzeknaIzvele"></div>
               <button class="poga-pievienot" id="pogaJaunsAudzeknis" type="button">+ Pievienot audzēkni</button>
             </div>
           </div>
@@ -582,7 +592,7 @@
         <div id="gaidamoSaraksts"><p class="tukss">Ielādē…</p></div>
 
         <!-- Pārcelšanas panelis — atveras ar rindas pogu "Labot" -->
-        <div id="labotPanelis" class="paslepts" style="margin-top:16px;border-top:0.5px solid var(--border);padding-top:18px">
+        <div id="labotPanelis" class="paslepts" style="margin:16px 0">
           <h2>Pārcelt nodarbību</h2>
           <p class="h2-piezime" id="labotApraksts"></p>
           <div class="ritjoslas-galva">
@@ -597,11 +607,6 @@
         </div>
       </section>
 
-      <section class="karte">
-        <h2>Notikušās nodarbības</h2>
-        <div id="pagatnesSaraksts"><p class="tukss">Ielādē…</p></div>
-        <button class="vairak" id="pogaVairakPagatnes" hidden>Ielādēt vairāk</button>
-      </section>
     </section>
 
     <!-- ---------- SADAĻA: PIRKUMI UN VĒSTURE ---------- -->
@@ -658,7 +663,7 @@ import {
 } from './js/firebase-init.js';
 import {
   doc, getDoc, onSnapshot, collection, query, where, orderBy,
-  limit, startAfter, getDocs,
+  limit, getDocs,
 } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js';
 
 const el = (id) => document.getElementById(id);
@@ -677,7 +682,6 @@ let izveletaisSlots = null;     // { startMillis, teacherId }
 let nedelasNobide = 0;          // rādāmā nedēļa: 0 = tekošā, 1 = nākamā utt.
 let slidesVirziens = 0;         // nedēļas maiņas animācija: 1 = uz priekšu, -1 = atpakaļ
 let atcelsanasStundas = 24;
-let pagatnesKursors = null;
 
 /* ---------- Formatēšanas palīgi ---------- */
 const fmtDiena = new Intl.DateTimeFormat('lv-LV', { timeZone: LAIKA_ZONA, weekday: 'long', day: 'numeric', month: 'long' });
@@ -901,14 +905,24 @@ el('bilancePoga').onclick = () => paradietSadalu('sadalaPirkumi');
 el('pogaUzPaketem').onclick = () => paradietSadalu('sadalaPirkumi');
 
 /* ---------- Audzēkņa izvēle rezervācijai ---------- */
+let izveletaisAudzeknis = null;
+
 function atjaunotAudzeknuIzveli(izveletaisVards = null) {
   const vardi = berni.map((b) => b.berna_vards).filter(Boolean);
-  el('audzeknaIzvele').innerHTML = vardi.length
-    ? vardi.map((v) => `<option value="${escapeHTML(v)}">${escapeHTML(v)}</option>`).join('')
-    : '<option value="">Vēl nav pievienotu audzēkņu</option>';
-  if (izveletaisVards && vardi.includes(izveletaisVards)) {
-    el('audzeknaIzvele').value = izveletaisVards;
-  }
+  if (izveletaisVards && vardi.includes(izveletaisVards)) izveletaisAudzeknis = izveletaisVards;
+  if (!vardi.includes(izveletaisAudzeknis)) izveletaisAudzeknis = vardi[0] ?? null;
+
+  const k = el('audzeknaIzvele');
+  k.innerHTML = vardi.length
+    ? vardi.map((v) => `<button type="button" class="audzekna-poga${v === izveletaisAudzeknis ? ' aktivs' : ''}" data-vards="${escapeHTML(v)}">${escapeHTML(v)}</button>`).join('')
+    : '<span class="tukss">Vēl nav pievienotu audzēkņu</span>';
+  k.querySelectorAll('.audzekna-poga').forEach((poga) => {
+    poga.addEventListener('click', () => {
+      izveletaisAudzeknis = poga.dataset.vards;
+      k.querySelectorAll('.audzekna-poga').forEach((p) => p.classList.toggle('aktivs', p === poga));
+      atjaunotApstiprinatJoslu();
+    });
+  });
   atjaunotApstiprinatJoslu();
 }
 
@@ -1086,13 +1100,11 @@ function atjaunotApstiprinatJoslu() {
     return;
   }
   const kad = new Date(izveletaisSlots.startMillis);
-  const audzeknis = el('audzeknaIzvele').value;
   josla.classList.add('redzams');
   el('apstiprinatTeksts').innerHTML =
     `<strong>${escapeHTML(izveletaisVeids.name)}</strong> · ${fmtDiena.format(kad)} plkst. ${fmtLaiks.format(kad)}`
-    + (audzeknis ? ` · ${escapeHTML(audzeknis)}` : '');
+    + (izveletaisAudzeknis ? ` · ${escapeHTML(izveletaisAudzeknis)}` : '');
 }
-el('audzeknaIzvele').onchange = atjaunotApstiprinatJoslu;
 
 el('pogaApstiprinat').onclick = async () => {
   if (!izveletaisVeids || !izveletaisSlots) return;
@@ -1104,7 +1116,7 @@ el('pogaApstiprinat').onclick = async () => {
       lessonTypeId: izveletaisVeids.id,
       startMillis: izveletaisSlots.startMillis,
       teacherId: izveletaisSlots.teacherId,
-      childName: el('audzeknaIzvele').value || null,
+      childName: izveletaisAudzeknis || null,
     });
     tosts('Nodarbība rezervēta! 🎵', 'labi');
     izveletaisSlots = null;
@@ -1192,9 +1204,18 @@ function nobideNedelai(dISO) {
 }
 
 async function atvertLabotu(id, rinda = null) {
+  // Atkārtots klikšķis uz tās pašas rindas pogas ("Atcelt") aizver paneli.
+  if (labojama?.id === id && !el('labotPanelis').classList.contains('paslepts')) {
+    aizvertLabotu();
+    return;
+  }
   const dati = gaidamoDati.get(id);
   if (!dati) return;
   labojama = { id, dati };
+  // Atvērtā paneļa rindas poga kļūst par "Atcelt"; pārējās paliek "Labot".
+  document.querySelectorAll('[data-labot]').forEach((p) => {
+    p.textContent = p.dataset.labot === id ? 'Atcelt' : 'Labot';
+  });
   labotSlots = null;
   labotNobide = nobideNedelai(datumsISO(dati.startAt.toDate()));
   el('labotApraksts').textContent =
@@ -1211,6 +1232,7 @@ function aizvertLabotu() {
   labojama = null;
   labotSlots = null;
   el('labotPanelis').classList.add('paslepts');
+  document.querySelectorAll('[data-labot]').forEach((p) => { p.textContent = 'Labot'; });
 }
 
 // Tas pats nedēļas kalendārs kā rezervēšanā; pašreizējais laiks ir iezīmēts
@@ -1307,42 +1329,6 @@ el('pogaLabotSaglabat').onclick = async () => {
     poga.textContent = 'Saglabāt izmaiņas';
   }
 };
-
-async function ieladetPagatni(nosakuma = false) {
-  const k = el('pagatnesSaraksts');
-  if (nosakuma) {
-    pagatnesKursors = null;
-    k.innerHTML = '<p class="tukss">Ielādē…</p>';
-  }
-  try {
-    const dalas = [
-      collection(db, 'bookings'),
-      where('userId', '==', uid),
-      orderBy('startAt', 'desc'),
-      limit(10),
-    ];
-    if (pagatnesKursors) dalas.push(startAfter(pagatnesKursors));
-    const snap = await getDocs(query(...dalas));
-
-    // Rādām tikai notikušās; atceltās nerādām vispār.
-    const rindas = snap.docs
-      .filter((d) => d.data().status !== 'cancelled' && d.data().startAt.toMillis() < Date.now())
-      .map((d) => nodarbibasRinda(d.data(), d.id));
-
-    if (nosakuma) k.innerHTML = '';
-    if (nosakuma && rindas.length === 0 && snap.docs.length < 10) {
-      k.innerHTML = '<p class="tukss">Vēl nav notikušu nodarbību.</p>';
-    } else {
-      k.insertAdjacentHTML('beforeend', rindas.join(''));
-    }
-    pagatnesKursors = snap.docs.at(-1) ?? pagatnesKursors;
-    el('pogaVairakPagatnes').hidden = snap.docs.length < 10;
-  } catch (err) {
-    console.error('Vēstures ielādes kļūda:', err);
-    k.innerHTML = '<p class="tukss">Neizdevās ielādēt. Mēģini vēlreiz.</p>';
-  }
-}
-el('pogaVairakPagatnes').onclick = () => ieladetPagatni();
 
 /* ---------- Paketes un maksājumi ---------- */
 // Pirkšana divos soļos: "Pirkt" izvēlas paketi un parāda kopsavilkumu ar
@@ -1580,7 +1566,6 @@ prasitPieteiksanos(async (user) => {
   el('izkartojums').classList.remove('paslepts');
 
   ieladetGaidamas();
-  ieladetPagatni(true);
   ieladetPaketes();
   ieladetPirkumus();
 
