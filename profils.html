@@ -293,6 +293,31 @@
     cursor:not-allowed;text-decoration:line-through;font-weight:600;
   }
   /* Brīvdienas kolonna — aizkrāsota, tāpat kā bloķētie periodi */
+  /* Pielāgotā audzēkņa izvēlne — izritinās uz leju vietnes stilā */
+  .izvelne{position:relative;flex:1;min-width:180px;max-width:320px}
+  .izvelne-poga{
+    width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:12px 14px;font-family:inherit;font-size:14.5px;color:var(--text);text-align:left;
+    background:var(--bg);border:0.5px solid var(--border);border-radius:10px;cursor:pointer;
+  }
+  .izvelne-poga:hover:not(:disabled){border-color:var(--accent)}
+  .izvelne-poga:disabled{opacity:.7;cursor:not-allowed}
+  .izvelne-bulta{color:var(--muted);font-size:12px;transition:transform .15s}
+  .izvelne.atverta .izvelne-bulta{transform:rotate(180deg)}
+  .izvelne-saraksts{
+    position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:30;
+    background:var(--bg);border:0.5px solid var(--border);border-radius:12px;
+    box-shadow:0 10px 26px rgba(42,31,8,.14);padding:6px;
+    animation:paradities .15s ease;
+  }
+  .izvelne-opcija{
+    display:block;width:100%;text-align:left;
+    background:transparent;border:none;border-radius:8px;
+    padding:10px 12px;font-family:inherit;font-size:14px;color:var(--text);cursor:pointer;
+  }
+  .izvelne-opcija:hover{background:var(--bg2)}
+  .izvelne-opcija.aktiva{background:var(--bg3);font-weight:700}
+
   .brivs-bloks{
     flex:1;min-height:100px;
     background:rgba(70,62,42,.12);border:1.5px dashed var(--border);border-radius:13px;
@@ -547,9 +572,15 @@
         <div class="veidi" id="veiduSaraksts"></div>
         <div id="audzeknaBloks">
           <div class="lauks" style="margin-top:14px;margin-bottom:0">
-            <label for="audzeknaIzvele">Kurš audzēknis apmeklēs nodarbību?</label>
+            <label for="audzeknaIzvelesPoga">Kurš audzēknis apmeklēs nodarbību?</label>
             <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-              <select id="audzeknaIzvele" style="flex:1;min-width:180px;max-width:320px"></select>
+              <div class="izvelne" id="audzeknaIzvelne">
+                <button type="button" class="izvelne-poga" id="audzeknaIzvelesPoga" aria-haspopup="listbox" aria-expanded="false">
+                  <span id="audzeknaIzvelesTeksts">—</span>
+                  <span class="izvelne-bulta" aria-hidden="true">▾</span>
+                </button>
+                <div class="izvelne-saraksts paslepts" id="audzeknaIzvelesSaraksts" role="listbox"></div>
+              </div>
               <button class="poga-pievienot paslepts" id="pogaJaunsAudzeknis" type="button">+ Pievienot audzēkni</button>
             </div>
           </div>
@@ -896,27 +927,46 @@ el('pogaUzPaketem').onclick = () => paradietSadalu('sadalaPirkumi');
 /* ---------- Audzēkņa izvēle rezervācijai ---------- */
 let izveletaisAudzeknis = null;
 
+function aizvertAudzeknuIzvelni() {
+  el('audzeknaIzvelne').classList.remove('atverta');
+  el('audzeknaIzvelesSaraksts').classList.add('paslepts');
+  el('audzeknaIzvelesPoga').setAttribute('aria-expanded', 'false');
+}
+
 function atjaunotAudzeknuIzveli(izveletaisVards = null) {
   const vardi = berni.map((b) => b.berna_vards).filter(Boolean);
   if (izveletaisVards && vardi.includes(izveletaisVards)) izveletaisAudzeknis = izveletaisVards;
   if (!vardi.includes(izveletaisAudzeknis)) izveletaisAudzeknis = vardi[0] ?? null;
 
-  const izvele = el('audzeknaIzvele');
-  izvele.innerHTML = vardi.length
-    ? vardi.map((v) => `<option value="${escapeHTML(v)}">${escapeHTML(v)}</option>`).join('')
-    : '<option value="">Vēl nav pievienotu audzēkņu</option>';
-  if (izveletaisAudzeknis) izvele.value = izveletaisAudzeknis;
-  izvele.disabled = vardi.length === 0;
+  el('audzeknaIzvelesTeksts').textContent = izveletaisAudzeknis ?? 'Vēl nav pievienotu audzēkņu';
+  el('audzeknaIzvelesPoga').disabled = vardi.length === 0;
 
   // "+ Pievienot audzēkni" redzama tikai tad, kad nav neviena audzēkņa.
   el('pogaJaunsAudzeknis').classList.toggle('paslepts', vardi.length > 0);
 
+  el('audzeknaIzvelesSaraksts').innerHTML = vardi.map((v) =>
+    `<button type="button" class="izvelne-opcija${v === izveletaisAudzeknis ? ' aktiva' : ''}" data-vards="${escapeHTML(v)}" role="option">${escapeHTML(v)}</button>`).join('');
+  el('audzeknaIzvelesSaraksts').querySelectorAll('.izvelne-opcija').forEach((opcija) => {
+    opcija.addEventListener('click', () => {
+      izveletaisAudzeknis = opcija.dataset.vards;
+      atjaunotAudzeknuIzveli(); // pārzīmē tekstu un atzīmi, aizver sarakstu
+    });
+  });
+
+  aizvertAudzeknuIzvelni();
   atjaunotApstiprinatJoslu();
 }
-el('audzeknaIzvele').onchange = () => {
-  izveletaisAudzeknis = el('audzeknaIzvele').value || null;
-  atjaunotApstiprinatJoslu();
+
+el('audzeknaIzvelesPoga').onclick = () => {
+  if (el('audzeknaIzvelesPoga').disabled) return;
+  const atverta = el('audzeknaIzvelne').classList.toggle('atverta');
+  el('audzeknaIzvelesSaraksts').classList.toggle('paslepts', !atverta);
+  el('audzeknaIzvelesPoga').setAttribute('aria-expanded', String(atverta));
 };
+// Klikšķis ārpus izvēlnes to aizver.
+document.addEventListener('click', (e) => {
+  if (!el('audzeknaIzvelne').contains(e.target)) aizvertAudzeknuIzvelni();
+});
 
 // "+ Pievienot audzēkni" no rezervēšanas: atver anketu Audzēkņu sadaļā un pēc
 // saglabāšanas atgriežas šeit ar jauno audzēkni jau izvēlētu.
