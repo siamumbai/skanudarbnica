@@ -209,10 +209,6 @@
   <section class="sadala aktiva" id="sadalaKalendars">
     <div class="filtri">
       <div>
-        <label for="filtrsSkolotajs">Skolotājs</label>
-        <select id="filtrsSkolotajs"><option value="">Visi</option></select>
-      </div>
-      <div>
         <label for="filtrsVeids">Nodarbības veids</label>
         <select id="filtrsVeids"><option value="">Visi</option></select>
       </div>
@@ -306,17 +302,6 @@
   <!-- ============ DARBA LAIKI ============ -->
   <section class="sadala" id="sadalaLaiki">
     <div class="karte">
-      <h2>Skolotāji</h2>
-      <div class="rinda-forma">
-        <div style="flex:2"><input id="jaunsSkolotajs" type="text" placeholder="Skolotāja vārds"></div>
-        <button class="cta" id="pogaJaunsSkolotajs">Pievienot</button>
-      </div>
-      <div class="tabula-riti" style="margin-top:12px">
-        <table><tbody id="skolotajuTabula"></tbody></table>
-      </div>
-    </div>
-
-    <div class="karte">
       <h2>Darba laiki</h2>
       <p class="h2-piezime">Vairāki intervāli vienā dienā ir atbalstīti (piem. 10:00–13:00 un 14:00–18:00). Diena bez intervāliem = brīvdiena.</p>
       <label for="laikuSkolotajs">Skolotājs</label>
@@ -408,6 +393,18 @@
         </div>
       </div>
       <button class="cta" id="pogaIestatijumi" style="margin-top:16px">Saglabāt noteikumus</button>
+    </div>
+
+    <div class="karte">
+      <h2>Skolotāji</h2>
+      <p class="h2-piezime">Pievieno, pārsauc vai dzēs skolotājus. Dzēšana noņem arī šī skolotāja darba laikus; jau notikušās nodarbības paliek vēsturē.</p>
+      <div class="rinda-forma">
+        <div style="flex:2"><input id="jaunsSkolotajs" type="text" placeholder="Skolotāja vārds"></div>
+        <button class="cta" id="pogaJaunsSkolotajs">Pievienot</button>
+      </div>
+      <div class="tabula-riti" style="margin-top:12px">
+        <table><tbody id="skolotajuTabula"></tbody></table>
+      </div>
     </div>
 
     <div class="karte">
@@ -526,7 +523,6 @@ async function ieladetSkolotajus() {
   const snap = await getDocs(collection(db, "teachers"));
   skolotaji = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
   const opcijas = skolotaji.filter((s) => s.active).map((s) => `<option value="${s.id}">${escapeHTML(s.name)}</option>`).join("");
-  el("filtrsSkolotajs").innerHTML = '<option value="">Visi</option>' + opcijas;
   el("blokaSkolotajs").innerHTML = '<option value="">Visi</option>' + opcijas;
   el("jaunaSkolotajs").innerHTML = opcijas;
   el("laikuSkolotajs").innerHTML = skolotaji.map((s) => `<option value="${s.id}">${escapeHTML(s.name)}${s.active ? "" : " (neaktīvs)"}</option>`).join("");
@@ -588,7 +584,7 @@ function initKalendaru() {
     editable: true,
     eventOverlap: false,
     businessHours: biznesaStundas.length ? biznesaStundas : false,
-    headerToolbar: { left: "prev,next today", center: "title", right: "timeGridWeek,timeGridDay,dayGridMonth" },
+    headerToolbar: { left: "prev,next today", center: "title", right: "timeGridDay,timeGridWeek,dayGridMonth" },
     events: ieladetNotikumus,
     eventDrop: parvietotNotikumu,
     eventResize: parvietotNotikumu,
@@ -600,7 +596,7 @@ function initKalendaru() {
   });
   kalendars.render();
 
-  ["filtrsSkolotajs", "filtrsVeids", "filtrsAtceltas"].forEach((id) =>
+  ["filtrsVeids", "filtrsAtceltas"].forEach((id) =>
     el(id).addEventListener("change", () => kalendars.refetchEvents()));
   el("filtrsMeklet").addEventListener("input", () => {
     clearTimeout(initKalendaru._t);
@@ -623,7 +619,6 @@ async function ieladetNotikumus(info, success, failure) {
       )),
     ]);
 
-    const fSkolotajs = el("filtrsSkolotajs").value;
     const fVeids = el("filtrsVeids").value;
     const fAtceltas = el("filtrsAtceltas").checked;
     const fMeklet = el("filtrsMeklet").value.trim().toLowerCase();
@@ -632,7 +627,6 @@ async function ieladetNotikumus(info, success, failure) {
     for (const d of rezSnap.docs) {
       const b = d.data();
       if (b.status === "cancelled" && !fAtceltas) continue;
-      if (fSkolotajs && b.teacherId !== fSkolotajs) continue;
       if (fVeids && b.lessonTypeId !== fVeids) continue;
       if (fMeklet) {
         const teksts = `${b.studentName} ${b.studentEmail} ${b.childName ?? ""}`.toLowerCase();
@@ -656,7 +650,6 @@ async function ieladetNotikumus(info, success, failure) {
     for (const d of blokuSnap.docs) {
       const b = d.data();
       if (b.startAt.toDate() >= info.end) continue;
-      if (fSkolotajs && b.teacherId && b.teacherId !== fSkolotajs) continue;
       notikumi.push({
         id: "bloks_" + d.id,
         start: b.startAt.toDate(),
@@ -737,7 +730,6 @@ function atvertJauno(datums) {
   el("jaunaAudzeknis").value = "";
   el("jaunaMaksas").checked = true;
   el("jaunaLaiks").value = datetimeLocalVertiba(datums);
-  if (el("filtrsSkolotajs").value) el("jaunaSkolotajs").value = el("filtrsSkolotajs").value;
   el("jaunaModalis").classList.add("redzams");
 }
 el("pogaAizvertJauno").addEventListener("click", () => el("jaunaModalis").classList.remove("redzams"));
@@ -1074,20 +1066,69 @@ el("pogaJaunaPakete").addEventListener("click", async () => {
 /* ---------- Skolotāji un darba laiki ---------- */
 function renderSkolotajuTabulu() {
   el("skolotajuTabula").innerHTML = skolotaji.map((s) => `
-    <tr>
-      <td>${escapeHTML(s.name)}</td>
+    <tr data-id="${s.id}">
+      <td><input data-lauks="name" value="${escapeHTML(s.name)}"></td>
       <td>${s.active ? '<span class="atzime zala">Aktīvs</span>' : '<span class="atzime">Neaktīvs</span>'}</td>
-      <td><button class="maza-poga" data-parslegt="${s.id}" data-aktivs="${s.active ? "1" : ""}">${s.active ? "Deaktivizēt" : "Aktivizēt"}</button></td>
+      <td style="white-space:nowrap">
+        <button class="maza-poga" data-saglabat-skolotaju>Saglabāt</button>
+        <button class="maza-poga" data-parslegt="${s.id}" data-aktivs="${s.active ? "1" : ""}">${s.active ? "Deaktivizēt" : "Aktivizēt"}</button>
+        <button class="maza-poga dzest" data-dzest-skolotaju="${s.id}">Dzēst</button>
+      </td>
     </tr>`).join("") || '<tr><td class="tukss">Vēl nav skolotāju.</td></tr>';
+
+  el("skolotajuTabula").querySelectorAll("[data-saglabat-skolotaju]").forEach((poga) => {
+    poga.addEventListener("click", async () => {
+      const rinda = poga.closest("tr");
+      const vards = rinda.querySelector('[data-lauks="name"]').value.trim();
+      if (!vards) { tosts("Vārds nevar būt tukšs."); return; }
+      try {
+        await updateDoc(doc(db, "teachers", rinda.dataset.id), { name: vards });
+        tosts("Saglabāts.");
+        await ieladetSkolotajus();
+        renderDarbaLaikus();
+      } catch (e) {
+        console.error(e);
+        tosts("Neizdevās saglabāt.");
+      }
+    });
+  });
   el("skolotajuTabula").querySelectorAll("[data-parslegt]").forEach((poga) => {
     poga.addEventListener("click", async () => {
       try {
         await updateDoc(doc(db, "teachers", poga.dataset.parslegt), { active: !poga.dataset.aktivs });
         await ieladetSkolotajus();
         renderDarbaLaikus();
+        ieladetBiznesaStundas();
       } catch (e) {
         console.error(e);
         tosts("Neizdevās mainīt.");
+      }
+    });
+  });
+  // Dzēšana ar divsoļu apstiprinājumu; līdzi iet arī skolotāja darba laiki.
+  el("skolotajuTabula").querySelectorAll("[data-dzest-skolotaju]").forEach((poga) => {
+    poga.addEventListener("click", async () => {
+      if (poga.dataset.apstiprinats !== "1") {
+        poga.dataset.apstiprinats = "1";
+        poga.textContent = "Tiešām dzēst?";
+        setTimeout(() => { poga.dataset.apstiprinats = ""; poga.textContent = "Dzēst"; }, 4000);
+        return;
+      }
+      poga.disabled = true;
+      try {
+        const id = poga.dataset.dzestSkolotaju;
+        const noteikumi = await getDocs(query(collection(db, "availabilityRules"), where("teacherId", "==", id)));
+        for (const n of noteikumi.docs) await deleteDoc(n.ref);
+        await deleteDoc(doc(db, "teachers", id));
+        tosts("Skolotājs izdzēsts.");
+        await ieladetSkolotajus();
+        renderDarbaLaikus();
+        ieladetBiznesaStundas();
+        if (kalendars) kalendars.refetchEvents();
+      } catch (e) {
+        console.error(e);
+        tosts("Neizdevās dzēst.");
+        poga.disabled = false;
       }
     });
   });

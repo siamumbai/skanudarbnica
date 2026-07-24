@@ -660,6 +660,45 @@
 
     </section>
 
+    <!-- ---------- SADAĻA: DĀVINĀT ---------- -->
+    <section class="sadala" id="sadalaDavinat" role="tabpanel" aria-labelledby="navDavinat">
+      <h1 class="virsraksts">Dāvini <em>nodarbības</em></h1>
+      <p class="ievads">Pēc apmaksas saņemsi dāvanu kodu.<br>Uzdāvini to, un saņēmējs savā profilā apmainīs kodu pret nodarbībām.</p>
+
+      <section class="karte">
+        <h2>Dāvanu karte</h2>
+        <div class="paketes" id="davanuPaketes"><p class="tukss">Ielādē…</p></div>
+      </section>
+
+      <!-- Dāvanas kopsavilkums — parādās, kad izvēlēta pakete -->
+      <section class="karte paslepts" id="davanasKopsavilkums">
+        <h2>Kopsavilkums</h2>
+        <div class="saraksta-rinda">
+          <div>
+            <div class="saraksta-galvena" id="davanasNosaukums"></div>
+            <div class="saraksta-apaksa" id="davanasDetalas"></div>
+          </div>
+          <div class="pakete-cena" id="davanasSumma" style="margin:0"></div>
+        </div>
+        <button class="cta cta-auto" id="pogaDavanuApmaksat" style="margin-top:14px">Apmaksāt</button>
+        <p class="h2-piezime" style="margin:12px 0 0">Droša apmaksa Stripe vidē. Dāvanu kods parādīsies sarakstā uzreiz pēc apmaksas.</p>
+      </section>
+
+      <section class="karte">
+        <h2>Manas dāvanu kartes</h2>
+        <div id="davanuSaraksts"><p class="tukss">Ielādē…</p></div>
+      </section>
+
+      <section class="karte">
+        <h2>Man ir dāvanu karte</h2>
+        <p class="h2-piezime">Ievadi dāvanu kodu, un nodarbības tiks pieskaitītas tavai bilancei.</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <input id="davanasKods" type="text" placeholder="SD-XXXX-XXXX" style="max-width:220px;text-transform:uppercase">
+          <button class="cta cta-auto" id="pogaIzmantotDavanu">Izmantot</button>
+        </div>
+      </section>
+    </section>
+
   </main>
 
   <!-- ======== LABĀ NAVIGĀCIJA: konta sadaļas ======== -->
@@ -669,6 +708,9 @@
     </button>
     <button class="nav-poga" id="navPirkumi" role="tab" aria-selected="false" aria-controls="sadalaPirkumi">
       <span class="nav-ik" aria-hidden="true">💳</span> Maksājumi
+    </button>
+    <button class="nav-poga" id="navDavinat" role="tab" aria-selected="false" aria-controls="sadalaDavinat">
+      <span class="nav-ik" aria-hidden="true">🎁</span> Dāvināt
     </button>
   </nav>
 </div>
@@ -747,9 +789,10 @@ const navPogas = [
   { poga: 'navRezervet', sadala: 'sadalaRezervet' },
   { poga: 'navNodarbibas', sadala: 'sadalaNodarbibas' },
   { poga: 'navPirkumi', sadala: 'sadalaPirkumi' },
+  { poga: 'navDavinat', sadala: 'sadalaDavinat' },
 ];
 // Bilances kartīti rādām tikai rezervāciju sadaļās.
-const bilancesSadalas = ['sadalaRezervet', 'sadalaNodarbibas', 'sadalaPirkumi'];
+const bilancesSadalas = ['sadalaRezervet', 'sadalaNodarbibas', 'sadalaPirkumi', 'sadalaDavinat'];
 function paradietSadalu(sadalasId) {
   navPogas.forEach(({ poga, sadala }) => {
     const aktivs = sadala === sadalasId;
@@ -1403,6 +1446,7 @@ async function ieladetPaketes() {
     k.querySelectorAll('[data-pakete]').forEach((poga) => {
       poga.addEventListener('click', () => izveletiesPaketi(poga.dataset.pakete));
     });
+    renderDavanuPaketes();
   } catch (err) {
     console.error('Pakešu ielādes kļūda:', err);
     k.innerHTML = '<p class="tukss">Neizdevās ielādēt paketes.</p>';
@@ -1437,6 +1481,116 @@ el('pogaApmaksat').onclick = async () => {
     tosts(funkcijasKluda(err), 'kluda');
     poga.disabled = false;
     poga.textContent = 'Apmaksāt';
+  }
+};
+
+/* ---------- Dāvināšana ---------- */
+let izveletaDavana = null;
+
+function renderDavanuPaketes() {
+  const k = el('davanuPaketes');
+  if (pirkumaPaketes.length === 0) {
+    k.innerHTML = '<p class="tukss">Šobrīd nav pieejamu pakešu.</p>';
+    return;
+  }
+  k.innerHTML = pirkumaPaketes.map((p) => {
+    const cena = p.credits > 1
+      ? `${eiro(Math.round(p.priceCents / p.credits))} <span class="par-nodarbibu">/ nodarbība</span>`
+      : eiro(p.priceCents);
+    return `
+      <div class="pakete${izveletaDavana?.id === p.id ? ' izveleta' : ''}" data-id="${p.id}">
+        <div class="pakete-nosaukums">${escapeHTML(p.name)}</div>
+        <div class="pakete-krediti">${p.credits} nodarbība${p.credits === 1 ? '' : 's'} dāvanā</div>
+        <div class="pakete-cena">${cena}</div>
+        <button class="cta" data-davana="${p.id}">Dāvināt</button>
+      </div>`;
+  }).join('');
+  k.querySelectorAll('[data-davana]').forEach((poga) => {
+    poga.addEventListener('click', () => izveletiesDavanu(poga.dataset.davana));
+  });
+}
+
+function izveletiesDavanu(id) {
+  izveletaDavana = pirkumaPaketes.find((p) => p.id === id) ?? null;
+  if (!izveletaDavana) return;
+  const p = izveletaDavana;
+  el('davanuPaketes').querySelectorAll('.pakete').forEach((karte) =>
+    karte.classList.toggle('izveleta', karte.dataset.id === id));
+  el('davanasNosaukums').textContent = `Dāvanu karte · ${p.name}`;
+  el('davanasDetalas').textContent = p.credits > 1
+    ? `${p.credits} nodarbības · ${eiro(Math.round(p.priceCents / p.credits))} par nodarbību`
+    : '1 nodarbība';
+  el('davanasSumma').textContent = eiro(p.priceCents);
+  el('davanasKopsavilkums').classList.remove('paslepts');
+  el('davanasKopsavilkums').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+el('pogaDavanuApmaksat').onclick = async () => {
+  if (!izveletaDavana) return;
+  const poga = el('pogaDavanuApmaksat');
+  poga.disabled = true;
+  poga.textContent = 'Atver apmaksu…';
+  try {
+    const r = await izsauktFunkciju('createCheckoutSession', { packageId: izveletaDavana.id, gift: true });
+    window.location.href = r.url;
+  } catch (err) {
+    console.error('createCheckoutSession (dāvana) kļūda:', err);
+    tosts(funkcijasKluda(err), 'kluda');
+    poga.disabled = false;
+    poga.textContent = 'Apmaksāt';
+  }
+};
+
+const formatetKodu = (k) => `SD-${k.slice(0, 4)}-${k.slice(4)}`;
+
+async function ieladetDavanas() {
+  const k = el('davanuSaraksts');
+  try {
+    const snap = await getDocs(query(
+      collection(db, 'gifts'),
+      where('buyerUserId', '==', uid),
+      orderBy('createdAt', 'desc'),
+      limit(20),
+    ));
+    k.innerHTML = snap.empty
+      ? '<p class="tukss">Vēl nav nopirktu dāvanu karšu.</p>'
+      : snap.docs.map((d) => {
+          const g = d.data();
+          const statuss = g.status === 'active'
+            ? '<span class="atzime zala">Aktīva</span>'
+            : g.status === 'void'
+              ? '<span class="atzime sarkana">Anulēta</span>'
+              : '<span class="atzime">Izmantota</span>';
+          return `
+            <div class="saraksta-rinda">
+              <div>
+                <div class="saraksta-galvena" style="letter-spacing:.06em">${formatetKodu(d.id)}</div>
+                <div class="saraksta-apaksa">${escapeHTML(g.packageName || '')} · ${g.credits} nodarbība${g.credits === 1 ? '' : 's'}${g.createdAt ? ' · ' + fmtDatums.format(g.createdAt.toDate()) : ''}</div>
+              </div>
+              ${statuss}
+            </div>`;
+        }).join('');
+  } catch (err) {
+    console.error('Dāvanu ielādes kļūda:', err);
+    k.innerHTML = '<p class="tukss">Neizdevās ielādēt.</p>';
+  }
+}
+
+el('pogaIzmantotDavanu').onclick = async () => {
+  const kods = el('davanasKods').value.trim();
+  if (!kods) { tosts('Ievadi dāvanu kodu.', 'kluda'); return; }
+  const poga = el('pogaIzmantotDavanu');
+  poga.disabled = true;
+  try {
+    const r = await izsauktFunkciju('redeemGift', { code: kods });
+    tosts(`🎁 Pieskaitītas ${r.credits} nodarbība${r.credits === 1 ? '' : 's'}!`, 'labi');
+    el('davanasKods').value = '';
+    ieladetDavanas();
+  } catch (err) {
+    console.error('redeemGift kļūda:', err);
+    tosts(funkcijasKluda(err), 'kluda');
+  } finally {
+    poga.disabled = false;
   }
 };
 
@@ -1608,6 +1762,7 @@ prasitPieteiksanos(async (user) => {
   ieladetGaidamas();
   ieladetPaketes();
   ieladetPirkumus();
+  ieladetDavanas();
 
   // Atgriešanās no Stripe apmaksas.
   const parametri = new URLSearchParams(window.location.search);
@@ -1615,6 +1770,12 @@ prasitPieteiksanos(async (user) => {
     paradietSadalu('sadalaPirkumi');
     tosts('Paldies! Maksājums saņemts — nodarbības tiks ieskaitītas dažu sekunžu laikā.', 'labi');
     history.replaceState(null, '', 'profils.html');
+  } else if (parametri.get('maksajums') === 'davana') {
+    paradietSadalu('sadalaDavinat');
+    tosts('Paldies! Dāvanu kods parādīsies sarakstā dažu sekunžu laikā.', 'labi');
+    history.replaceState(null, '', 'profils.html');
+    setTimeout(ieladetDavanas, 4000);
+    setTimeout(ieladetDavanas, 10000);
   } else if (parametri.get('maksajums') === 'atcelts') {
     paradietSadalu('sadalaPirkumi');
     tosts('Maksājums netika pabeigts.', 'kluda');

@@ -9,4 +9,4 @@ export {
   adminSyncUserProfiles,
   seedDefaults,
 } from "./adminApi";
-export { createCheckoutSession, stripeWebhook } from "./payments";
+export { createCheckoutSession, stripeWebhook, redeemGift } from "./payments";

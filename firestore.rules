@@ -82,6 +82,13 @@ service cloud.firestore {
         || (autorizets() && resource.data.userId == request.auth.uid);
       allow write: if false;
     }
+    // Dāvanu kartes: pircējs redz tikai savas nopirktās (kods = dokumenta ID,
+    // tāpēc svešus kodus uzminēt caur lasīšanu nevar); raksta tikai funkcijas.
+    match /gifts/{kods} {
+      allow read: if irAdmins()
+        || (autorizets() && resource.data.buyerUserId == request.auth.uid);
+      allow write: if false;
+    }
 
     /* ---------- Viss pārējais aizliegts ---------- */
     match /{document=**} {

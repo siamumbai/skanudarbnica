@@ -12,6 +12,7 @@ export const COL = {
   availabilityRules: "availabilityRules",
   blockedPeriods: "blockedPeriods",
   payments: "payments",
+  gifts: "gifts",
   settings: "settings",
 } as const;
 
@@ -94,6 +95,22 @@ export interface PaymentDoc {
   providerEventId: string;
   status: "succeeded" | "failed" | "error";
   errorMessage?: string;
+  createdAt: Timestamp;
+}
+
+// Dāvanu karte: dokumenta ID ir pats dāvanu kods (8 zīmes). Pirkums caur
+// Stripe to izveido; saņēmējs ar redeemGift apmaina pret kredītiem.
+export interface GiftDoc {
+  buyerUserId: string;
+  packageId: string;
+  packageName: string;
+  credits: number;
+  amountCents: number;
+  currency: string;
+  providerSessionId: string;
+  status: "active" | "redeemed";
+  redeemedBy: string | null;
+  redeemedAt: Timestamp | null;
   createdAt: Timestamp;
 }
 

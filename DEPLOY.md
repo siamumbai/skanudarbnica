@@ -93,7 +93,11 @@ firebase functions:secrets:set STRIPE_SECRET_KEY
      (precīzo URL parāda `firebase deploy` izvade)
    - Notikumi: `checkout.session.completed`,
      `checkout.session.async_payment_succeeded`,
-     `checkout.session.async_payment_failed`
+     `checkout.session.async_payment_failed`,
+     `charge.refunded`, `charge.dispute.created`
+     (pēdējie divi automātiski anulē neizmantotu dāvanu karti un atzīmē
+     maksājumu kā atmaksātu; par izmantotu karti funkciju žurnālā parādās
+     kļūda manuālai korekcijai)
 4. Saglabā webhook **parakstīšanas noslēpumu** (whsec_…):
 
 ```bash
