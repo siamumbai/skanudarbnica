@@ -293,16 +293,6 @@
     cursor:not-allowed;text-decoration:line-through;font-weight:600;
   }
   /* Brīvdienas kolonna — aizkrāsota, tāpat kā bloķētie periodi */
-  /* Audzēkņa izvēle — pogas vietnes stilā, nevis pārlūka izvēlne */
-  .audzeknu-pogas{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-  .audzekna-poga{
-    background:var(--bg);border:1.5px solid var(--border);border-radius:100px;
-    padding:9px 18px;font-family:inherit;font-size:13.5px;font-weight:700;
-    color:var(--text);cursor:pointer;transition:border-color .15s,background .15s;
-  }
-  .audzekna-poga:hover{border-color:var(--accent-light)}
-  .audzekna-poga.aktivs{background:var(--accent-dark);border-color:var(--accent-dark);color:var(--bg)}
-
   .brivs-bloks{
     flex:1;min-height:100px;
     background:rgba(70,62,42,.12);border:1.5px dashed var(--border);border-radius:13px;
@@ -557,10 +547,10 @@
         <div class="veidi" id="veiduSaraksts"></div>
         <div id="audzeknaBloks">
           <div class="lauks" style="margin-top:14px;margin-bottom:0">
-            <label>Kurš audzēknis apmeklēs nodarbību?</label>
+            <label for="audzeknaIzvele">Kurš audzēknis apmeklēs nodarbību?</label>
             <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-              <div class="audzeknu-pogas" id="audzeknaIzvele"></div>
-              <button class="poga-pievienot" id="pogaJaunsAudzeknis" type="button">+ Pievienot audzēkni</button>
+              <select id="audzeknaIzvele" style="flex:1;min-width:180px;max-width:320px"></select>
+              <button class="poga-pievienot paslepts" id="pogaJaunsAudzeknis" type="button">+ Pievienot audzēkni</button>
             </div>
           </div>
         </div>
@@ -594,7 +584,6 @@
         <!-- Pārcelšanas panelis — atveras ar rindas pogu "Labot" -->
         <div id="labotPanelis" class="paslepts" style="margin:16px 0">
           <h2>Pārcelt nodarbību</h2>
-          <p class="h2-piezime" id="labotApraksts"></p>
           <div class="ritjoslas-galva">
             <button class="riti-poga" id="labotRitiKreisi" type="button" aria-label="Iepriekšējā nedēļa">‹</button>
             <button class="riti-poga" id="labotRitiLabi" type="button" aria-label="Nākamā nedēļa">›</button>
@@ -912,19 +901,22 @@ function atjaunotAudzeknuIzveli(izveletaisVards = null) {
   if (izveletaisVards && vardi.includes(izveletaisVards)) izveletaisAudzeknis = izveletaisVards;
   if (!vardi.includes(izveletaisAudzeknis)) izveletaisAudzeknis = vardi[0] ?? null;
 
-  const k = el('audzeknaIzvele');
-  k.innerHTML = vardi.length
-    ? vardi.map((v) => `<button type="button" class="audzekna-poga${v === izveletaisAudzeknis ? ' aktivs' : ''}" data-vards="${escapeHTML(v)}">${escapeHTML(v)}</button>`).join('')
-    : '<span class="tukss">Vēl nav pievienotu audzēkņu</span>';
-  k.querySelectorAll('.audzekna-poga').forEach((poga) => {
-    poga.addEventListener('click', () => {
-      izveletaisAudzeknis = poga.dataset.vards;
-      k.querySelectorAll('.audzekna-poga').forEach((p) => p.classList.toggle('aktivs', p === poga));
-      atjaunotApstiprinatJoslu();
-    });
-  });
+  const izvele = el('audzeknaIzvele');
+  izvele.innerHTML = vardi.length
+    ? vardi.map((v) => `<option value="${escapeHTML(v)}">${escapeHTML(v)}</option>`).join('')
+    : '<option value="">Vēl nav pievienotu audzēkņu</option>';
+  if (izveletaisAudzeknis) izvele.value = izveletaisAudzeknis;
+  izvele.disabled = vardi.length === 0;
+
+  // "+ Pievienot audzēkni" redzama tikai tad, kad nav neviena audzēkņa.
+  el('pogaJaunsAudzeknis').classList.toggle('paslepts', vardi.length > 0);
+
   atjaunotApstiprinatJoslu();
 }
+el('audzeknaIzvele').onchange = () => {
+  izveletaisAudzeknis = el('audzeknaIzvele').value || null;
+  atjaunotApstiprinatJoslu();
+};
 
 // "+ Pievienot audzēkni" no rezervēšanas: atver anketu Audzēkņu sadaļā un pēc
 // saglabāšanas atgriežas šeit ar jauno audzēkni jau izvēlētu.
@@ -1218,8 +1210,6 @@ async function atvertLabotu(id, rinda = null) {
   });
   labotSlots = null;
   labotNobide = nobideNedelai(datumsISO(dati.startAt.toDate()));
-  el('labotApraksts').textContent =
-    `${dati.childName || dati.studentName || 'Nodarbība'} · šobrīd ${arLieloBurtu(fmtDiena.format(dati.startAt.toDate()))}, ${fmtLaiks.format(dati.startAt.toDate())}. Izvēlies jaunu laiku un saglabā.`;
   const panelis = el('labotPanelis');
   // Panelis atveras tieši aiz labojamās rindas — pārējās rindas nobīdās uz leju.
   if (rinda) rinda.insertAdjacentElement('afterend', panelis);
