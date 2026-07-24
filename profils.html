@@ -249,8 +249,15 @@
   /* Dienu kolonnas: diena augšā, laiki no augšas uz leju, nākamā diena pa labi */
   /* Bultiņas virs kalendāra; dienas zem tām, kartītes iekšmalās */
   .ritjoslas-galva{display:flex;justify-content:flex-end;gap:8px;margin-bottom:12px}
-  /* Apgriež slīdēšanas animāciju, lai kalendārs nekad neizlien no kartītes iekšmalām */
-  .dienu-skats{overflow:hidden}
+  /* Apgriež slīdēšanas animāciju kartītes iekšmalās. Malās nav cieta griezuma
+     (redzamas "svītras") — gradienta maska padding joslā saturu maigi izdzēš,
+     pirms tas sasniedz malu; miera stāvoklī kalendārs ir pilnā spilgtumā. */
+  .dienu-skats{
+    overflow:hidden;
+    margin:0 -18px;padding:0 18px;
+    -webkit-mask-image:linear-gradient(to right,transparent 0,#000 18px,#000 calc(100% - 18px),transparent 100%);
+    mask-image:linear-gradient(to right,transparent 0,#000 18px,#000 calc(100% - 18px),transparent 100%);
+  }
   /* Nedēļas maiņa "aizslīd" — lēnāka (1s), lai virziens ir skaidri sajūtams */
   @keyframes slidNoLabas{from{opacity:.15;transform:translateX(130px)}to{opacity:1;transform:none}}
   @keyframes slidNoKreisas{from{opacity:.15;transform:translateX(-130px)}to{opacity:1;transform:none}}
