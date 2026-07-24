@@ -247,6 +247,8 @@
   /* Dienu kolonnas: diena augšā, laiki no augšas uz leju, nākamā diena pa labi */
   /* Bultiņas virs kalendāra; dienas zem tām, kartītes iekšmalās */
   .ritjoslas-galva{display:flex;justify-content:flex-end;gap:8px;margin-bottom:12px}
+  /* Apgriež slīdēšanas animāciju, lai kalendārs nekad neizlien no kartītes iekšmalām */
+  .dienu-skats{overflow:hidden}
   /* Nedēļas maiņa "aizslīd" — lēnāka (1s), lai virziens ir skaidri sajūtams */
   @keyframes slidNoLabas{from{opacity:.15;transform:translateX(130px)}to{opacity:1;transform:none}}
   @keyframes slidNoKreisas{from{opacity:.15;transform:translateX(-130px)}to{opacity:1;transform:none}}
@@ -991,7 +993,7 @@ async function ieladetSlotus() {
         <button class="riti-poga" id="ritiPaKreisi" type="button" ${varAtpakal ? '' : 'disabled'} aria-label="Iepriekšējā nedēļa">‹</button>
         <button class="riti-poga" id="ritiPaLabi" type="button" ${varUzPrieksu ? '' : 'disabled'} aria-label="Nākamā nedēļa">›</button>
       </div>
-      <div class="dienu-riti${animKlase}" id="dienuRiti">${kolonnas.join('')}</div>`;
+      <div class="dienu-skats"><div class="dienu-riti${animKlase}" id="dienuRiti">${kolonnas.join('')}</div></div>`;
     el('ritiPaKreisi').onclick = () => {
       if (nedelasNobide > 0) {
         nedelasNobide--; slidesVirziens = -1;
