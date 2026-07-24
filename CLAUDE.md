@@ -29,7 +29,7 @@ Mūzikas nodarbību studijas (bērniem, Rīga) mārketinga lapa + lietotāju kon
 ## Firestore datu modelis
 
 - `users/{uid}` — profils (latviskie lauki: `vards`, `epasts`, `berni[]`…) + `creditBalance` (raksta TIKAI funkcijas; klients nevar mainīt `creditBalance`/`loma`).
-- Rezervāciju kolekcijas (angliskā shēma): `lessonTypes`, `lessonPackages`, `teachers`, `availabilityRules` (nedēļas dienu intervāli), `blockedPeriods`, `bookings` (ar `blockStartAt/blockEndAt` buferu pārklāšanās pārbaudēm), `creditTransactions` (virsgrāmata — nekad nedzēš), `payments`, `settings/booking` (logs, brīdinājums, atcelšanas termiņš u.c.).
+- Rezervāciju kolekcijas (angliskā shēma): `lessonTypes`, `lessonPackages`, `teachers`, `availabilityRules` (nedēļas dienu intervāli), `blockedPeriods`, `bookings` (ar `blockStartAt/blockEndAt` buferu pārklāšanās pārbaudēm), `creditTransactions` (virsgrāmata — nekad nedzēš), `payments`, `gifts` (dāvanu kartes: dokumenta ID = 8 zīmju kods; pirkums ar `gift:true` caur Stripe, izpirkšana ar `redeemGift`; atmaksa/strīds anulē neizmantotu kodu), `settings/booking` (logs, brīdinājums, atcelšanas termiņš u.c.).
 - `bookings`, `creditTransactions`, `payments` klients NEKAD neraksta — tikai lasa savus; visas izmaiņas caur callable funkcijām.
 
 ## Konvencijas
