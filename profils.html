@@ -50,12 +50,14 @@
     max-width:1180px;margin:0 auto;padding:36px 32px 90px;
     display:grid;grid-template-columns:200px 1fr auto;gap:34px;align-items:start;
   }
-  /* Konta navigācija pie pašas labās malas, zem "Izrakstīties" */
-  .laba-nav{justify-self:end;align-items:flex-end}
+  /* Konta navigācija: pogas precīzi viena zem otras, labajā pusē */
+  .laba-nav{justify-self:end;align-items:flex-start}
   .laba-nav .nav-poga{width:auto}
-  /* Platos ekrānos — pie paša loga labās malas, ne tikai satura malas */
-  @media(min-width:1421px){
-    .laba-nav{position:fixed;top:96px;right:32px}
+  /* Pietiekami platos ekrānos — piesprausta pie paša loga labās malas, zem
+     "Izrakstīties", ārpus satura iekšmalām. Selektoram .sanu-nav.laba-nav ir
+     augstāka specifika, lai tas pārspēj vēlāko ".sanu-nav" sticky noteikumu. */
+  @media(min-width:1560px){
+    .sanu-nav.laba-nav{position:fixed;top:80px;right:28px}
   }
   /* min-width:0 ļauj saturam (dienu ritjoslai) sarukt, nevis izstiept lapu */
   .izkartojums > main{min-width:0}
