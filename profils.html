@@ -879,6 +879,7 @@ async function saglabatBernus(jaunieBerni, veiksmesTeksts, poga) {
 }
 
 /* ---------- Bilance (realtime) ---------- */
+let bijaNepietiekami = false;
 function atjaunotBilanci() {
   el('bilanceSkaitlis').textContent = String(bilance);
   // Zaļā kartīte, kad ir atlikušas nodarbības; brūnā — kad bilance 0.
@@ -887,6 +888,14 @@ function atjaunotBilanci() {
     ? '✔ Apmaksātas un gatavas izmantošanai'
     : 'Papildini un tad rezervē nodarbību';
   atjaunotSlotuPieejamibu();
+
+  // Tiklīdz bilance kļūst pietiekama (nopirkta vai piešķirta nodarbība),
+  // laiku kalendārs ielādējas uzreiz — bez sadaļas pārvēršanas.
+  const nepietiek = izveletaisVeids ? bilance < izveletaisVeids.creditsRequired : false;
+  if (izveletaisVeids && !nepietiek && (bijaNepietiekami || !el('dienuRiti'))) {
+    ieladetSlotus();
+  }
+  bijaNepietiekami = nepietiek;
 }
 el('bilancePoga').onclick = () => paradietSadalu('sadalaPirkumi');
 el('pogaUzPaketem').onclick = () => paradietSadalu('sadalaPirkumi');
@@ -1136,6 +1145,13 @@ function nodarbibasRinda(b, id, { arLabotPogu = false } = {}) {
 
 async function ieladetGaidamas() {
   const k = el('gaidamoSaraksts');
+  // Ja pārcelšanas panelis ir starp rindām, pirms saraksta pārzīmēšanas to
+  // aizveram un noliekam atpakaļ aiz saraksta (citādi innerHTML to izdzēstu).
+  const parkPanelis = el('labotPanelis');
+  if (parkPanelis && k.contains(parkPanelis)) {
+    aizvertLabotu();
+    k.insertAdjacentElement('afterend', parkPanelis);
+  }
   try {
     const snap = await getDocs(query(
       collection(db, 'bookings'),
@@ -1150,7 +1166,7 @@ async function ieladetGaidamas() {
       : snap.docs.map((d) => nodarbibasRinda(d.data(), d.id, { arLabotPogu: true })).join('');
     gaidamoDati = new Map(snap.docs.map((d) => [d.id, d.data()]));
     k.querySelectorAll('[data-labot]').forEach((poga) => {
-      poga.addEventListener('click', () => atvertLabotu(poga.dataset.labot));
+      poga.addEventListener('click', () => atvertLabotu(poga.dataset.labot, poga.closest('.saraksta-rinda')));
     });
     // Zaļais skaitītājs navigācijā — cik nodarbību gaidāms.
     const skaititajs = el('navNodarbibasSkaits');
@@ -1175,7 +1191,7 @@ function nobideNedelai(dISO) {
   return Math.max(0, Math.floor((d - p0) / (7 * 86_400_000)));
 }
 
-async function atvertLabotu(id) {
+async function atvertLabotu(id, rinda = null) {
   const dati = gaidamoDati.get(id);
   if (!dati) return;
   labojama = { id, dati };
@@ -1183,9 +1199,12 @@ async function atvertLabotu(id) {
   labotNobide = nobideNedelai(datumsISO(dati.startAt.toDate()));
   el('labotApraksts').textContent =
     `${dati.childName || dati.studentName || 'Nodarbība'} · šobrīd ${arLieloBurtu(fmtDiena.format(dati.startAt.toDate()))}, ${fmtLaiks.format(dati.startAt.toDate())}. Izvēlies jaunu laiku un saglabā.`;
-  el('labotPanelis').classList.remove('paslepts');
+  const panelis = el('labotPanelis');
+  // Panelis atveras tieši aiz labojamās rindas — pārējās rindas nobīdās uz leju.
+  if (rinda) rinda.insertAdjacentElement('afterend', panelis);
+  panelis.classList.remove('paslepts');
   await renderLabotKalendaru();
-  el('labotPanelis').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  panelis.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 function aizvertLabotu() {
