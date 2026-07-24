@@ -53,6 +53,10 @@
   /* Konta navigācija pie pašas labās malas, zem "Izrakstīties" */
   .laba-nav{justify-self:end;align-items:flex-end}
   .laba-nav .nav-poga{width:auto}
+  /* Platos ekrānos — pie paša loga labās malas, ne tikai satura malas */
+  @media(min-width:1421px){
+    .laba-nav{position:fixed;top:96px;right:32px}
+  }
   /* min-width:0 ļauj saturam (dienu ritjoslai) sarukt, nevis izstiept lapu */
   .izkartojums > main{min-width:0}
   .ielade{max-width:1180px;margin:0 auto;padding:44px 32px;color:var(--muted);font-size:15px}
@@ -242,11 +246,11 @@
 
   /* Dienu kolonnas: diena augšā, laiki no augšas uz leju, nākamā diena pa labi */
   .dienu-ritjosla{display:flex;align-items:stretch;gap:8px}
-  /* Nedēļas maiņa "aizslīd" — virziens rada nākamās/iepriekšējās nedēļas sajūtu */
-  @keyframes slidNoLabas{from{opacity:.25;transform:translateX(52px)}to{opacity:1;transform:none}}
-  @keyframes slidNoKreisas{from{opacity:.25;transform:translateX(-52px)}to{opacity:1;transform:none}}
-  .dienu-riti.no-labas{animation:slidNoLabas .3s ease}
-  .dienu-riti.no-kreisas{animation:slidNoKreisas .3s ease}
+  /* Nedēļas maiņa "aizslīd" — lēnāka (1s), lai virziens ir skaidri sajūtams */
+  @keyframes slidNoLabas{from{opacity:.15;transform:translateX(130px)}to{opacity:1;transform:none}}
+  @keyframes slidNoKreisas{from{opacity:.15;transform:translateX(-130px)}to{opacity:1;transform:none}}
+  .dienu-riti.no-labas{animation:slidNoLabas 1s cubic-bezier(.22,.8,.3,1)}
+  .dienu-riti.no-kreisas{animation:slidNoKreisas 1s cubic-bezier(.22,.8,.3,1)}
   .riti-poga{
     flex-shrink:0;align-self:flex-start;margin-top:30px;
     width:32px;height:32px;border-radius:50%;
@@ -667,6 +671,8 @@ function escapeHTML(s) {
   return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
+const arLieloBurtu = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+
 /* ---------- Tosts ---------- */
 let tostsTaimeris;
 function tosts(teksts, veids = 'labi') {
@@ -1073,7 +1079,7 @@ function nodarbibasRinda(b, id, { arAtceltPogu = false } = {}) {
   return `
     <div class="saraksta-rinda">
       <div class="saraksta-galvena">${escapeHTML(b.childName || b.studentName || 'Audzēknis')}</div>
-      <div class="saraksta-vidus">${fmtDiena.format(new Date(sakums))} · ${laiks}</div>
+      <div class="saraksta-vidus">${arLieloBurtu(fmtDiena.format(new Date(sakums)))} · ${laiks}</div>
       <div style="display:flex;align-items:center;gap:10px">
         ${statuss}
         ${arAtceltPogu ? `<button class="maza-poga" data-atcelt="${id}" ${varAtcelt ? '' : `disabled title="Atcelt var ne vēlāk kā ${atcelsanasStundas}h pirms nodarbības"`}>Atcelt</button>` : ''}
@@ -1195,7 +1201,7 @@ async function ieladetPaketes() {
           <div class="pakete-nosaukums">${escapeHTML(p.name)}</div>
           <div class="pakete-krediti">${p.credits} nodarbība${p.credits === 1 ? '' : 's'}</div>
           <div class="pakete-cena">${cena}</div>
-          <button class="cta" data-pakete="${p.id}">Pirkt</button>
+          <button class="cta" data-pakete="${p.id}">Apmaksāt</button>
         </div>`;
     }).join('');
     k.querySelectorAll('[data-pakete]').forEach((poga) => {
