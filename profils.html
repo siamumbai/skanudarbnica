@@ -36,8 +36,16 @@
     position:sticky; top:0; background:var(--bg); z-index:20;
   }
   .logo{font-size:15px;font-weight:600;letter-spacing:.02em;text-decoration:none;color:var(--text)}
+  .josla-labi-kolonna{display:flex;flex-direction:column;align-items:flex-end;gap:7px}
   .josla-labi{display:flex;align-items:center;gap:18px}
   .josla-epasts{font-size:13px;color:var(--muted)}
+  .josla-saites{display:flex;gap:16px}
+  .josla-saite{
+    background:none;border:none;padding:0;cursor:pointer;
+    font-family:inherit;font-size:12.5px;font-weight:700;color:var(--muted);
+  }
+  .josla-saite:hover{color:var(--accent-dark)}
+  .josla-saite.aktiva{color:var(--accent-dark);text-decoration:underline;text-underline-offset:4px}
   .izeja{
     background:transparent;border:0.5px solid var(--border);border-radius:100px;
     padding:9px 18px;font-family:inherit;font-size:13px;font-weight:600;
@@ -238,7 +246,7 @@
   .veids-info{font-size:12.5px;color:var(--muted)}
 
   /* Dienu kolonnas: diena augšā, laiki no augšas uz leju, nākamā diena pa labi */
-  .dienu-ritjosla{display:flex;align-items:stretch;gap:8px}
+  .dienu-ritjosla{display:flex;align-items:stretch;gap:8px;animation:paradities .22s ease}
   .riti-poga{
     flex-shrink:0;align-self:flex-start;margin-top:30px;
     width:32px;height:32px;border-radius:50%;
@@ -371,9 +379,15 @@
 
 <header class="josla">
   <a class="logo" href="index.html">skanudarbnica.lv</a>
-  <div class="josla-labi">
-    <span class="josla-epasts" id="joslaEpasts"></span>
-    <button class="izeja" id="pogaIzrakstities">Izrakstīties</button>
+  <div class="josla-labi-kolonna">
+    <div class="josla-labi">
+      <span class="josla-epasts" id="joslaEpasts"></span>
+      <button class="izeja" id="pogaIzrakstities">Izrakstīties</button>
+    </div>
+    <div class="josla-saites">
+      <button class="josla-saite" id="navProfils" role="tab" aria-selected="false" aria-controls="sadalaProfils">Mans profils</button>
+      <button class="josla-saite" id="navPirkumi" role="tab" aria-selected="false" aria-controls="sadalaPirkumi">Pirkumi</button>
+    </div>
   </div>
 </header>
 
@@ -385,9 +399,6 @@
 
   <!-- ======== GALVENĀ SĀNU NAVIGĀCIJA ======== -->
   <nav class="sanu-nav" role="tablist" aria-label="Profila sadaļas">
-    <button class="nav-poga aktiva" id="navProfils" role="tab" aria-selected="true" aria-controls="sadalaProfils">
-      <span class="nav-ik" aria-hidden="true">👤</span> Mans profils
-    </button>
     <button class="nav-poga" id="navPieteikties" role="tab" aria-selected="false" aria-controls="sadalaPieteikties">
       <span class="nav-ik" aria-hidden="true">🧒</span> Audzēkņi
     </button>
@@ -397,9 +408,6 @@
     <button class="nav-poga" id="navNodarbibas" role="tab" aria-selected="false" aria-controls="sadalaNodarbibas">
       <span class="nav-ik" aria-hidden="true">🎵</span> Manas nodarbības
       <span class="nav-skaits paslepts" id="navNodarbibasSkaits" aria-label="Gaidāmās nodarbības"></span>
-    </button>
-    <button class="nav-poga" id="navPirkumi" role="tab" aria-selected="false" aria-controls="sadalaPirkumi">
-      <span class="nav-ik" aria-hidden="true">💳</span> Pirkumi un vēsture
     </button>
   </nav>
 
@@ -532,8 +540,8 @@
 
       <section class="karte paslepts" id="nevarKarte">
         <h2>Nepietiek nodarbību</h2>
-        <p class="h2-piezime" id="nevarTeksts">Lai rezervētu šo nodarbību, vispirms iegādājies nodarbību paketi.</p>
-        <button class="cta cta-auto" id="pogaUzPaketem">Pirkt nodarbību paketi</button>
+        <p class="h2-piezime">Kalendārs atvērsies, kad nopirksiet vismaz 1 nodarbību.</p>
+        <button class="cta cta-auto" id="pogaUzPaketem">Pirkt nodarbību</button>
       </section>
 
       <div class="apstiprinat" id="apstiprinatJosla">
@@ -575,11 +583,6 @@
         <div id="pirkumuSaraksts"><p class="tukss">Ielādē…</p></div>
       </section>
 
-      <section class="karte">
-        <h2>Bilances izmaiņas</h2>
-        <div id="kreditusSaraksts"><p class="tukss">Ielādē…</p></div>
-        <button class="vairak" id="pogaVairakKreditu" hidden>Ielādēt vairāk</button>
-      </section>
     </section>
 
   </main>
@@ -614,7 +617,6 @@ let izveletaisSlots = null;     // { startMillis, teacherId }
 let nedelasNobide = 0;          // rādāmā nedēļa: 0 = tekošā, 1 = nākamā utt.
 let atcelsanasStundas = 24;
 let pagatnesKursors = null;
-let kreditusKursors = null;
 
 /* ---------- Formatēšanas palīgi ---------- */
 const fmtDiena = new Intl.DateTimeFormat('lv-LV', { timeZone: LAIKA_ZONA, weekday: 'long', day: 'numeric', month: 'long' });
@@ -817,7 +819,7 @@ function atjaunotBilanci() {
   el('bilanceKarte').classList.toggle('pozitiva', bilance > 0);
   el('bilanceApaksteksts').textContent = bilance > 0
     ? '✔ Apmaksātas un gatavas izmantošanai'
-    : 'Nopērc paketi, lai varētu rezervēt';
+    : 'Papildini un tad rezervē nodarbību';
   atjaunotSlotuPieejamibu();
 }
 el('bilancePoga').onclick = () => paradietSadalu('sadalaPirkumi');
@@ -864,8 +866,6 @@ function atjaunotSlotuPieejamibu() {
   el('nevarKarte').classList.toggle('paslepts', !nepietiek);
   if (nepietiek) {
     el('apstiprinatJosla').classList.remove('redzams');
-    el('nevarTeksts').textContent =
-      `Šai nodarbībai vajag ${izveletaisVeids.creditsRequired} nodarbību bilancē (tev ir ${bilance}). Iegādājies paketi, un varēsi rezervēt.`;
   }
 }
 
@@ -876,7 +876,11 @@ async function ieladetSlotus() {
   if (bilance < izveletaisVeids.creditsRequired) return;
 
   const k = el('slotuSaraksts');
-  k.innerHTML = '<p class="tukss">Meklē brīvos laikus…</p>';
+  // Pirmajā ielādē rādām paziņojumu; pāršķirot nedēļas, esošais saturs paliek
+  // (viegli pieblāvēts), lai pāreja ir plūstoša, bez "ielādes" lēciena.
+  const esosaisRiti = el('dienuRiti');
+  if (esosaisRiti) esosaisRiti.style.opacity = '.45';
+  else k.innerHTML = '<p class="tukss">Meklē brīvos laikus…</p>';
 
   // Pilna nedēļa no pirmdienas līdz svētdienai; ‹ › pāršķir pa nedēļām.
   const pirmdiena = nedelasPirmdiena(nedelasNobide);
@@ -1178,54 +1182,6 @@ async function ieladetPirkumus() {
   }
 }
 
-const TIPU_NOSAUKUMI = {
-  PURCHASE: 'Pirkums',
-  BOOKING: 'Rezervācija',
-  CANCELLATION: 'Atcelšana',
-  MANUAL_ADMIN: 'Korekcija',
-  REFUND: 'Atmaksa',
-};
-
-async function ieladetKreditus(nosakuma = false) {
-  const k = el('kreditusSaraksts');
-  if (nosakuma) {
-    kreditusKursors = null;
-    k.innerHTML = '<p class="tukss">Ielādē…</p>';
-  }
-  try {
-    const dalas = [
-      collection(db, 'creditTransactions'),
-      where('userId', '==', uid),
-      orderBy('createdAt', 'desc'),
-      limit(15),
-    ];
-    if (kreditusKursors) dalas.push(startAfter(kreditusKursors));
-    const snap = await getDocs(query(...dalas));
-    const rindas = snap.docs.map((d) => {
-      const t = d.data();
-      return `
-        <div class="saraksta-rinda">
-          <div>
-            <div class="saraksta-galvena">${TIPU_NOSAUKUMI[t.type] || t.type}</div>
-            <div class="saraksta-apaksa">${t.createdAt ? fmtDatums.format(t.createdAt.toDate()) : ''}${t.note ? ' · ' + escapeHTML(t.note) : ''}</div>
-          </div>
-          <div class="${t.amount > 0 ? 'plus' : 'minus'}">${t.amount > 0 ? '+' : ''}${t.amount}</div>
-        </div>`;
-    });
-    if (nosakuma) k.innerHTML = '';
-    if (nosakuma && rindas.length === 0) {
-      k.innerHTML = '<p class="tukss">Vēl nav bilances izmaiņu.</p>';
-    } else {
-      k.insertAdjacentHTML('beforeend', rindas.join(''));
-    }
-    kreditusKursors = snap.docs.at(-1) ?? kreditusKursors;
-    el('pogaVairakKreditu').hidden = snap.docs.length < 15;
-  } catch (err) {
-    console.error('Kredītu vēstures kļūda:', err);
-    k.innerHTML = '<p class="tukss">Neizdevās ielādēt.</p>';
-  }
-}
-el('pogaVairakKreditu').onclick = () => ieladetKreditus();
 
 /* ---------- Notikumi: anketa ---------- */
 el('pogaPieteiktBernu').onclick = () => atvertAnketu(null);
@@ -1358,7 +1314,6 @@ prasitPieteiksanos(async (user) => {
   ieladetPagatni(true);
   ieladetPaketes();
   ieladetPirkumus();
-  ieladetKreditus(true);
 
   // Atgriešanās no Stripe apmaksas.
   const parametri = new URLSearchParams(window.location.search);
