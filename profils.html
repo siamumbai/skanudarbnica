@@ -345,6 +345,8 @@
   }
   .maza-poga:hover{border-color:var(--sarkana)}
   .maza-poga:disabled{opacity:.45;cursor:not-allowed}
+  .maza-poga.neitrala{color:var(--muted)}
+  .maza-poga.neitrala:hover{border-color:var(--accent-dark);color:var(--accent-dark)}
   .plus{color:var(--zala);font-weight:800}
   .minus{color:var(--sarkana);font-weight:800}
 
@@ -578,6 +580,21 @@
       <section class="karte">
         <h2>Gaidāmās nodarbības</h2>
         <div id="gaidamoSaraksts"><p class="tukss">Ielādē…</p></div>
+
+        <!-- Pārcelšanas panelis — atveras ar rindas pogu "Labot" -->
+        <div id="labotPanelis" class="paslepts" style="margin-top:16px;border-top:0.5px solid var(--border);padding-top:18px">
+          <h2>Pārcelt nodarbību</h2>
+          <p class="h2-piezime" id="labotApraksts"></p>
+          <div class="ritjoslas-galva">
+            <button class="riti-poga" id="labotRitiKreisi" type="button" aria-label="Iepriekšējā nedēļa">‹</button>
+            <button class="riti-poga" id="labotRitiLabi" type="button" aria-label="Nākamā nedēļa">›</button>
+          </div>
+          <div class="dienu-skats"><div class="dienu-riti" id="labotRiti"></div></div>
+          <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;align-items:center">
+            <button class="cta cta-auto" id="pogaLabotSaglabat" disabled>Saglabāt izmaiņas</button>
+            <button class="maza-poga neitrala" id="pogaLabotAtcelt" style="padding:11px 18px">Atcelt</button>
+          </div>
+        </div>
       </section>
 
       <section class="karte">
@@ -945,12 +962,12 @@ function nedelasDatumi(nobide) {
   return nedela;
 }
 
-async function pieprasitNedelu(nobide) {
-  const atslega = `${izveletaisVeids.id}|${nobide}`;
+async function pieprasitNedelu(veidaId, nobide) {
+  const atslega = `${veidaId}|${nobide}`;
   if (slotuKese.has(atslega)) return slotuKese.get(atslega);
   const nedela = nedelasDatumi(nobide);
   const atbilde = await izsauktFunkciju('getAvailableSlots', {
-    lessonTypeId: izveletaisVeids.id,
+    lessonTypeId: veidaId,
     fromISO: nedela[0],
     toISO: nedela[6],
   });
@@ -973,7 +990,7 @@ async function ieladetSlotus() {
   }
 
   try {
-    const { nedela, atbilde } = await pieprasitNedelu(nedelasNobide);
+    const { nedela, atbilde } = await pieprasitNedelu(izveletaisVeids.id, nedelasNobide);
     atcelsanasStundas = atbilde.cancellationHours ?? atcelsanasStundas;
 
     const dienuKarte = new Map(atbilde.days.map((d) => [d.date, d.slots]));
@@ -1045,8 +1062,8 @@ async function ieladetSlotus() {
     });
 
     // Fonā ielādējam blakus nedēļas — nākamā pāršķiršana notiek uzreiz.
-    if (varUzPrieksu) pieprasitNedelu(nedelasNobide + 1).catch(() => {});
-    if (nedelasNobide > 0) pieprasitNedelu(nedelasNobide - 1).catch(() => {});
+    if (varUzPrieksu) pieprasitNedelu(izveletaisVeids.id, nedelasNobide + 1).catch(() => {});
+    if (nedelasNobide > 0) pieprasitNedelu(izveletaisVeids.id, nedelasNobide - 1).catch(() => {});
   } catch (err) {
     console.error('getAvailableSlots kļūda:', err);
     k.innerHTML = `<p class="tukss">${escapeHTML(funkcijasKluda(err))}</p>`;
@@ -1097,11 +1114,10 @@ el('pogaApstiprinat').onclick = async () => {
 };
 
 /* ---------- Manas nodarbības ---------- */
-// Rinda sākas ar audzēkņa vārdu; vidū — diena, datums un laiks "no–līdz".
-function nodarbibasRinda(b, id, { arAtceltPogu = false } = {}) {
+// Rinda: audzēkņa vārds | diena, datums, laiks | Labot | statuss.
+function nodarbibasRinda(b, id, { arLabotPogu = false } = {}) {
   const sakums = b.startAt.toMillis();
   const beigas = b.endAt?.toMillis?.() ?? null;
-  const varAtcelt = arAtceltPogu && Date.now() < sakums - atcelsanasStundas * 3_600_000;
   const statuss = sakums < Date.now()
     ? '<span class="atzime zala">Notikusi</span>'
     : '<span class="atzime zala">Apstiprināta</span>';
@@ -1112,8 +1128,8 @@ function nodarbibasRinda(b, id, { arAtceltPogu = false } = {}) {
       <div class="saraksta-galvena">${escapeHTML(b.childName || b.studentName || 'Audzēknis')}</div>
       <div class="saraksta-vidus">${arLieloBurtu(fmtDiena.format(new Date(sakums)))} · ${laiks}</div>
       <div style="display:flex;align-items:center;gap:10px">
+        ${arLabotPogu ? `<button class="maza-poga neitrala" data-labot="${id}">Labot</button>` : ''}
         ${statuss}
-        ${arAtceltPogu ? `<button class="maza-poga" data-atcelt="${id}" ${varAtcelt ? '' : `disabled title="Atcelt var ne vēlāk kā ${atcelsanasStundas}h pirms nodarbības"`}>Atcelt</button>` : ''}
       </div>
     </div>`;
 }
@@ -1131,9 +1147,10 @@ async function ieladetGaidamas() {
     ));
     k.innerHTML = snap.empty
       ? '<p class="tukss">Nav gaidāmu nodarbību. Rezervē nākamo sadaļā "Rezervēt"!</p>'
-      : snap.docs.map((d) => nodarbibasRinda(d.data(), d.id, { arAtceltPogu: true })).join('');
-    k.querySelectorAll('[data-atcelt]').forEach((poga) => {
-      poga.addEventListener('click', () => atceltNodarbibu(poga));
+      : snap.docs.map((d) => nodarbibasRinda(d.data(), d.id, { arLabotPogu: true })).join('');
+    gaidamoDati = new Map(snap.docs.map((d) => [d.id, d.data()]));
+    k.querySelectorAll('[data-labot]').forEach((poga) => {
+      poga.addEventListener('click', () => atvertLabotu(poga.dataset.labot));
     });
     // Zaļais skaitītājs navigācijā — cik nodarbību gaidāms.
     const skaititajs = el('navNodarbibasSkaits');
@@ -1145,29 +1162,132 @@ async function ieladetGaidamas() {
   }
 }
 
-async function atceltNodarbibu(poga) {
-  if (poga.dataset.apstiprinats !== '1') {
-    poga.dataset.apstiprinats = '1';
-    poga.textContent = 'Tiešām atcelt?';
-    setTimeout(() => {
-      poga.dataset.apstiprinats = '';
-      poga.textContent = 'Atcelt';
-    }, 4000);
-    return;
+/* ---------- Nodarbības pārcelšana ("Labot") ---------- */
+let gaidamoDati = new Map();
+let labojama = null;    // { id, dati }
+let labotNobide = 0;    // rādāmā nedēļa pārcelšanas kalendārā
+let labotSlots = null;  // izvēlētais jaunais laiks
+
+// Cik nedēļas uz priekšu no tekošās ir dotais datums.
+function nobideNedelai(dISO) {
+  const p0 = nedelasPirmdiena(0).getTime();
+  const d = new Date(dISO + 'T12:00:00').getTime();
+  return Math.max(0, Math.floor((d - p0) / (7 * 86_400_000)));
+}
+
+async function atvertLabotu(id) {
+  const dati = gaidamoDati.get(id);
+  if (!dati) return;
+  labojama = { id, dati };
+  labotSlots = null;
+  labotNobide = nobideNedelai(datumsISO(dati.startAt.toDate()));
+  el('labotApraksts').textContent =
+    `${dati.childName || dati.studentName || 'Nodarbība'} · šobrīd ${arLieloBurtu(fmtDiena.format(dati.startAt.toDate()))}, ${fmtLaiks.format(dati.startAt.toDate())}. Izvēlies jaunu laiku un saglabā.`;
+  el('labotPanelis').classList.remove('paslepts');
+  await renderLabotKalendaru();
+  el('labotPanelis').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function aizvertLabotu() {
+  labojama = null;
+  labotSlots = null;
+  el('labotPanelis').classList.add('paslepts');
+}
+
+// Tas pats nedēļas kalendārs kā rezervēšanā; pašreizējais laiks ir iezīmēts
+// un paliek izvēlams, pārējie aizņemtie — pelēki.
+async function renderLabotKalendaru() {
+  if (!labojama) return;
+  const riti = el('labotRiti');
+  if (!slotuKese.has(`${labojama.dati.lessonTypeId}|${labotNobide}`)) {
+    riti.innerHTML = '<p class="tukss">Ielādē…</p>';
   }
-  poga.disabled = true;
   try {
-    const r = await izsauktFunkciju('cancelBooking', { bookingId: poga.dataset.atcelt });
-    tosts(r.creditsReturned > 0 ? 'Nodarbība atcelta, bilance atjaunota.' : 'Nodarbība atcelta.', 'labi');
-    await Promise.all([ieladetGaidamas(), ieladetPagatni(true)]);
-    slotuKese.clear(); // atceltais laiks atkal kļūst brīvs
-    if (izveletaisVeids) ieladetSlotus();
+    const { nedela, atbilde } = await pieprasitNedelu(labojama.dati.lessonTypeId, labotNobide);
+    const dienuKarte = new Map(atbilde.days.map((d) => [d.date, d.slots]));
+    const logaBeigas = atbilde.windowEndISO || nedela[6];
+    const sodien = sodienISO();
+    const vecaisMillis = labojama.dati.startAt.toMillis();
+    const izveletsMillis = labotSlots?.startMillis ?? vecaisMillis;
+
+    riti.innerHTML = nedela.map((datums) => {
+      const pusdienlaiks = new Date(datums + 'T12:00:00');
+      const virsraksts = `
+        <div class="kolonna-virsraksts">
+          <div class="kolonna-diena">${fmtNedelasDiena.format(pusdienlaiks)}</div>
+          <div class="kolonna-datums">${fmtDatumsIss.format(pusdienlaiks)}</div>
+        </div>`;
+      const sloti = dienuKarte.get(datums);
+      if (datums < sodien) {
+        return `<div class="diena-kolonna briva">${virsraksts}<div class="brivs-bloks">Pagājusi</div></div>`;
+      }
+      if (datums > logaBeigas) {
+        return `<div class="diena-kolonna briva">${virsraksts}<div class="brivs-bloks">—</div></div>`;
+      }
+      if (!sloti || sloti.length === 0) {
+        return `<div class="diena-kolonna briva">${virsraksts}<div class="brivs-bloks">Brīvdiena</div></div>`;
+      }
+      return `
+        <div class="diena-kolonna">
+          ${virsraksts}
+          ${sloti.map((s) => {
+            const spiezams = s.available || s.startMillis === vecaisMillis;
+            const aktivs = s.startMillis === izveletsMillis;
+            return spiezams ? `
+              <button class="laiks${aktivs ? ' aktivs' : ''}" data-start="${s.startMillis}" data-teacher="${s.teacherId}" type="button">
+                ${fmtLaiks.format(new Date(s.startMillis))}
+              </button>` : `
+              <button class="laiks aiznemts" type="button" disabled title="Aizņemts">
+                ${fmtLaiks.format(new Date(s.startMillis))}
+              </button>`;
+          }).join('')}
+        </div>`;
+    }).join('');
+
+    el('labotRitiKreisi').disabled = labotNobide <= 0;
+    el('labotRitiLabi').disabled = !(nedela[6] < logaBeigas);
+    el('pogaLabotSaglabat').disabled = izveletsMillis === vecaisMillis;
+
+    riti.querySelectorAll('.laiks:not(.aiznemts)').forEach((poga) => {
+      poga.addEventListener('click', () => {
+        labotSlots = { startMillis: Number(poga.dataset.start), teacherId: poga.dataset.teacher };
+        riti.querySelectorAll('.laiks').forEach((p) => p.classList.toggle('aktivs', p === poga));
+        el('pogaLabotSaglabat').disabled = labotSlots.startMillis === vecaisMillis;
+      });
+    });
   } catch (err) {
-    console.error('cancelBooking kļūda:', err);
-    tosts(funkcijasKluda(err), 'kluda');
-    poga.disabled = false;
+    console.error('Pārcelšanas kalendāra kļūda:', err);
+    riti.innerHTML = `<p class="tukss">${escapeHTML(funkcijasKluda(err))}</p>`;
   }
 }
+
+el('labotRitiKreisi').onclick = () => { if (labotNobide > 0) { labotNobide--; renderLabotKalendaru(); } };
+el('labotRitiLabi').onclick = () => { labotNobide++; renderLabotKalendaru(); };
+el('pogaLabotAtcelt').onclick = () => aizvertLabotu();
+
+el('pogaLabotSaglabat').onclick = async () => {
+  if (!labojama || !labotSlots) return;
+  const poga = el('pogaLabotSaglabat');
+  poga.disabled = true;
+  poga.textContent = 'Saglabā…';
+  try {
+    await izsauktFunkciju('rescheduleBooking', {
+      bookingId: labojama.id,
+      newStartMillis: labotSlots.startMillis,
+      teacherId: labotSlots.teacherId,
+    });
+    tosts('Nodarbība pārcelta.', 'labi');
+    aizvertLabotu();
+    slotuKese.clear(); // laiki mainījušies — pārlasām no servera
+    await ieladetGaidamas();
+    if (izveletaisVeids) ieladetSlotus();
+  } catch (err) {
+    console.error('rescheduleBooking kļūda:', err);
+    tosts(funkcijasKluda(err), 'kluda');
+  } finally {
+    poga.textContent = 'Saglabāt izmaiņas';
+  }
+};
 
 async function ieladetPagatni(nosakuma = false) {
   const k = el('pagatnesSaraksts');

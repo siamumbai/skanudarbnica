@@ -276,6 +276,132 @@ export const createBooking = onCall({ region: REGION }, async (request) => {
   return rezultats;
 });
 
+/* ================= rescheduleBooking ================= */
+
+// Studenta rezervācijas pārcelšana uz citu laiku — vienā transakcijā, bez
+// kredītu kustības. Pārcelt drīkst tikai atcelšanas termiņa ietvaros, un
+// jaunajam laikam jāiztur tās pašas pārbaudes kā jaunai rezervācijai.
+export const rescheduleBooking = onCall({ region: REGION }, async (request) => {
+  assertAppCheck(request);
+  const uid = assertAuth(request);
+
+  const bookingId = reqString(request.data?.bookingId, "bookingId", 80);
+  const newStartMillis = reqMillis(request.data?.newStartMillis, "newStartMillis");
+  const requestedTeacher = optString(request.data?.teacherId, "teacherId", 80);
+
+  const bookingRef = db.collection(COL.bookings).doc(bookingId);
+  const pirmsSnap = await bookingRef.get();
+  if (!pirmsSnap.exists) {
+    throw new HttpsError("not-found", "Rezervācija nav atrasta.");
+  }
+  const pirms = pirmsSnap.data() as FirebaseFirestore.DocumentData;
+  if (pirms.userId !== uid) {
+    throw new HttpsError("permission-denied", "Šī nav tava rezervācija.");
+  }
+
+  const [settings, lessonType, teacherIds, rules] = await Promise.all([
+    getSettings(),
+    getLessonType(pirms.lessonTypeId as string, { allowInactive: true }),
+    resolveTeacherIds(requestedTeacher),
+    getActiveRules(),
+  ]);
+
+  const zone = settings.timezone;
+  const nowMillis = Date.now();
+  const day = DateTime.fromMillis(newStartMillis, { zone });
+  const dayStartMillis = day.startOf("day").toMillis();
+  const dayEndMillis = day.endOf("day").toMillis();
+  const dateISO = day.toISODate() as string;
+
+  const rezultats = await db.runTransaction(async (tx) => {
+    const [bookingSnap, busySnap, blockedSnap] = await Promise.all([
+      tx.get(bookingRef),
+      tx.get(busyQuery(dayStartMillis - 12 * 3_600_000, dayEndMillis)),
+      tx.get(blockedQuery(dayStartMillis)),
+    ]);
+
+    if (!bookingSnap.exists) {
+      throw new HttpsError("not-found", "Rezervācija nav atrasta.");
+    }
+    const booking = bookingSnap.data() as FirebaseFirestore.DocumentData;
+    if (booking.userId !== uid) {
+      throw new HttpsError("permission-denied", "Šī nav tava rezervācija.");
+    }
+    if (booking.status !== "confirmed") {
+      throw new HttpsError("failed-precondition", "Atceltu rezervāciju nevar pārcelt.");
+    }
+
+    const oldStartMillis = (booking.startAt as Timestamp).toMillis();
+    if (nowMillis > oldStartMillis - settings.cancellationHours * 3_600_000) {
+      throw new HttpsError(
+        "failed-precondition",
+        `Nodarbību var pārcelt ne vēlāk kā ${settings.cancellationHours} stundas pirms tās sākuma.`
+      );
+    }
+
+    // Aizņemtie bloki — bez pašas pārceļamās rezervācijas.
+    const busy = busySnap.docs
+      .filter((d) => d.id !== bookingId)
+      .map((d) => {
+        const x = d.data();
+        return {
+          teacherId: x.teacherId as string,
+          userId: x.userId as string,
+          startMillis: (x.startAt as Timestamp).toMillis(),
+          blockStartMillis: (x.blockStartAt as Timestamp).toMillis(),
+          blockEndMillis: (x.blockEndAt as Timestamp).toMillis(),
+        };
+      });
+    const blocked = blockedFromSnap(blockedSnap, dayEndMillis);
+
+    const dienasSkaits = busy.filter(
+      (b) => b.userId === uid && b.startMillis >= dayStartMillis && b.startMillis <= dayEndMillis
+    ).length;
+    if (dienasSkaits >= settings.maxBookingsPerDay) {
+      throw new HttpsError(
+        "failed-precondition",
+        `Vienā dienā var rezervēt ne vairāk kā ${settings.maxBookingsPerDay} nodarbības.`
+      );
+    }
+
+    const dienas = generateSlots({
+      fromISO: dateISO,
+      toISO: dateISO,
+      nowMillis,
+      lessonType,
+      settings,
+      rules,
+      blocked,
+      busy,
+      teacherIds,
+    });
+    const slot = (dienas[0]?.slots ?? []).find((s) => s.startMillis === newStartMillis);
+    if (!slot) {
+      throw new HttpsError(
+        "failed-precondition",
+        "Šis laiks vairs nav pieejams. Lūdzu, izvēlies citu laiku."
+      );
+    }
+
+    tx.update(bookingRef, {
+      teacherId: slot.teacherId,
+      startAt: Timestamp.fromMillis(slot.startMillis),
+      endAt: Timestamp.fromMillis(slot.endMillis),
+      blockStartAt: Timestamp.fromMillis(slot.blockStartMillis),
+      blockEndAt: Timestamp.fromMillis(slot.blockEndMillis),
+    });
+
+    return {
+      bookingId,
+      startMillis: slot.startMillis,
+      endMillis: slot.endMillis,
+      teacherId: slot.teacherId,
+    };
+  });
+
+  return rezultats;
+});
+
 /* ================= cancelBooking ================= */
 
 export const cancelBooking = onCall({ region: REGION }, async (request) => {
