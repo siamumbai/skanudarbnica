@@ -201,27 +201,30 @@
   .dzest-anketu-rinda span{font-size:13px;font-weight:600;color:var(--sarkana)}
 
   /* --- Rezervācijas: bilances cips hederī, veidi, laiki, saraksti, paketes --- */
-  /* Lielā brūnā bilances kartīte pa visu satura platumu */
+  /* Bilances kartīte pa visu satura platumu:
+     brūna, kad bilance ir 0; zaļa, kad ir atlikušas nodarbības */
   .bilance{
     display:flex;align-items:center;justify-content:space-between;gap:18px;width:100%;
     background:var(--accent-dark);color:var(--bg);
-    border-radius:16px;padding:16px 22px;margin-bottom:24px;flex-wrap:wrap;
+    border-radius:18px;padding:16px 22px;margin-bottom:24px;flex-wrap:wrap;
+    transition:background .25s;
   }
-  .bilance-kreisa{display:flex;align-items:center;gap:16px}
-  .bilance-teksts{font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;opacity:.85}
-  /* Cipars aplī; aplis kļūst zaļš, kad bilance ir virs nulles */
+  .bilance.pozitiva{background:#5C8A3C}
+  .bilance-kreisa{display:flex;align-items:center;gap:18px}
+  .bilance-teksts{font-size:15px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+  .bilance-apaksteksts{font-size:12.5px;font-weight:600;opacity:.9;margin-top:3px}
   .bilance-aplis{
-    width:54px;height:54px;border-radius:50%;flex-shrink:0;
+    width:58px;height:58px;border-radius:50%;flex-shrink:0;
     display:flex;align-items:center;justify-content:center;
-    font-family:Georgia,serif;font-size:25px;line-height:1;
-    background:rgba(245,237,216,.16);color:var(--bg);
-    transition:background .2s;
+    font-family:Georgia,serif;font-size:26px;line-height:1;
+    background:var(--bg);color:var(--accent-dark);
   }
-  .bilance-aplis.pozitiva{background:var(--zala);color:#fff}
+  .bilance.pozitiva .bilance-aplis{color:#3B6D11;font-weight:700}
   .bilance-poga{
     background:var(--bg);color:var(--accent-dark);border:none;border-radius:100px;
-    padding:12px 22px;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;
+    padding:13px 26px;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;
   }
+  .bilance.pozitiva .bilance-poga{color:#3B6D11}
   .bilance-poga:hover{background:var(--bg2)}
 
   .veidi{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:6px}
@@ -407,7 +410,10 @@
     <div class="bilance paslepts" id="bilanceKarte">
       <div class="bilance-kreisa">
         <span class="bilance-aplis" id="bilanceSkaitlis">–</span>
-        <span class="bilance-teksts">Atlikušās nodarbības</span>
+        <div>
+          <div class="bilance-teksts">Atlikušās nodarbības</div>
+          <div class="bilance-apaksteksts" id="bilanceApaksteksts"></div>
+        </div>
       </div>
       <button class="bilance-poga" id="bilancePoga">Papildināt</button>
     </div>
@@ -806,9 +812,12 @@ async function saglabatBernus(jaunieBerni, veiksmesTeksts, poga) {
 
 /* ---------- Bilance (realtime) ---------- */
 function atjaunotBilanci() {
-  const skaitlis = el('bilanceSkaitlis');
-  skaitlis.textContent = String(bilance);
-  skaitlis.classList.toggle('pozitiva', bilance > 0); // zaļš, kad ir nodarbības
+  el('bilanceSkaitlis').textContent = String(bilance);
+  // Zaļā kartīte, kad ir atlikušas nodarbības; brūnā — kad bilance 0.
+  el('bilanceKarte').classList.toggle('pozitiva', bilance > 0);
+  el('bilanceApaksteksts').textContent = bilance > 0
+    ? '✔ Apmaksātas un gatavas izmantošanai'
+    : 'Nopērc paketi, lai varētu rezervēt';
   atjaunotSlotuPieejamibu();
 }
 el('bilancePoga').onclick = () => paradietSadalu('sadalaPirkumi');
