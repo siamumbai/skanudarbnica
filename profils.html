@@ -36,16 +36,8 @@
     position:sticky; top:0; background:var(--bg); z-index:20;
   }
   .logo{font-size:15px;font-weight:600;letter-spacing:.02em;text-decoration:none;color:var(--text)}
-  .josla-labi-kolonna{display:flex;flex-direction:column;align-items:flex-end;gap:7px}
   .josla-labi{display:flex;align-items:center;gap:18px}
   .josla-epasts{font-size:13px;color:var(--muted)}
-  .josla-saites{display:flex;gap:16px}
-  .josla-saite{
-    background:none;border:none;padding:0;cursor:pointer;
-    font-family:inherit;font-size:12.5px;font-weight:700;color:var(--muted);
-  }
-  .josla-saite:hover{color:var(--accent-dark)}
-  .josla-saite.aktiva{color:var(--accent-dark);text-decoration:underline;text-underline-offset:4px}
   .izeja{
     background:transparent;border:0.5px solid var(--border);border-radius:100px;
     padding:9px 18px;font-family:inherit;font-size:13px;font-weight:600;
@@ -56,7 +48,7 @@
   /* --- Izkārtojums: sānu navigācija + saturs --- */
   .izkartojums{
     max-width:1180px;margin:0 auto;padding:36px 32px 90px;
-    display:grid;grid-template-columns:224px 1fr;gap:38px;align-items:start;
+    display:grid;grid-template-columns:200px 1fr 190px;gap:34px;align-items:start;
   }
   /* min-width:0 ļauj saturam (dienu ritjoslai) sarukt, nevis izstiept lapu */
   .izkartojums > main{min-width:0}
@@ -246,7 +238,12 @@
   .veids-info{font-size:12.5px;color:var(--muted)}
 
   /* Dienu kolonnas: diena augšā, laiki no augšas uz leju, nākamā diena pa labi */
-  .dienu-ritjosla{display:flex;align-items:stretch;gap:8px;animation:paradities .22s ease}
+  .dienu-ritjosla{display:flex;align-items:stretch;gap:8px}
+  /* Nedēļas maiņa "aizslīd" — virziens rada nākamās/iepriekšējās nedēļas sajūtu */
+  @keyframes slidNoLabas{from{opacity:.25;transform:translateX(52px)}to{opacity:1;transform:none}}
+  @keyframes slidNoKreisas{from{opacity:.25;transform:translateX(-52px)}to{opacity:1;transform:none}}
+  .dienu-riti.no-labas{animation:slidNoLabas .3s ease}
+  .dienu-riti.no-kreisas{animation:slidNoKreisas .3s ease}
   .riti-poga{
     flex-shrink:0;align-self:flex-start;margin-top:30px;
     width:32px;height:32px;border-radius:50%;
@@ -361,6 +358,10 @@
   /* --- Responsīvi: planšete un telefons --- */
   @media(max-width:860px){
     .izkartojums{grid-template-columns:1fr;gap:16px;padding:22px 18px 70px}
+    /* Mobilajā abas navigācijas rindā viena zem otras, saturs zem tām */
+    .sanu-nav{order:0}
+    .laba-nav{order:1;margin-top:-8px}
+    .izkartojums > main{order:2}
     .sanu-nav{
       position:static;flex-direction:row;gap:8px;margin-top:0 !important;
       overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;
@@ -379,15 +380,9 @@
 
 <header class="josla">
   <a class="logo" href="index.html">skanudarbnica.lv</a>
-  <div class="josla-labi-kolonna">
-    <div class="josla-labi">
-      <span class="josla-epasts" id="joslaEpasts"></span>
-      <button class="izeja" id="pogaIzrakstities">Izrakstīties</button>
-    </div>
-    <div class="josla-saites">
-      <button class="josla-saite" id="navProfils" role="tab" aria-selected="false" aria-controls="sadalaProfils">Mans profils</button>
-      <button class="josla-saite" id="navPirkumi" role="tab" aria-selected="false" aria-controls="sadalaPirkumi">Pirkumi</button>
-    </div>
+  <div class="josla-labi">
+    <span class="josla-epasts" id="joslaEpasts"></span>
+    <button class="izeja" id="pogaIzrakstities">Izrakstīties</button>
   </div>
 </header>
 
@@ -553,7 +548,6 @@
     <!-- ---------- SADAĻA: MANAS NODARBĪBAS ---------- -->
     <section class="sadala" id="sadalaNodarbibas" role="tabpanel" aria-labelledby="navNodarbibas">
       <h1 class="virsraksts">Manas <em>nodarbības</em></h1>
-      <p class="ievads" id="atcelsanasPiezime"></p>
 
       <section class="karte">
         <h2>Gaidāmās nodarbības</h2>
@@ -586,6 +580,16 @@
     </section>
 
   </main>
+
+  <!-- ======== LABĀ NAVIGĀCIJA: konta sadaļas ======== -->
+  <nav class="sanu-nav laba-nav" role="tablist" aria-label="Konta sadaļas">
+    <button class="nav-poga" id="navProfils" role="tab" aria-selected="false" aria-controls="sadalaProfils">
+      <span class="nav-ik" aria-hidden="true">👤</span> Mans profils
+    </button>
+    <button class="nav-poga" id="navPirkumi" role="tab" aria-selected="false" aria-controls="sadalaPirkumi">
+      <span class="nav-ik" aria-hidden="true">💳</span> Maksājumi
+    </button>
+  </nav>
 </div>
 
 <!-- Tosts (neuzbāzīgs paziņojums) -->
@@ -615,6 +619,7 @@ let nodarbibuVeidi = [];        // aktīvie nodarbību veidi no Firestore
 let izveletaisVeids = null;
 let izveletaisSlots = null;     // { startMillis, teacherId }
 let nedelasNobide = 0;          // rādāmā nedēļa: 0 = tekošā, 1 = nākamā utt.
+let slidesVirziens = 0;         // nedēļas maiņas animācija: 1 = uz priekšu, -1 = atpakaļ
 let atcelsanasStundas = 24;
 let pagatnesKursors = null;
 
@@ -936,17 +941,23 @@ async function ieladetSlotus() {
 
     const varAtpakal = nedelasNobide > 0;
     const varUzPrieksu = nedela[6] < logaBeigas;
+    const animKlase = slidesVirziens > 0 ? ' no-labas' : slidesVirziens < 0 ? ' no-kreisas' : '';
+    slidesVirziens = 0;
     k.innerHTML = `
       <div class="dienu-ritjosla">
         <button class="riti-poga" id="ritiPaKreisi" type="button" ${varAtpakal ? '' : 'disabled'} aria-label="Iepriekšējā nedēļa">‹</button>
-        <div class="dienu-riti" id="dienuRiti">${kolonnas.join('')}</div>
+        <div class="dienu-riti${animKlase}" id="dienuRiti">${kolonnas.join('')}</div>
         <button class="riti-poga" id="ritiPaLabi" type="button" ${varUzPrieksu ? '' : 'disabled'} aria-label="Nākamā nedēļa">›</button>
       </div>`;
     el('ritiPaKreisi').onclick = () => {
-      if (nedelasNobide > 0) { nedelasNobide--; izveletaisSlots = null; atjaunotApstiprinatJoslu(); ieladetSlotus(); }
+      if (nedelasNobide > 0) {
+        nedelasNobide--; slidesVirziens = -1;
+        izveletaisSlots = null; atjaunotApstiprinatJoslu(); ieladetSlotus();
+      }
     };
     el('ritiPaLabi').onclick = () => {
-      nedelasNobide++; izveletaisSlots = null; atjaunotApstiprinatJoslu(); ieladetSlotus();
+      nedelasNobide++; slidesVirziens = 1;
+      izveletaisSlots = null; atjaunotApstiprinatJoslu(); ieladetSlotus();
     };
     k.querySelectorAll('.laiks:not(.aiznemts)').forEach((poga) => {
       poga.addEventListener('click', () => {
@@ -1292,8 +1303,6 @@ prasitPieteiksanos(async (user) => {
     const iestatijumi = await getDoc(doc(db, 'settings', 'booking'));
     atcelsanasStundas = iestatijumi.data()?.cancellationHours ?? atcelsanasStundas;
   } catch { /* noklusējums paliek */ }
-  el('atcelsanasPiezime').textContent =
-    `Nodarbību var atcelt ne vēlāk kā ${atcelsanasStundas} stundas pirms tās sākuma — nodarbība atgriežas tavā bilancē.`;
 
   // Nodarbību veidi.
   try {
