@@ -79,7 +79,12 @@ export const getAvailableSlots = onCall({ region: REGION }, async (request) => {
   if (first.toMillis() < today.toMillis()) first = today;
   if (last.toMillis() > windowEnd.toMillis()) last = windowEnd;
   if (last.toMillis() < first.toMillis()) {
-    return { days: [], cancellationHours: settings.cancellationHours, timezone: zone };
+    return {
+      days: [],
+      cancellationHours: settings.cancellationHours,
+      timezone: zone,
+      windowEndISO: windowEnd.toISODate(),
+    };
   }
   // Drošības robeža vaicājumu apjomam.
   if (last.diff(first, "days").days > 62) last = first.plus({ days: 62 });
@@ -118,6 +123,8 @@ export const getAvailableSlots = onCall({ region: REGION }, async (request) => {
     cancellationHours: settings.cancellationHours,
     minimumNoticeHours: settings.minimumNoticeHours,
     timezone: zone,
+    // Līdz kuram datumam sniedzas rezervāciju logs — UI aiz tā dienas nerāda.
+    windowEndISO: windowEnd.toISODate(),
   };
 });
 

@@ -201,10 +201,11 @@
   .dzest-anketu-rinda span{font-size:13px;font-weight:600;color:var(--sarkana)}
 
   /* --- Rezervācijas: bilances cips hederī, veidi, laiki, saraksti, paketes --- */
+  /* Pilna platuma josla virs sadaļas virsraksta — tikpat plata kā saturs zem tās */
   .bilances-cips{
-    display:flex;align-items:center;gap:14px;width:max-content;max-width:100%;
+    display:flex;align-items:center;justify-content:space-between;gap:14px;width:100%;
     background:var(--bg2);border:0.5px solid var(--border);border-radius:100px;
-    padding:8px 8px 8px 18px;font-size:13px;font-weight:600;color:var(--text);
+    padding:8px 8px 8px 20px;font-size:13px;font-weight:600;color:var(--text);
     margin-bottom:22px;
   }
   .bilances-cips b{font-family:Georgia,serif;font-size:34px;line-height:1;color:var(--accent-dark)}
@@ -255,6 +256,16 @@
     background:var(--bg2);border-color:var(--border);color:#B3A57F;
     cursor:not-allowed;text-decoration:line-through;font-weight:600;
   }
+  /* Brīvdienas kolonna — aizkrāsota, tāpat kā bloķētie periodi */
+  .brivs-bloks{
+    flex:1;min-height:130px;
+    background:rgba(70,62,42,.12);border:1.5px dashed var(--border);border-radius:13px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+    color:#A2946E;
+  }
+  .diena-kolonna.briva .kolonna-diena,
+  .diena-kolonna.briva .kolonna-datums{color:#B3A57F}
   .tukss{font-size:13.5px;color:var(--muted);line-height:1.6}
 
   .vairak{
@@ -279,7 +290,8 @@
   }
   .saraksta-rinda:last-child{border-bottom:none}
   .saraksta-galvena{font-size:14px;font-weight:700}
-  .saraksta-vidus{flex:1;text-align:center;font-size:13px;color:var(--muted);min-width:200px}
+  /* Diena, datums un laiks — izcelts */
+  .saraksta-vidus{flex:1;text-align:center;font-size:14.5px;font-weight:800;color:var(--text);min-width:200px}
   .saraksta-apaksa{font-size:12.5px;color:var(--muted);margin-top:3px}
   .atzime{
     display:inline-block;font-size:11px;font-weight:800;letter-spacing:.06em;
@@ -482,7 +494,7 @@
     <!-- ---------- SADAĻA: REZERVĒT ---------- -->
     <section class="sadala" id="sadalaRezervet" role="tabpanel" aria-labelledby="navRezervet">
       <h1 class="virsraksts">Rezervē <em>nodarbību</em></h1>
-      <p class="ievads">Izvēlies nodarbības veidu un sev ērtu laiku. Rezervācija uzreiz tiek apstiprināta un norakstīta no tavām atlikušajām nodarbībām.</p>
+      <p class="ievads">Izvēlies nodarbības veidu un sev ērtu laiku.<br>Rezervācija uzreiz tiek apstiprināta.</p>
 
       <section class="karte">
         <h2>1 · Nodarbības veids</h2>
@@ -849,31 +861,47 @@ async function ieladetSlotus() {
     });
     atcelsanasStundas = atbilde.cancellationHours ?? atcelsanasStundas;
 
-    if (!atbilde.days.length) {
-      k.innerHTML = '<p class="tukss">Tuvākajās dienās brīvu laiku nav. Pamēģini paskatīties tālāk uz priekšu.</p>';
+    // Vertikālas dienu kolonnas pa VISĀM dienām: diena augšā, laiki uz leju,
+    // nākamā diena pa labi. Aizņemtie laiki pelēki un nespiežami; dienas bez
+    // darba laika (brīvdienas) — aizkrāsotas tāpat kā bloķētie periodi.
+    const dienuKarte = new Map(atbilde.days.map((d) => [d.date, d.slots]));
+    const logaBeigas = atbilde.windowEndISO || sodienISO(slotuDienuSkaits);
+    const kolonnas = [];
+    for (let i = 0; i <= slotuDienuSkaits; i++) {
+      const datums = sodienISO(i);
+      if (datums > logaBeigas) break;
+      const pusdienlaiks = new Date(datums + 'T12:00:00');
+      const virsraksts = `
+        <div class="kolonna-virsraksts">
+          <div class="kolonna-diena">${fmtNedelasDiena.format(pusdienlaiks)}</div>
+          <div class="kolonna-datums">${fmtDatumsIss.format(pusdienlaiks)}</div>
+        </div>`;
+      const sloti = dienuKarte.get(datums);
+      if (!sloti || sloti.length === 0) {
+        kolonnas.push(`<div class="diena-kolonna briva">${virsraksts}<div class="brivs-bloks">Brīvdiena</div></div>`);
+      } else {
+        kolonnas.push(`
+          <div class="diena-kolonna">
+            ${virsraksts}
+            ${sloti.map((s) => s.available ? `
+              <button class="laiks${izveletaisSlots?.startMillis === s.startMillis ? ' aktivs' : ''}"
+                      data-start="${s.startMillis}" data-teacher="${s.teacherId}" type="button">
+                ${fmtLaiks.format(new Date(s.startMillis))}
+              </button>` : `
+              <button class="laiks aiznemts" type="button" disabled title="Aizņemts">
+                ${fmtLaiks.format(new Date(s.startMillis))}
+              </button>`).join('')}
+          </div>`);
+      }
+    }
+
+    if (kolonnas.length === 0) {
+      k.innerHTML = '<p class="tukss">Rezervāciju logs šobrīd neļauj skatīties tik tālu uz priekšu.</p>';
     } else {
-      // Vertikālas dienu kolonnas: diena augšā, laiki uz leju, nākamā diena
-      // pa labi; aizņemtie laiki paliek redzami pelēki un nespiežami.
       k.innerHTML = `
         <div class="dienu-ritjosla">
           <button class="riti-poga" id="ritiPaKreisi" type="button" aria-label="Ritināt pa kreisi">‹</button>
-          <div class="dienu-riti" id="dienuRiti">
-            ${atbilde.days.map((diena) => `
-              <div class="diena-kolonna">
-                <div class="kolonna-virsraksts">
-                  <div class="kolonna-diena">${fmtNedelasDiena.format(new Date(diena.slots[0].startMillis))}</div>
-                  <div class="kolonna-datums">${fmtDatumsIss.format(new Date(diena.slots[0].startMillis))}</div>
-                </div>
-                ${diena.slots.map((s) => s.available ? `
-                  <button class="laiks${izveletaisSlots?.startMillis === s.startMillis ? ' aktivs' : ''}"
-                          data-start="${s.startMillis}" data-teacher="${s.teacherId}" type="button">
-                    ${fmtLaiks.format(new Date(s.startMillis))}
-                  </button>` : `
-                  <button class="laiks aiznemts" type="button" disabled title="Aizņemts">
-                    ${fmtLaiks.format(new Date(s.startMillis))}
-                  </button>`).join('')}
-              </div>`).join('')}
-          </div>
+          <div class="dienu-riti" id="dienuRiti">${kolonnas.join('')}</div>
           <button class="riti-poga" id="ritiPaLabi" type="button" aria-label="Ritināt pa labi">›</button>
         </div>`;
       const riti = el('dienuRiti');
