@@ -56,15 +56,16 @@
   /* Pietiekami platos ekrānos — piesprausta pie paša loga labās malas, zem
      "Izrakstīties", ārpus satura iekšmalām. Selektoram .sanu-nav.laba-nav ir
      augstāka specifika, lai tas pārspēj vēlāko ".sanu-nav" sticky noteikumu. */
+  /* Sākas tajā pašā augstumā, kur kreisās navigācijas "Audzēkņi" */
   @media(min-width:1560px){
-    .sanu-nav.laba-nav{position:fixed;top:80px;right:28px}
+    .sanu-nav.laba-nav{position:fixed;top:106px;right:28px}
   }
   /* min-width:0 ļauj saturam (dienu ritjoslai) sarukt, nevis izstiept lapu */
   .izkartojums > main{min-width:0}
   .ielade{max-width:1180px;margin:0 auto;padding:44px 32px;color:var(--muted);font-size:15px}
 
   /* --- Sānu navigācija --- */
-  .sanu-nav{position:sticky;top:92px;display:flex;flex-direction:column;gap:6px}
+  .sanu-nav{position:sticky;top:106px;display:flex;flex-direction:column;gap:6px}
   .nav-poga{
     display:flex;align-items:center;gap:11px;
     width:100%;text-align:left;
@@ -324,9 +325,11 @@
     padding:14px 2px;border-bottom:0.5px solid var(--border);flex-wrap:wrap;
   }
   .saraksta-rinda:last-child{border-bottom:none}
+  /* Vārda kolonnai fiksēts platums — datumi visiem sākas vienā un tajā pašā vietā */
+  .saraksta-rinda > .saraksta-galvena{flex:0 0 170px}
   .saraksta-galvena{font-size:14px;font-weight:700}
-  /* Diena, datums un laiks — izcelts */
-  .saraksta-vidus{flex:1;text-align:center;font-size:14.5px;font-weight:800;color:var(--text);min-width:200px}
+  /* Diena, datums un laiks — izcelts, visiem vienā līnijā */
+  .saraksta-vidus{flex:1;text-align:left;font-size:14.5px;font-weight:800;color:var(--text);min-width:200px}
   .saraksta-apaksa{font-size:12.5px;color:var(--muted);margin-top:3px}
   .atzime{
     display:inline-block;font-size:11px;font-weight:800;letter-spacing:.06em;
@@ -540,10 +543,13 @@
       <section class="karte">
         <h2>1 · Nodarbības veids</h2>
         <div class="veidi" id="veiduSaraksts"></div>
-        <div id="audzeknaBloks" class="paslepts">
+        <div id="audzeknaBloks">
           <div class="lauks" style="margin-top:14px;margin-bottom:0">
             <label for="audzeknaIzvele">Kurš audzēknis apmeklēs nodarbību?</label>
-            <select id="audzeknaIzvele" style="max-width:320px"></select>
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+              <select id="audzeknaIzvele" style="flex:1;min-width:180px;max-width:320px"></select>
+              <button class="poga-pievienot" id="pogaJaunsAudzeknis" type="button">+ Pievienot audzēkni</button>
+            </div>
           </div>
         </div>
       </section>
@@ -555,8 +561,7 @@
       </section>
 
       <section class="karte paslepts" id="nevarKarte">
-        <h2>Nepietiek nodarbību</h2>
-        <p class="h2-piezime">Kalendārs atvērsies, kad nopirksiet vismaz 1 nodarbību.</p>
+        <p style="font-size:15px;font-weight:600;line-height:1.6;margin-bottom:16px">Kalendārs atvērsies, kad nopirksiet vismaz 1 nodarbību.</p>
         <button class="cta cta-auto" id="pogaUzPaketem">Pirkt nodarbību</button>
       </section>
 
@@ -766,6 +771,7 @@ function atvertAnketu(indekss) {
   else { el('dzestAnketuRinda').classList.remove('paslepts'); zimetDzestAnketuPogu(indekss); }
   el('anketaKarte').classList.remove('paslepts');
   el('pogaPieteiktBernu').classList.add('paslepts');
+  zimetBernuKartes(indekss); // paslēpjam rediģējamā kartīti, kamēr anketa atvērta
   el('anketaKarte').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   el('bernaVards').focus();
 }
@@ -774,6 +780,7 @@ function aizvertAnketu() {
   el('dzestAnketuRinda').classList.add('paslepts');
   el('pogaPieteiktBernu').classList.remove('paslepts');
   rediggamaisIndekss = null;
+  zimetBernuKartes(); // kartīte atgriežas sarakstā
 }
 
 /* "Dzēst anketu" poga + apstiprinājums (rediģēšanas formā) */
@@ -804,11 +811,12 @@ function paradietDzestAnketuApstiprinajumu(indekss) {
 /* ---------- Audzēkņu kartītes ----------
    Visa kartīte ir klikšķināma un atver rediģēšanu (bez atsevišķas "Rediģēt"
    pogas). */
-function zimetBernuKartes() {
+function zimetBernuKartes(izlaistoIndekss = null) {
   const konteiners = el('bernuKartes');
   konteiners.innerHTML = '';
 
   berni.forEach((b, i) => {
+    if (i === izlaistoIndekss) return; // rediģējamais nav dublēts zem atvērtas anketas
     const karte = document.createElement('button');
     karte.type = 'button';
     karte.className = 'bernu-karte';
@@ -867,13 +875,25 @@ el('bilancePoga').onclick = () => paradietSadalu('sadalaPirkumi');
 el('pogaUzPaketem').onclick = () => paradietSadalu('sadalaPirkumi');
 
 /* ---------- Audzēkņa izvēle rezervācijai ---------- */
-function atjaunotAudzeknuIzveli() {
+function atjaunotAudzeknuIzveli(izveletaisVards = null) {
   const vardi = berni.map((b) => b.berna_vards).filter(Boolean);
-  el('audzeknaBloks').classList.toggle('paslepts', vardi.length === 0);
-  el('audzeknaIzvele').innerHTML =
-    vardi.map((v) => `<option value="${escapeHTML(v)}">${escapeHTML(v)}</option>`).join('');
+  el('audzeknaIzvele').innerHTML = vardi.length
+    ? vardi.map((v) => `<option value="${escapeHTML(v)}">${escapeHTML(v)}</option>`).join('')
+    : '<option value="">Vēl nav pievienotu audzēkņu</option>';
+  if (izveletaisVards && vardi.includes(izveletaisVards)) {
+    el('audzeknaIzvele').value = izveletaisVards;
+  }
   atjaunotApstiprinatJoslu();
 }
+
+// "+ Pievienot audzēkni" no rezervēšanas: atver anketu Audzēkņu sadaļā un pēc
+// saglabāšanas atgriežas šeit ar jauno audzēkni jau izvēlētu.
+let atpakalUzRezervet = false;
+el('pogaJaunsAudzeknis').onclick = () => {
+  atpakalUzRezervet = true;
+  paradietSadalu('sadalaPieteikties');
+  atvertAnketu(null);
+};
 
 /* ---------- Nodarbību veidi ---------- */
 function renderVeidi() {
@@ -1289,7 +1309,10 @@ async function ieladetPirkumus() {
 
 /* ---------- Notikumi: anketa ---------- */
 el('pogaPieteiktBernu').onclick = () => atvertAnketu(null);
-el('pogaAtceltAnketu').onclick = () => aizvertAnketu();
+el('pogaAtceltAnketu').onclick = () => {
+  atpakalUzRezervet = false;
+  aizvertAnketu();
+};
 
 el('pogaSaglabatBernu').onclick = async () => {
   const dati = {
@@ -1314,8 +1337,13 @@ el('pogaSaglabatBernu').onclick = async () => {
 
   berni = jaunieBerni;
   aizvertAnketu();
-  zimetBernuKartes();
-  atjaunotAudzeknuIzveli();
+  atjaunotAudzeknuIzveli(dati.berna_vards || null);
+
+  // Ja anketa tika atvērta no rezervēšanas — atgriežamies tur ar audzēkni jau izvēlētu.
+  if (atpakalUzRezervet) {
+    atpakalUzRezervet = false;
+    paradietSadalu('sadalaRezervet');
+  }
 };
 
 /* ---------- Notikumi: profils ---------- */
