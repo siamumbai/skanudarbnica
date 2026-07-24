@@ -631,8 +631,7 @@
 
     <!-- ---------- SADAĻA: PIRKUMI UN VĒSTURE ---------- -->
     <section class="sadala" id="sadalaPirkumi" role="tabpanel" aria-labelledby="navPirkumi">
-      <h1 class="virsraksts">Pirkumi un <em>vēsture</em></h1>
-      <p class="ievads">Nodarbību paketes, maksājumu vēsture un visas izmaiņas tavā nodarbību bilancē.</p>
+      <h1 class="virsraksts">Iegādājies <em>nodarbību</em></h1>
 
       <section class="karte">
         <h2>Nodarbību paketes</h2>
@@ -1425,9 +1424,14 @@ async function ieladetPaketes() {
     const snap = await getDocs(query(collection(db, 'lessonPackages'), where('active', '==', true)));
     // Paketes ar "dāvana" nosaukumā nerādām — dāvināšana iet caur īstajām
     // paketēm sadaļā "Dāvināt", un Maksājumos paliek tikai tīrās 3 paketes.
+    // Vārdu "Abonements" attēlojumā noņemam — paliek vienkārši "4 nodarbības".
     pirkumaPaketes = snap.docs
       .map((d) => ({ id: d.id, ...d.data() }))
       .filter((p) => !/d[āa]van/i.test(p.name || ''))
+      .map((p) => ({
+        ...p,
+        name: ((p.name || '').replace(/abonements\s*[·\-–—]?\s*/gi, '').trim()) || p.name,
+      }))
       .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
     if (pirkumaPaketes.length === 0) {
       k.innerHTML = '<p class="tukss">Šobrīd nav pieejamu pakešu.</p>';
