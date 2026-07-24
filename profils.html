@@ -245,14 +245,14 @@
   .veids-info{font-size:12.5px;color:var(--muted)}
 
   /* Dienu kolonnas: diena augšā, laiki no augšas uz leju, nākamā diena pa labi */
-  .dienu-ritjosla{display:flex;align-items:stretch;gap:8px}
+  /* Bultiņas virs kalendāra; dienas zem tām, kartītes iekšmalās */
+  .ritjoslas-galva{display:flex;justify-content:flex-end;gap:8px;margin-bottom:12px}
   /* Nedēļas maiņa "aizslīd" — lēnāka (1s), lai virziens ir skaidri sajūtams */
   @keyframes slidNoLabas{from{opacity:.15;transform:translateX(130px)}to{opacity:1;transform:none}}
   @keyframes slidNoKreisas{from{opacity:.15;transform:translateX(-130px)}to{opacity:1;transform:none}}
   .dienu-riti.no-labas{animation:slidNoLabas 1s cubic-bezier(.22,.8,.3,1)}
   .dienu-riti.no-kreisas{animation:slidNoKreisas 1s cubic-bezier(.22,.8,.3,1)}
   .riti-poga{
-    flex-shrink:0;align-self:flex-start;margin-top:30px;
     width:32px;height:32px;border-radius:50%;
     background:var(--bg);border:0.5px solid var(--border);
     font-size:16px;line-height:1;color:var(--muted);cursor:pointer;
@@ -987,11 +987,11 @@ async function ieladetSlotus() {
     const animKlase = slidesVirziens > 0 ? ' no-labas' : slidesVirziens < 0 ? ' no-kreisas' : '';
     slidesVirziens = 0;
     k.innerHTML = `
-      <div class="dienu-ritjosla">
+      <div class="ritjoslas-galva">
         <button class="riti-poga" id="ritiPaKreisi" type="button" ${varAtpakal ? '' : 'disabled'} aria-label="Iepriekšējā nedēļa">‹</button>
-        <div class="dienu-riti${animKlase}" id="dienuRiti">${kolonnas.join('')}</div>
         <button class="riti-poga" id="ritiPaLabi" type="button" ${varUzPrieksu ? '' : 'disabled'} aria-label="Nākamā nedēļa">›</button>
-      </div>`;
+      </div>
+      <div class="dienu-riti${animKlase}" id="dienuRiti">${kolonnas.join('')}</div>`;
     el('ritiPaKreisi').onclick = () => {
       if (nedelasNobide > 0) {
         nedelasNobide--; slidesVirziens = -1;
