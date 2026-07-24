@@ -48,8 +48,11 @@
   /* --- Izkārtojums: sānu navigācija + saturs --- */
   .izkartojums{
     max-width:1180px;margin:0 auto;padding:36px 32px 90px;
-    display:grid;grid-template-columns:200px 1fr 190px;gap:34px;align-items:start;
+    display:grid;grid-template-columns:200px 1fr auto;gap:34px;align-items:start;
   }
+  /* Konta navigācija pie pašas labās malas, zem "Izrakstīties" */
+  .laba-nav{justify-self:end;align-items:flex-end}
+  .laba-nav .nav-poga{width:auto}
   /* min-width:0 ļauj saturam (dienu ritjoslai) sarukt, nevis izstiept lapu */
   .izkartojums > main{min-width:0}
   .ielade{max-width:1180px;margin:0 auto;padding:44px 32px;color:var(--muted);font-size:15px}
@@ -256,7 +259,8 @@
     display:flex;gap:10px;overflow-x:auto;flex:1;min-width:0;
     padding-bottom:6px;-webkit-overflow-scrolling:touch;scroll-behavior:smooth;
   }
-  .diena-kolonna{flex:0 0 94px;display:flex;flex-direction:column;gap:7px}
+  /* Visas 7 dienas redzamas uzreiz — kolonnas dala platumu vienādi */
+  .diena-kolonna{flex:1 1 0;min-width:68px;display:flex;flex-direction:column;gap:7px}
   .kolonna-virsraksts{text-align:center;margin-bottom:2px;min-height:32px}
   .kolonna-diena{font-size:12px;font-weight:800;text-transform:capitalize}
   .kolonna-datums{font-size:11px;color:var(--muted)}
@@ -334,6 +338,8 @@
   .pakete-nosaukums{font-size:14.5px;font-weight:700}
   .pakete-krediti{font-size:12.5px;color:var(--muted)}
   .pakete-cena{font-family:Georgia,serif;font-size:26px;margin:6px 0 10px}
+  .par-nodarbibu{font-family:'Raleway',sans-serif;font-size:12px;font-weight:600;color:var(--muted)}
+  .pakete.izveleta{border-color:var(--accent-dark);background:#F1E6C8}
 
   .slegts-note{
     font-size:13px;color:var(--muted);line-height:1.6;
@@ -568,8 +574,21 @@
 
       <section class="karte">
         <h2>Nodarbību paketes</h2>
-        <p class="h2-piezime">Apmaksa notiek drošā Stripe vidē. Nodarbības tiek ieskaitītas uzreiz pēc apmaksas.</p>
         <div class="paketes" id="paketuSaraksts"><p class="tukss">Ielādē…</p></div>
+      </section>
+
+      <!-- Pirkuma kopsavilkums — parādās, kad izvēlēta pakete -->
+      <section class="karte paslepts" id="pirkumaKopsavilkums">
+        <h2>Kopsavilkums</h2>
+        <div class="saraksta-rinda">
+          <div>
+            <div class="saraksta-galvena" id="kopsNosaukums"></div>
+            <div class="saraksta-apaksa" id="kopsDetalas"></div>
+          </div>
+          <div class="pakete-cena" id="kopsSumma" style="margin:0"></div>
+        </div>
+        <button class="cta cta-auto" id="pogaApmaksat" style="margin-top:14px">Apmaksāt</button>
+        <p class="h2-piezime" style="margin:12px 0 0">Droša apmaksa Stripe vidē. Nodarbības tiek ieskaitītas uzreiz pēc apmaksas.</p>
       </section>
 
       <section class="karte">
@@ -857,6 +876,7 @@ function renderVeidi() {
       izveletaisVeids = nodarbibuVeidi.find((v) => v.id === poga.dataset.id) ?? null;
       izveletaisSlots = null;
       nedelasNobide = 0;
+      slotuKese.clear();
       renderVeidi();
       atjaunotApstiprinatJoslu();
       ieladetSlotus();
@@ -875,31 +895,48 @@ function atjaunotSlotuPieejamibu() {
 }
 
 /* ---------- Brīvie laiki ---------- */
+
+// Nedēļu kešatmiņa un priekšielāde — pāršķiršana notiek momentā, bez gaidīšanas.
+const slotuKese = new Map(); // "veidaId|nobide" → { nedela, atbilde }
+
+function nedelasDatumi(nobide) {
+  const pirmdiena = nedelasPirmdiena(nobide);
+  const nedela = [];
+  for (let i = 0; i < 7; i++) {
+    nedela.push(datumsISO(new Date(pirmdiena.getTime() + i * 86_400_000)));
+  }
+  return nedela;
+}
+
+async function pieprasitNedelu(nobide) {
+  const atslega = `${izveletaisVeids.id}|${nobide}`;
+  if (slotuKese.has(atslega)) return slotuKese.get(atslega);
+  const nedela = nedelasDatumi(nobide);
+  const atbilde = await izsauktFunkciju('getAvailableSlots', {
+    lessonTypeId: izveletaisVeids.id,
+    fromISO: nedela[0],
+    toISO: nedela[6],
+  });
+  const dati = { nedela, atbilde };
+  slotuKese.set(atslega, dati);
+  return dati;
+}
+
 async function ieladetSlotus() {
   if (!izveletaisVeids) return;
   atjaunotSlotuPieejamibu();
   if (bilance < izveletaisVeids.creditsRequired) return;
 
   const k = el('slotuSaraksts');
-  // Pirmajā ielādē rādām paziņojumu; pāršķirot nedēļas, esošais saturs paliek
-  // (viegli pieblāvēts), lai pāreja ir plūstoša, bez "ielādes" lēciena.
-  const esosaisRiti = el('dienuRiti');
-  if (esosaisRiti) esosaisRiti.style.opacity = '.45';
-  else k.innerHTML = '<p class="tukss">Meklē brīvos laikus…</p>';
-
-  // Pilna nedēļa no pirmdienas līdz svētdienai; ‹ › pāršķir pa nedēļām.
-  const pirmdiena = nedelasPirmdiena(nedelasNobide);
-  const nedela = [];
-  for (let i = 0; i < 7; i++) {
-    nedela.push(datumsISO(new Date(pirmdiena.getTime() + i * 86_400_000)));
+  // No kešatmiņas nedēļa parādās momentā; tikai īsta ielāde rāda pāreju.
+  if (!slotuKese.has(`${izveletaisVeids.id}|${nedelasNobide}`)) {
+    const esosaisRiti = el('dienuRiti');
+    if (esosaisRiti) esosaisRiti.style.opacity = '.45';
+    else k.innerHTML = '<p class="tukss">Meklē brīvos laikus…</p>';
   }
 
   try {
-    const atbilde = await izsauktFunkciju('getAvailableSlots', {
-      lessonTypeId: izveletaisVeids.id,
-      fromISO: nedela[0],
-      toISO: nedela[6],
-    });
+    const { nedela, atbilde } = await pieprasitNedelu(nedelasNobide);
     atcelsanasStundas = atbilde.cancellationHours ?? atcelsanasStundas;
 
     const dienuKarte = new Map(atbilde.days.map((d) => [d.date, d.slots]));
@@ -969,6 +1006,10 @@ async function ieladetSlotus() {
         atjaunotApstiprinatJoslu();
       });
     });
+
+    // Fonā ielādējam blakus nedēļas — nākamā pāršķiršana notiek uzreiz.
+    if (varUzPrieksu) pieprasitNedelu(nedelasNobide + 1).catch(() => {});
+    if (nedelasNobide > 0) pieprasitNedelu(nedelasNobide - 1).catch(() => {});
   } catch (err) {
     console.error('getAvailableSlots kļūda:', err);
     k.innerHTML = `<p class="tukss">${escapeHTML(funkcijasKluda(err))}</p>`;
@@ -1005,10 +1046,12 @@ el('pogaApstiprinat').onclick = async () => {
     tosts('Nodarbība rezervēta! 🎵', 'labi');
     izveletaisSlots = null;
     el('apstiprinatJosla').classList.remove('redzams');
+    slotuKese.clear(); // pēc rezervācijas laiki jāpārlasa no servera
     await Promise.all([ieladetSlotus(), ieladetGaidamas()]);
   } catch (err) {
     console.error('createBooking kļūda:', err);
     tosts(funkcijasKluda(err), 'kluda');
+    slotuKese.clear();
     ieladetSlotus(); // laiks varēja tikt aizņemts — atsvaidzinām
   } finally {
     poga.disabled = false;
@@ -1080,6 +1123,7 @@ async function atceltNodarbibu(poga) {
     const r = await izsauktFunkciju('cancelBooking', { bookingId: poga.dataset.atcelt });
     tosts(r.creditsReturned > 0 ? 'Nodarbība atcelta, bilance atjaunota.' : 'Nodarbība atcelta.', 'labi');
     await Promise.all([ieladetGaidamas(), ieladetPagatni(true)]);
+    slotuKese.clear(); // atceltais laiks atkal kļūst brīvs
     if (izveletaisVeids) ieladetSlotus();
   } catch (err) {
     console.error('cancelBooking kļūda:', err);
@@ -1125,42 +1169,74 @@ async function ieladetPagatni(nosakuma = false) {
 el('pogaVairakPagatnes').onclick = () => ieladetPagatni();
 
 /* ---------- Paketes un maksājumi ---------- */
+// Pirkšana divos soļos: "Pirkt" izvēlas paketi un parāda kopsavilkumu ar
+// kopējo summu; "Apmaksāt" aizved uz Stripe.
+let pirkumaPaketes = [];
+let izveletaPakete = null;
+
 async function ieladetPaketes() {
   const k = el('paketuSaraksts');
   try {
     const snap = await getDocs(query(collection(db, 'lessonPackages'), where('active', '==', true)));
-    const paketes = snap.docs
+    pirkumaPaketes = snap.docs
       .map((d) => ({ id: d.id, ...d.data() }))
       .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
-    k.innerHTML = paketes.length === 0
-      ? '<p class="tukss">Šobrīd nav pieejamu pakešu.</p>'
-      : paketes.map((p) => `
-        <div class="pakete">
+    if (pirkumaPaketes.length === 0) {
+      k.innerHTML = '<p class="tukss">Šobrīd nav pieejamu pakešu.</p>';
+      return;
+    }
+    // Abonementiem rādām cenu par vienu nodarbību ("/ nodarbība" maziem burtiem).
+    k.innerHTML = pirkumaPaketes.map((p) => {
+      const cena = p.credits > 1
+        ? `${eiro(Math.round(p.priceCents / p.credits))} <span class="par-nodarbibu">/ nodarbība</span>`
+        : eiro(p.priceCents);
+      return `
+        <div class="pakete" data-id="${p.id}">
           <div class="pakete-nosaukums">${escapeHTML(p.name)}</div>
           <div class="pakete-krediti">${p.credits} nodarbība${p.credits === 1 ? '' : 's'}</div>
-          <div class="pakete-cena">${eiro(p.priceCents)}</div>
+          <div class="pakete-cena">${cena}</div>
           <button class="cta" data-pakete="${p.id}">Pirkt</button>
-        </div>`).join('');
+        </div>`;
+    }).join('');
     k.querySelectorAll('[data-pakete]').forEach((poga) => {
-      poga.addEventListener('click', async () => {
-        poga.disabled = true;
-        poga.textContent = 'Atver apmaksu…';
-        try {
-          const r = await izsauktFunkciju('createCheckoutSession', { packageId: poga.dataset.pakete });
-          window.location.href = r.url;
-        } catch (err) {
-          console.error('createCheckoutSession kļūda:', err);
-          tosts(funkcijasKluda(err), 'kluda');
-          poga.disabled = false;
-          poga.textContent = 'Pirkt';
-        }
-      });
+      poga.addEventListener('click', () => izveletiesPaketi(poga.dataset.pakete));
     });
   } catch (err) {
     console.error('Pakešu ielādes kļūda:', err);
     k.innerHTML = '<p class="tukss">Neizdevās ielādēt paketes.</p>';
   }
 }
+
+function izveletiesPaketi(id) {
+  izveletaPakete = pirkumaPaketes.find((p) => p.id === id) ?? null;
+  if (!izveletaPakete) return;
+  const p = izveletaPakete;
+  document.querySelectorAll('#paketuSaraksts .pakete').forEach((karte) =>
+    karte.classList.toggle('izveleta', karte.dataset.id === id));
+  el('kopsNosaukums').textContent = p.name;
+  el('kopsDetalas').textContent = p.credits > 1
+    ? `${p.credits} nodarbības · ${eiro(Math.round(p.priceCents / p.credits))} par nodarbību`
+    : '1 nodarbība';
+  el('kopsSumma').textContent = eiro(p.priceCents);
+  el('pirkumaKopsavilkums').classList.remove('paslepts');
+  el('pirkumaKopsavilkums').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+el('pogaApmaksat').onclick = async () => {
+  if (!izveletaPakete) return;
+  const poga = el('pogaApmaksat');
+  poga.disabled = true;
+  poga.textContent = 'Atver apmaksu…';
+  try {
+    const r = await izsauktFunkciju('createCheckoutSession', { packageId: izveletaPakete.id });
+    window.location.href = r.url;
+  } catch (err) {
+    console.error('createCheckoutSession kļūda:', err);
+    tosts(funkcijasKluda(err), 'kluda');
+    poga.disabled = false;
+    poga.textContent = 'Apmaksāt';
+  }
+};
 
 async function ieladetPirkumus() {
   const k = el('pirkumuSaraksts');
