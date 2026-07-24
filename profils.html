@@ -668,6 +668,20 @@
       <section class="karte">
         <h2>Dāvanu karte</h2>
         <div class="paketes" id="davanuPaketes"><p class="tukss">Ielādē…</p></div>
+
+        <!-- Nopirkto kodu saraksts — redzams tikai tad, ja tādi ir -->
+        <div id="davanuKoduBloks" class="paslepts" style="margin-top:20px;border-top:0.5px solid var(--border);padding-top:16px">
+          <h2>Tavi dāvanu kodi</h2>
+          <div id="davanuSaraksts"></div>
+        </div>
+
+        <div style="margin-top:20px;border-top:0.5px solid var(--border);padding-top:16px">
+          <h2>Saņēmi dāvanu karti?</h2>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+            <input id="davanasKods" type="text" placeholder="SD-XXXX-XXXX" style="max-width:220px;text-transform:uppercase">
+            <button class="cta cta-auto" id="pogaIzmantotDavanu">Izmantot</button>
+          </div>
+        </div>
       </section>
 
       <!-- Dāvanas kopsavilkums — parādās, kad izvēlēta pakete -->
@@ -681,21 +695,7 @@
           <div class="pakete-cena" id="davanasSumma" style="margin:0"></div>
         </div>
         <button class="cta cta-auto" id="pogaDavanuApmaksat" style="margin-top:14px">Apmaksāt</button>
-        <p class="h2-piezime" style="margin:12px 0 0">Droša apmaksa Stripe vidē. Dāvanu kods parādīsies sarakstā uzreiz pēc apmaksas.</p>
-      </section>
-
-      <section class="karte">
-        <h2>Manas dāvanu kartes</h2>
-        <div id="davanuSaraksts"><p class="tukss">Ielādē…</p></div>
-      </section>
-
-      <section class="karte">
-        <h2>Man ir dāvanu karte</h2>
-        <p class="h2-piezime">Ievadi dāvanu kodu, un nodarbības tiks pieskaitītas tavai bilancei.</p>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-          <input id="davanasKods" type="text" placeholder="SD-XXXX-XXXX" style="max-width:220px;text-transform:uppercase">
-          <button class="cta cta-auto" id="pogaIzmantotDavanu">Izmantot</button>
-        </div>
+        <p class="h2-piezime" style="margin:12px 0 0">Droša apmaksa Stripe vidē. Dāvanu kods parādīsies uzreiz pēc apmaksas.</p>
       </section>
     </section>
 
@@ -1423,8 +1423,11 @@ async function ieladetPaketes() {
   const k = el('paketuSaraksts');
   try {
     const snap = await getDocs(query(collection(db, 'lessonPackages'), where('active', '==', true)));
+    // Paketes ar "dāvana" nosaukumā nerādām — dāvināšana iet caur īstajām
+    // paketēm sadaļā "Dāvināt", un Maksājumos paliek tikai tīrās 3 paketes.
     pirkumaPaketes = snap.docs
       .map((d) => ({ id: d.id, ...d.data() }))
+      .filter((p) => !/d[āa]van/i.test(p.name || ''))
       .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
     if (pirkumaPaketes.length === 0) {
       k.innerHTML = '<p class="tukss">Šobrīd nav pieejamu pakešu.</p>';
@@ -1552,8 +1555,10 @@ async function ieladetDavanas() {
       orderBy('createdAt', 'desc'),
       limit(20),
     ));
+    // Kodu bloks redzams tikai tad, ja pircējam tādi ir.
+    el('davanuKoduBloks').classList.toggle('paslepts', snap.empty);
     k.innerHTML = snap.empty
-      ? '<p class="tukss">Vēl nav nopirktu dāvanu karšu.</p>'
+      ? ''
       : snap.docs.map((d) => {
           const g = d.data();
           const statuss = g.status === 'active'
