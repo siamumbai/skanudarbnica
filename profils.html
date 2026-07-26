@@ -44,21 +44,21 @@
     color:var(--muted);cursor:pointer;
   }
   .izeja:hover{border-color:var(--accent-dark);color:var(--accent-dark)}
+  /* Apaļā "Mans profils" ikona galvenē (starp e-pastu un "Izrakstīties") */
+  .profils-ikona{
+    width:38px;height:38px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    background:transparent;border:0.5px solid var(--border);
+    font-size:17px;line-height:1;cursor:pointer;flex-shrink:0;
+    transition:background .15s,border-color .15s;
+  }
+  .profils-ikona:hover{border-color:var(--accent-dark);background:var(--bg2)}
+  .profils-ikona.aktiva{background:var(--accent-dark);border-color:var(--accent-dark)}
 
   /* --- Izkārtojums: sānu navigācija + saturs --- */
   .izkartojums{
     max-width:1180px;margin:0 auto;padding:36px 32px 90px;
-    display:grid;grid-template-columns:200px 1fr auto;gap:34px;align-items:start;
-  }
-  /* Konta navigācija: pogas precīzi viena zem otras, labajā pusē */
-  .laba-nav{justify-self:end;align-items:flex-start}
-  .laba-nav .nav-poga{width:auto}
-  /* Pietiekami platos ekrānos — piesprausta pie paša loga labās malas, zem
-     "Izrakstīties", ārpus satura iekšmalām. Selektoram .sanu-nav.laba-nav ir
-     augstāka specifika, lai tas pārspēj vēlāko ".sanu-nav" sticky noteikumu. */
-  /* Sākas tajā pašā augstumā, kur kreisās navigācijas "Audzēkņi" */
-  @media(min-width:1560px){
-    .sanu-nav.laba-nav{position:fixed;top:106px;right:28px}
+    display:grid;grid-template-columns:200px 1fr;gap:34px;align-items:start;
   }
   /* min-width:0 ļauj saturam (dienu ritjoslai) sarukt, nevis izstiept lapu */
   .izkartojums > main{min-width:0}
@@ -409,10 +409,7 @@
   /* --- Responsīvi: planšete un telefons --- */
   @media(max-width:860px){
     .izkartojums{grid-template-columns:1fr;gap:16px;padding:22px 18px 70px}
-    /* Mobilajā abas navigācijas rindā viena zem otras, saturs zem tām */
-    .sanu-nav{order:0}
-    .laba-nav{order:1;margin-top:-8px}
-    .izkartojums > main{order:2}
+    /* Mobilajā navigācija rindā, saturs zem tās */
     .sanu-nav{
       position:static;flex-direction:row;gap:8px;margin-top:0 !important;
       overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch;
@@ -433,6 +430,9 @@
   <a class="logo" href="index.html">skanudarbnica.lv</a>
   <div class="josla-labi">
     <span class="josla-epasts" id="joslaEpasts"></span>
+    <button class="profils-ikona" id="navProfils" aria-controls="sadalaProfils" aria-label="Mans profils" title="Mans profils">
+      <span aria-hidden="true">👤</span>
+    </button>
     <button class="izeja" id="pogaIzrakstities">Izrakstīties</button>
   </div>
 </header>
@@ -446,7 +446,7 @@
   <!-- ======== GALVENĀ SĀNU NAVIGĀCIJA ======== -->
   <nav class="sanu-nav" role="tablist" aria-label="Profila sadaļas">
     <button class="nav-poga" id="navPieteikties" role="tab" aria-selected="false" aria-controls="sadalaPieteikties">
-      <span class="nav-ik" aria-hidden="true">🧒</span> Audzēkņi
+      <span class="nav-ik" aria-hidden="true">🧒</span> Pievienot bērnu
     </button>
     <button class="nav-poga" id="navRezervet" role="tab" aria-selected="false" aria-controls="sadalaRezervet">
       <span class="nav-ik" aria-hidden="true">🗓️</span> Rezervēt
@@ -454,6 +454,12 @@
     <button class="nav-poga" id="navNodarbibas" role="tab" aria-selected="false" aria-controls="sadalaNodarbibas">
       <span class="nav-ik" aria-hidden="true">🎵</span> Manas nodarbības
       <span class="nav-skaits paslepts" id="navNodarbibasSkaits" aria-label="Gaidāmās nodarbības"></span>
+    </button>
+    <button class="nav-poga" id="navPirkumi" role="tab" aria-selected="false" aria-controls="sadalaPirkumi">
+      <span class="nav-ik" aria-hidden="true">💳</span> Maksājumi
+    </button>
+    <button class="nav-poga" id="navDavinat" role="tab" aria-selected="false" aria-controls="sadalaDavinat">
+      <span class="nav-ik" aria-hidden="true">🎁</span> Dāvināt
     </button>
   </nav>
 
@@ -499,10 +505,9 @@
 
     <!-- ---------- SADAĻA: AUDZĒKŅI ---------- -->
     <section class="sadala" id="sadalaPieteikties" role="tabpanel" aria-labelledby="navPieteikties">
-        <h1 class="virsraksts">Audzēkņi</h1>
-        <p class="ievads">Pievieno vienu vai vairākus audzēkņus, ko vēlies pieteikt nodarbībām.</p>
+        <h1 class="virsraksts" style="margin-bottom:18px">Pievieno vienu vai vairākus audzēkņus, ko vēlies pieteikt nodarbībām.</h1>
 
-        <button class="poga-pievienot" id="pogaPieteiktBernu">+ Pievienot audzēkni</button>
+        <button class="poga-pievienot" id="pogaPieteiktBernu">+ Pievienot bērnu</button>
 
         <!-- Audzēkņa anketa (sākotnēji paslēpta) -->
         <section class="karte paslepts" id="anketaKarte" style="margin-top:16px" aria-label="Audzēkņa anketa">
@@ -581,7 +586,7 @@
                 </button>
                 <div class="izvelne-saraksts paslepts" id="audzeknaIzvelesSaraksts" role="listbox"></div>
               </div>
-              <button class="poga-pievienot paslepts" id="pogaJaunsAudzeknis" type="button">+ Pievienot audzēkni</button>
+              <button class="poga-pievienot paslepts" id="pogaJaunsAudzeknis" type="button">+ Pievienot bērnu</button>
             </div>
           </div>
         </div>
@@ -700,18 +705,6 @@
 
   </main>
 
-  <!-- ======== LABĀ NAVIGĀCIJA: konta sadaļas ======== -->
-  <nav class="sanu-nav laba-nav" role="tablist" aria-label="Konta sadaļas">
-    <button class="nav-poga" id="navProfils" role="tab" aria-selected="false" aria-controls="sadalaProfils">
-      <span class="nav-ik" aria-hidden="true">👤</span> Mans profils
-    </button>
-    <button class="nav-poga" id="navPirkumi" role="tab" aria-selected="false" aria-controls="sadalaPirkumi">
-      <span class="nav-ik" aria-hidden="true">💳</span> Maksājumi
-    </button>
-    <button class="nav-poga" id="navDavinat" role="tab" aria-selected="false" aria-controls="sadalaDavinat">
-      <span class="nav-ik" aria-hidden="true">🎁</span> Dāvināt
-    </button>
-  </nav>
 </div>
 
 <!-- Tosts (neuzbāzīgs paziņojums) -->
