@@ -505,8 +505,6 @@
 
     <!-- ---------- SADAĻA: AUDZĒKŅI ---------- -->
     <section class="sadala" id="sadalaPieteikties" role="tabpanel" aria-labelledby="navPieteikties">
-        <h1 class="virsraksts" style="margin-bottom:18px">Pievieno vienu vai vairākus audzēkņus, ko vēlies pieteikt nodarbībām.</h1>
-
         <button class="poga-pievienot" id="pogaPieteiktBernu">+ Pievienot bērnu</button>
 
         <!-- Audzēkņa anketa (sākotnēji paslēpta) -->
@@ -1781,6 +1779,13 @@ prasitPieteiksanos(async (user) => {
   } else if (parametri.get('maksajums') === 'atcelts') {
     paradietSadalu('sadalaPirkumi');
     tosts('Maksājums netika pabeigts.', 'kluda');
+    history.replaceState(null, '', 'profils.html');
+  } else if (parametri.get('sadala') === 'maksajumi') {
+    // Saite no sākumlapas cenu pogām.
+    paradietSadalu('sadalaPirkumi');
+    history.replaceState(null, '', 'profils.html');
+  } else if (parametri.get('sadala') === 'davinat') {
+    paradietSadalu('sadalaDavinat');
     history.replaceState(null, '', 'profils.html');
   } else {
     // Atveras ar rezervēšanu; ja vēl nav neviena audzēkņa — ar to pievienošanu.

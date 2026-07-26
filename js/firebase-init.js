@@ -148,7 +148,11 @@ export function saglabatProfilu(uid, dati) {
 export function prasitPieteiksanos(callback) {
   return onAuthStateChanged(auth, (user) => {
     if (!user) {
-      window.location.href = "pieteikties.html";
+      // Saglabājam lapas parametrus (piem. ?sadala=maksajumi), lai pēc
+      // pieteikšanās varētu atgriezties tieši vajadzīgajā sadaļā.
+      const s = window.location.search;
+      window.location.href =
+        "pieteikties.html" + (s ? "?talak=" + encodeURIComponent(s) : "");
       return;
     }
     callback(user);

@@ -174,8 +174,16 @@ function paradit(teksts, veids = 'kluda') {
 }
 function notirit() { zinojums.className = 'zinojums'; }
 
+// Ja atnācām ar ?talak=... (piem. no sākumlapas cenu pogām caur profilu),
+// pēc pieteikšanās aizvedam uz profilu ar sākotnējiem parametriem.
+const talak = new URLSearchParams(window.location.search).get('talak');
+function uzProfilu() {
+  const der = talak && /^\?[\w=&%.\-]*$/.test(talak);
+  window.location.href = 'profils.html' + (der ? talak : '');
+}
+
 onAuthStateChanged(auth, (user) => {
-  if (user) window.location.href = 'profils.html';
+  if (user) uzProfilu();
 });
 
 celinsPieteikties.onclick = () => {
@@ -199,7 +207,7 @@ formaPieteikties.onsubmit = async (e) => {
   poga.disabled = true; poga.textContent = 'Piesakās…';
   try {
     await pieteikties(pEpasts.value.trim(), pParole.value);
-    window.location.href = 'profils.html';
+    uzProfilu();
   } catch (err) {
     paradit(kludasTeksts(err));
     poga.disabled = false; poga.textContent = 'Pieteikties';
@@ -217,7 +225,7 @@ formaRegistret.onsubmit = async (e) => {
       vards: rVards.value.trim(),
       telefons: rTelefons.value.trim(),
     });
-    window.location.href = 'profils.html';
+    uzProfilu();
   } catch (err) {
     paradit(kludasTeksts(err));
     poga.disabled = false; poga.textContent = 'Izveidot kontu';
@@ -227,7 +235,7 @@ formaRegistret.onsubmit = async (e) => {
 document.getElementById('pogaGoogle').onclick = async () => {
   try {
     await pieteiktiesArGoogle();
-    window.location.href = 'profils.html';
+    uzProfilu();
   } catch (err) {
     paradit(kludasTeksts(err));
   }
