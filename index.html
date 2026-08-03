@@ -65,9 +65,14 @@
   .review-name { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
   .review-cta { margin-top: 3rem; text-align: center; }
   .gmail-btn { display: inline-flex; align-items: center; gap: 10px; font-family: 'Raleway', sans-serif; font-size: 14px; font-weight: 600; padding: 12px 24px; border-radius: 100px; border: 0.5px solid var(--border); color: var(--text); background: var(--bg2); cursor: pointer; text-decoration: none; }
-  footer { padding: 2rem 3rem; border-top: 0.5px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+  footer { padding: 2.5rem 3rem 2rem; border-top: 0.5px solid var(--border); }
+  .footer-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 2rem; flex-wrap: wrap; max-width: var(--maxw); margin: 0 auto; }
   .footer-logo { font-size: 16px; font-weight: 600; }
-  .footer-note { font-size: 12px; color: var(--muted); font-weight: 300; }
+  .footer-note { font-size: 12px; color: var(--muted); font-weight: 300; line-height: 1.7; }
+  .footer-links { display: flex; flex-direction: column; gap: 0.35rem; }
+  .footer-links a { font-size: 13px; color: var(--muted); text-decoration: none; border-bottom: 0.5px solid transparent; width: fit-content; }
+  .footer-links a:hover { color: var(--accent-dark); border-bottom-color: var(--accent-dark); }
+  .footer-bottom { max-width: var(--maxw); margin: 1.5rem auto 0; padding-top: 1rem; border-top: 0.5px solid var(--border); display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; font-size: 11px; color: var(--muted); font-weight: 300; }
 
   @media (max-width: 700px) {
     nav { padding: 1rem 1.25rem !important; }
@@ -121,7 +126,11 @@
     .faq-highlight { font-size: 14px !important; line-height: 1.5 !important; }
     .mob-br { display: inline !important; }
 
-    footer { flex-direction: column; gap: 0.5rem; text-align: center; padding: 2rem 1.25rem; }
+    footer { padding: 2rem 1.25rem; }
+    .footer-top { flex-direction: column; gap: 1.25rem; text-align: center; align-items: center; }
+    .footer-links { align-items: center; }
+    .footer-links a { width: auto; }
+    .footer-bottom { flex-direction: column; gap: 0.4rem; text-align: center; justify-content: center; }
   }
 </style>
 </head>
@@ -316,8 +325,25 @@
 </section>
 
 <footer>
-  <div class="footer-logo">skanudarbnica.lv</div>
-  <div class="footer-note">Rīga, 2025 · skanudarbnica.lv</div>
+  <div class="footer-top">
+    <div>
+      <div class="footer-logo">skanudarbnica.lv</div>
+      <div class="footer-note" style="margin-top: 0.5rem;">
+        SIA "MUMBAI"<br>
+        Reģ. Nr. 40203627024 · PVN Nr. LV40203627024<br>
+        Ernestīnes iela 8 k-1 – 73, Rīga, LV-1083<br>
+        <a href="mailto:info@skanudarbnica.lv" style="color: var(--muted);">info@skanudarbnica.lv</a>
+      </div>
+    </div>
+    <div class="footer-links">
+      <a href="distances-ligums.html">Distances līgums</a>
+      <a href="privatuma-politika.html">Privātuma politika</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div>© 2026 SIA "MUMBAI" · Rīga, VEF Kvartāls</div>
+    <div>Droši karšu maksājumi: Visa · Mastercard · Cenas norādītas EUR</div>
+  </div>
 </footer>
 
 </div>
