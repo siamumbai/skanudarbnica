@@ -45,7 +45,23 @@
 
   .ielade{max-width:1380px;margin:0 auto;padding:44px 28px;color:var(--muted);font-size:15px}
 
-  .konteiners{max-width:1380px;margin:0 auto;padding:20px 28px 80px}
+  .konteiners{
+    max-width:1380px;margin:0 auto;padding:20px 28px 80px;
+    display:grid;grid-template-columns:185px 1fr;gap:20px;align-items:start;
+  }
+
+  /* Kreisā režīmu navigācija: Pirmā nodarbība / Nodarbības */
+  .rezimu-nav{position:sticky;top:78px;display:flex;flex-direction:column;gap:6px}
+  .rezima-poga{
+    display:flex;align-items:center;gap:10px;width:100%;text-align:left;
+    background:transparent;border:0.5px solid transparent;border-radius:12px;
+    padding:12px 14px;font-family:inherit;font-size:13.5px;font-weight:600;
+    color:var(--muted);cursor:pointer;transition:background .15s,color .15s;
+  }
+  .rezima-poga:hover{background:var(--bg2);color:var(--text)}
+  .rezima-poga.aktiva{background:var(--accent-dark);border-color:var(--accent-dark);color:var(--bg)}
+  .rezima-poga .punkts{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+  .rezima-saturs{min-width:0}
 
   /* Sekciju navigācija */
   .sekciju-nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:22px}
@@ -180,7 +196,9 @@
 
   @media (max-width:760px){
     .josla{padding:12px 16px}
-    .konteiners{padding:14px 14px 70px}
+    .konteiners{padding:14px 14px 70px;grid-template-columns:1fr;gap:12px}
+    .rezimu-nav{position:static;flex-direction:row;overflow-x:auto}
+    .rezima-poga{width:auto;white-space:nowrap;padding:10px 14px}
   }
 </style>
 </head>
@@ -194,6 +212,18 @@
 <p class="ielade" id="ielade">Pārbauda piekļuvi…</p>
 
 <div class="konteiners" id="konteiners" hidden>
+
+  <!-- Kreisā navigācija: kurā režīmā rediģē kalendāru -->
+  <nav class="rezimu-nav" aria-label="Nodarbību režīmi">
+    <button class="rezima-poga" id="rezimsPirma" type="button">
+      <span class="punkts" style="background:var(--zala)" aria-hidden="true"></span> Pirmā nodarbība
+    </button>
+    <button class="rezima-poga aktiva" id="rezimsParastas" type="button">
+      <span class="punkts" style="background:var(--accent-dark)" aria-hidden="true"></span> Nodarbības
+    </button>
+  </nav>
+
+  <div class="rezima-saturs">
 
   <nav class="sekciju-nav" role="tablist">
     <button class="nav-poga aktiva" data-sadala="sadalaKalendars">🗓️ Kalendārs</button>
@@ -422,6 +452,8 @@
       </p>
     </div>
   </section>
+
+  </div><!-- /rezima-saturs -->
 </div>
 
 <!-- Modālis: rezervācijas detaļas -->
@@ -498,12 +530,44 @@ function datetimeLocalVertiba(datums) {
 let kalendars = null;
 let skolotaji = [];
 let veidi = [];
+// Režīms: "pirma" = iepazīšanās nodarbības (zaļās), "parastas" = pārējās (brūnās).
+// Abos kalendāros redzamas visas rezervācijas; rediģēt var tikai sava režīma.
+let rezims = "parastas";
 let atvertaisAudzeknis = null; // { id, dati }
 let audzeknuKursors = null;
 let maksajumuKursors = null;
 let detaluRezervacija = null;
 let jaunaIzveletaisLietotajs = null;
 const lietotajuKese = new Map();
+
+/* ---------- Režīmi: Pirmā nodarbība / Nodarbības ---------- */
+// Iepazīšanās nodarbības atpazīst pēc veida nosaukuma ("Iepazīšanās …").
+function irIepazVeidaId(id) {
+  const v = veidi.find((x) => x.id === id);
+  return v ? /iepaz/i.test(v.name || "") : false;
+}
+function irIepazRezervacija(b) {
+  return irIepazVeidaId(b.lessonTypeId) || /iepaz/i.test(b.lessonTypeName || "");
+}
+function uzstaditRezimu(jauns) {
+  rezims = jauns;
+  el("rezimsPirma").classList.toggle("aktiva", rezims === "pirma");
+  el("rezimsParastas").classList.toggle("aktiva", rezims === "parastas");
+  atjaunotJaunaVeidus();
+  if (kalendars) kalendars.refetchEvents();
+}
+el("rezimsPirma").addEventListener("click", () => uzstaditRezimu("pirma"));
+el("rezimsParastas").addEventListener("click", () => uzstaditRezimu("parastas"));
+
+// Jaunas rezervācijas modālī rādām tikai aktīvā režīma nodarbību veidus.
+function atjaunotJaunaVeidus() {
+  const akt = veidi
+    .filter((v) => v.active)
+    .filter((v) => (rezims === "pirma") === /iepaz/i.test(v.name || ""));
+  el("jaunaVeids").innerHTML = akt
+    .map((v) => `<option value="${v.id}">${escapeHTML(v.name)}</option>`)
+    .join("");
+}
 
 /* ---------- Navigācija ---------- */
 document.querySelectorAll(".sekciju-nav .nav-poga").forEach((poga) => {
@@ -534,7 +598,7 @@ async function ieladetVeidus() {
   veidi = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
   const opcijas = veidi.filter((v) => v.active).map((v) => `<option value="${v.id}">${escapeHTML(v.name)}</option>`).join("");
   el("filtrsVeids").innerHTML = '<option value="">Visi</option>' + opcijas;
-  el("jaunaVeids").innerHTML = opcijas;
+  atjaunotJaunaVeidus();
   renderVeiduTabulu();
 }
 
@@ -633,17 +697,22 @@ async function ieladetNotikumus(info, success, failure) {
         if (!teksts.includes(fMeklet)) continue;
       }
       const atcelta = b.status === "cancelled";
+      // Iepazīšanās nodarbības zaļas, parastās brūnas — redzamas abos režīmos,
+      // bet vilkt/mainīt var tikai sava režīma nodarbības.
+      const iepaz = irIepazRezervacija(b);
+      const krasa = iepaz ? "#3B6D11" : "#7A5800";
+      const savaRezima = (rezims === "pirma") === iepaz;
       notikumi.push({
         id: d.id,
         title: `${b.childName || b.studentName || b.studentEmail || "?"} · ${b.lessonTypeName ?? ""}`,
         start: b.startAt.toDate(),
         end: b.endAt.toDate(),
-        backgroundColor: atcelta ? "transparent" : "#7A5800",
-        borderColor: atcelta ? "#9C3A22" : "#7A5800",
+        backgroundColor: atcelta ? "transparent" : krasa,
+        borderColor: atcelta ? "#9C3A22" : krasa,
         textColor: atcelta ? "#9C3A22" : "#F5EDD8",
-        startEditable: !atcelta,
-        durationEditable: !atcelta,
-        extendedProps: { rezervacija: b },
+        startEditable: !atcelta && savaRezima,
+        durationEditable: !atcelta && savaRezima,
+        extendedProps: { rezervacija: b, iepaz },
       });
     }
 
@@ -689,6 +758,8 @@ function atvertDetalas(notikums) {
   const b = notikums.extendedProps.rezervacija;
   detaluRezervacija = { id: notikums.id, dati: b };
   const atcelta = b.status === "cancelled";
+  // Cita režīma nodarbību var apskatīt, bet ne rediģēt — pārslēdz režīmu kreisajā navigācijā.
+  const svesaRezima = (rezims === "pirma") !== !!notikums.extendedProps.iepaz;
   el("detaluSaturs").innerHTML = `
     <strong>${escapeHTML(b.childName || b.studentName || "—")}</strong>
     ${b.childName && b.studentName ? `<br>Vecāks: ${escapeHTML(b.studentName)}` : ""}
@@ -697,9 +768,10 @@ function atvertDetalas(notikums) {
     <br>${fmtDatumsLaiks.format(b.startAt.toDate())} – ${new Intl.DateTimeFormat("lv-LV", { hour: "2-digit", minute: "2-digit" }).format(b.endAt.toDate())}
     <br>Kredīti: ${b.creditsUsed ?? 0}
     <br>Statuss: ${atcelta ? "Atcelta" : "Apstiprināta"}
+    ${svesaRezima && !atcelta ? `<br><em style="color:var(--muted)">Šo nodarbību rediģē sadaļā "${notikums.extendedProps.iepaz ? "Pirmā nodarbība" : "Nodarbības"}".</em>` : ""}
   `;
-  el("pogaAtceltArAtmaksu").hidden = atcelta;
-  el("pogaAtceltBezAtmaksas").hidden = atcelta;
+  el("pogaAtceltArAtmaksu").hidden = atcelta || svesaRezima;
+  el("pogaAtceltBezAtmaksas").hidden = atcelta || svesaRezima;
   el("detaluModalis").classList.add("redzams");
 }
 el("pogaAizvertDetalas").addEventListener("click", () => el("detaluModalis").classList.remove("redzams"));

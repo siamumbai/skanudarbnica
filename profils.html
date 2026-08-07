@@ -445,6 +445,9 @@
 
   <!-- ======== GALVENĀ SĀNU NAVIGĀCIJA ======== -->
   <nav class="sanu-nav" role="tablist" aria-label="Profila sadaļas">
+    <button class="nav-poga paslepts" id="navIepazisanas" role="tab" aria-selected="false" aria-controls="sadalaIepazisanas">
+      <span class="nav-ik" aria-hidden="true">✨</span> Pirmā nodarbība
+    </button>
     <button class="nav-poga" id="navPieteikties" role="tab" aria-selected="false" aria-controls="sadalaPieteikties">
       <span class="nav-ik" aria-hidden="true">🧒</span> Pievienot bērnu
     </button>
@@ -477,6 +480,31 @@
       </div>
       <button class="bilance-poga" id="bilancePoga">Papildināt</button>
     </div>
+
+    <!-- ---------- SADAĻA: PIRMĀ NODARBĪBA (jauniem lietotājiem līdz apstiprināšanai) ---------- -->
+    <section class="sadala" id="sadalaIepazisanas" role="tabpanel" aria-labelledby="navIepazisanas">
+      <h1 class="virsraksts">Iepazīšanās <em>nodarbība</em></h1>
+      <p class="ievads">Viss sākas ar vienu iepazīšanās nodarbību.<br>Pēc tās apstiprināsim turpmākās mācības, un atvērsies pilnais profils.</p>
+
+      <section class="karte">
+        <h2>1 · Pastāsti par bērnu</h2>
+        <p class="h2-piezime" id="iepazBernaTeksts">Aizpildi īsu anketu — tā palīdzēs pasniedzējam sagatavoties.</p>
+        <button class="poga-pievienot" id="pogaIepazBerns" type="button">+ Pievienot bērnu</button>
+      </section>
+
+      <section class="karte">
+        <h2>2 · Apmaksā iepazīšanās nodarbību</h2>
+        <p class="h2-piezime" id="iepazMaksasTeksts">Iepazīšanās nodarbība · 20€</p>
+        <button class="cta cta-auto" id="pogaIepazApmaksat" type="button">Apmaksāt</button>
+        <p class="h2-piezime" style="margin:12px 0 0">Droša apmaksa. Veicot apmaksu, tu apstiprini, ka piekrīti <a href="distances-ligums.html" target="_blank" rel="noopener">distances līgumam</a>.</p>
+      </section>
+
+      <section class="karte">
+        <h2>3 · Rezervē laiku</h2>
+        <p class="h2-piezime">Kad nodarbība apmaksāta, izvēlies sev ērtu laiku.</p>
+        <button class="cta cta-auto" id="pogaIepazRezervet" type="button">Izvēlēties laiku</button>
+      </section>
+    </section>
 
     <!-- ---------- SADAĻA: MANS PROFILS ---------- -->
     <section class="sadala aktiva" id="sadalaProfils" role="tabpanel" aria-labelledby="navProfils">
@@ -705,6 +733,10 @@
 
 </div>
 
+<!-- "Tālāk" — pagaidu poga uzņemšanas plūsmas izlaišanai (redzama tikai neapstiprinātiem) -->
+<button class="cta cta-auto paslepts" id="pogaTalak" type="button"
+  style="position:fixed;right:24px;bottom:24px;z-index:50;box-shadow:0 8px 26px rgba(0,0,0,.25)">Tālāk →</button>
+
 <!-- Tosts (neuzbāzīgs paziņojums) -->
 <div class="tosts" id="tosts" role="status" aria-live="polite"></div>
 
@@ -729,6 +761,9 @@ let rediggamaisIndekss = null;  // kuru audzēkni šobrīd rediģē anketā (nul
 // Rezervāciju stāvoklis
 let bilance = 0;                // atlikušās nodarbības (users.creditBalance, realtime)
 let nodarbibuVeidi = [];        // aktīvie nodarbību veidi no Firestore
+let uznemsanas = 'apstiprinats'; // uzņemšanas statuss: jauns | pieteikts | apstiprinats
+let iepazPakete = null;          // "Iepazīšanās" pakete (20€) no lessonPackages
+const irIepaz = (t) => /iepaz/i.test(t || ''); // iepazīšanās veidu/paketes atpazīst pēc nosaukuma
 let izveletaisVeids = null;
 let izveletaisSlots = null;     // { startMillis, teacherId }
 let nedelasNobide = 0;          // rādāmā nedēļa: 0 = tekošā, 1 = nākamā utt.
@@ -775,6 +810,7 @@ function tosts(teksts, veids = 'labi') {
 /* ---------- Galvenā navigācija ---------- */
 const navPogas = [
   { poga: 'navProfils', sadala: 'sadalaProfils' },
+  { poga: 'navIepazisanas', sadala: 'sadalaIepazisanas' },
   { poga: 'navPieteikties', sadala: 'sadalaPieteikties' },
   { poga: 'navRezervet', sadala: 'sadalaRezervet' },
   { poga: 'navNodarbibas', sadala: 'sadalaNodarbibas' },
@@ -954,8 +990,10 @@ function atjaunotBilanci() {
   }
   bijaNepietiekami = nepietiek;
 }
-el('bilancePoga').onclick = () => paradietSadalu('sadalaPirkumi');
-el('pogaUzPaketem').onclick = () => paradietSadalu('sadalaPirkumi');
+// Neapstiprinātiem pirkšana notiek iepazīšanās sadaļā, nevis Maksājumos.
+const pirkumuSadala = () => uznemsanas === 'apstiprinats' ? 'sadalaPirkumi' : 'sadalaIepazisanas';
+el('bilancePoga').onclick = () => paradietSadalu(pirkumuSadala());
+el('pogaUzPaketem').onclick = () => paradietSadalu(pirkumuSadala());
 
 /* ---------- Audzēkņa izvēle rezervācijai ---------- */
 let izveletaisAudzeknis = null;
@@ -1424,6 +1462,10 @@ async function ieladetPaketes() {
         name: ((p.name || '').replace(/abonements\s*[·\-–—]?\s*/gi, '').trim()) || p.name,
       }))
       .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+    // "Iepazīšanās" paketi rādām tikai iepazīšanās sadaļā, ne kopējos sarakstos.
+    iepazPakete = pirkumaPaketes.find((p) => irIepaz(p.name)) ?? null;
+    pirkumaPaketes = pirkumaPaketes.filter((p) => !irIepaz(p.name));
+    atjaunotIepazSkatu();
     if (pirkumaPaketes.length === 0) {
       k.innerHTML = '<p class="tukss">Šobrīd nav pieejamu pakešu.</p>';
       return;
@@ -1626,10 +1668,79 @@ async function ieladetPirkumus() {
 }
 
 
+/* ---------- Uzņemšana: iepazīšanās plūsma jauniem lietotājiem ---------- */
+// Līdz apstiprināšanai lietotājs redz tikai "Pirmā nodarbība" sadaļu.
+function piemerotUznemsanu() {
+  const pilns = uznemsanas === 'apstiprinats';
+  ['navPieteikties', 'navRezervet', 'navNodarbibas', 'navPirkumi', 'navDavinat'].forEach((id) =>
+    el(id).classList.toggle('paslepts', !pilns));
+  el('navIepazisanas').classList.toggle('paslepts', pilns);
+  el('pogaTalak').classList.toggle('paslepts', pilns);
+}
+
+// Iepazīšanās sadaļas soļu statusi (audzēknis, apmaksa).
+function atjaunotIepazSkatu() {
+  if (berni.length > 0) {
+    const vardi = berni.map((b) => b.berna_vards).filter(Boolean).join(', ');
+    el('iepazBernaTeksts').textContent = `Audzēknis pievienots${vardi ? ': ' + vardi : ''} ✓`;
+    el('pogaIepazBerns').textContent = '+ Pievienot vēl vienu';
+  }
+  if (bilance > 0) {
+    el('iepazMaksasTeksts').textContent = 'Apmaksāts ✓ — vari rezervēt laiku.';
+    el('pogaIepazApmaksat').disabled = true;
+  } else if (iepazPakete) {
+    el('iepazMaksasTeksts').textContent = `${iepazPakete.name} · ${eiro(iepazPakete.priceCents)}`;
+    el('pogaIepazApmaksat').textContent = `Apmaksāt ${eiro(iepazPakete.priceCents)}`;
+    el('pogaIepazApmaksat').disabled = false;
+  }
+}
+
+let atpakalUzPirmo = false;
+el('pogaIepazBerns').onclick = () => {
+  atpakalUzPirmo = true;
+  paradietSadalu('sadalaPieteikties');
+  atvertAnketu(null);
+};
+el('pogaIepazRezervet').onclick = () => paradietSadalu('sadalaRezervet');
+el('pogaIepazApmaksat').onclick = async () => {
+  if (!iepazPakete) {
+    tosts('Iepazīšanās nodarbība šobrīd nav pieejama. Lūdzu, sazinies ar mums.', 'kluda');
+    return;
+  }
+  const poga = el('pogaIepazApmaksat');
+  const sak = poga.textContent;
+  poga.disabled = true;
+  poga.textContent = 'Atver apmaksu…';
+  try {
+    const r = await izsauktFunkciju('createCheckoutSession', { packageId: iepazPakete.id });
+    window.location.href = r.url;
+  } catch (err) {
+    console.error('createCheckoutSession (iepazīšanās) kļūda:', err);
+    tosts(funkcijasKluda(err), 'kluda');
+    poga.disabled = false;
+    poga.textContent = sak;
+  }
+};
+
+// Pagaidu "Tālāk" — atver pilno profilu bez admin apstiprinājuma.
+el('pogaTalak').onclick = async () => {
+  try {
+    await saglabatProfilu(uid, { uznemsanasStatuss: 'apstiprinats' });
+    location.reload();
+  } catch (err) {
+    console.error('Statusa maiņas kļūda:', err);
+    tosts(kludasTeksts(err), 'kluda');
+  }
+};
+
 /* ---------- Notikumi: anketa ---------- */
 el('pogaPieteiktBernu').onclick = () => atvertAnketu(null);
 el('pogaAtceltAnketu').onclick = () => {
   atpakalUzRezervet = false;
+  if (atpakalUzPirmo) {
+    atpakalUzPirmo = false;
+    paradietSadalu('sadalaIepazisanas');
+  }
   aizvertAnketu();
 };
 
@@ -1658,8 +1769,13 @@ el('pogaSaglabatBernu').onclick = async () => {
   aizvertAnketu();
   atjaunotAudzeknuIzveli(dati.berna_vards || null);
 
-  // Ja anketa tika atvērta no rezervēšanas — atgriežamies tur ar audzēkni jau izvēlētu.
-  if (atpakalUzRezervet) {
+  atjaunotIepazSkatu();
+
+  // Ja anketa tika atvērta no iepazīšanās vai rezervēšanas — atgriežamies tur.
+  if (atpakalUzPirmo) {
+    atpakalUzPirmo = false;
+    paradietSadalu('sadalaIepazisanas');
+  } else if (atpakalUzRezervet) {
     atpakalUzRezervet = false;
     paradietSadalu('sadalaRezervet');
   }
@@ -1729,13 +1845,24 @@ prasitPieteiksanos(async (user) => {
     velamie_laiki: p.velamie_laiki || '',
   }] : []);
 
+  // Uzņemšanas statuss: jaunie lietotāji vispirms redz tikai iepazīšanās plūsmu.
+  // Esošajiem profiliem (jau ir audzēkņi vai bilance) statusu piešķiram klusām.
+  uznemsanas = p?.uznemsanasStatuss || null;
+  if (!uznemsanas) {
+    uznemsanas = (berni.length > 0 || (p?.creditBalance ?? 0) > 0) ? 'apstiprinats' : 'jauns';
+    saglabatProfilu(uid, { uznemsanasStatuss: uznemsanas }).catch(() => {});
+  }
+  piemerotUznemsanu();
+
   zimetBernuKartes();
   atjaunotAudzeknuIzveli();
+  atjaunotIepazSkatu();
 
   // Bilance realtime — atjaunojas arī tad, kad webhook ieskaita pirkumu.
   onSnapshot(doc(db, 'users', uid), (snap) => {
     bilance = typeof snap.data()?.creditBalance === 'number' ? snap.data().creditBalance : 0;
     atjaunotBilanci();
+    atjaunotIepazSkatu();
   });
 
   // Atcelšanas noteikumi paziņojumam.
@@ -1752,6 +1879,9 @@ prasitPieteiksanos(async (user) => {
   } catch (err) {
     console.error('Veidu ielādes kļūda:', err);
   }
+  // Neapstiprinātiem rezervēšanā tikai iepazīšanās veids; apstiprinātiem — pārējie.
+  nodarbibuVeidi = nodarbibuVeidi.filter((v) =>
+    uznemsanas === 'apstiprinats' ? !irIepaz(v.name) : irIepaz(v.name));
   if (nodarbibuVeidi.length === 1) izveletaisVeids = nodarbibuVeidi[0];
   renderVeidi();
   if (izveletaisVeids) ieladetSlotus();
@@ -1767,7 +1897,16 @@ prasitPieteiksanos(async (user) => {
   // Atgriešanās no Stripe apmaksas.
   const parametri = new URLSearchParams(window.location.search);
   if (parametri.get('maksajums') === 'ok') {
-    paradietSadalu('sadalaPirkumi');
+    if (uznemsanas !== 'apstiprinats') {
+      // Iepazīšanās nodarbība apmaksāta — atzīmējam un paliekam iepazīšanās plūsmā.
+      if (uznemsanas === 'jauns') {
+        uznemsanas = 'pieteikts';
+        saglabatProfilu(uid, { uznemsanasStatuss: 'pieteikts' }).catch(() => {});
+      }
+      paradietSadalu('sadalaIepazisanas');
+    } else {
+      paradietSadalu('sadalaPirkumi');
+    }
     tosts('Paldies! Maksājums saņemts — nodarbības tiks ieskaitītas dažu sekunžu laikā.', 'labi');
     history.replaceState(null, '', 'profils.html');
   } else if (parametri.get('maksajums') === 'davana') {
@@ -1781,12 +1920,14 @@ prasitPieteiksanos(async (user) => {
     tosts('Maksājums netika pabeigts.', 'kluda');
     history.replaceState(null, '', 'profils.html');
   } else if (parametri.get('sadala') === 'maksajumi') {
-    // Saite no sākumlapas cenu pogām.
-    paradietSadalu('sadalaPirkumi');
+    // Saite no sākumlapas cenu pogām; neapstiprinātiem — iepazīšanās plūsma.
+    paradietSadalu(uznemsanas === 'apstiprinats' ? 'sadalaPirkumi' : 'sadalaIepazisanas');
     history.replaceState(null, '', 'profils.html');
   } else if (parametri.get('sadala') === 'davinat') {
-    paradietSadalu('sadalaDavinat');
+    paradietSadalu(uznemsanas === 'apstiprinats' ? 'sadalaDavinat' : 'sadalaIepazisanas');
     history.replaceState(null, '', 'profils.html');
+  } else if (uznemsanas !== 'apstiprinats') {
+    paradietSadalu('sadalaIepazisanas');
   } else {
     // Atveras ar rezervēšanu; ja vēl nav neviena audzēkņa — ar to pievienošanu.
     paradietSadalu(berni.length ? 'sadalaRezervet' : 'sadalaPieteikties');
