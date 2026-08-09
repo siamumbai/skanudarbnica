@@ -6,6 +6,7 @@ export {
   adminMoveBooking,
   adminCancelBooking,
   adminAdjustCredits,
+  adminDeleteUser,
   adminSyncUserProfiles,
   seedDefaults,
 } from "./adminApi";

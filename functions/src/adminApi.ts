@@ -287,6 +287,57 @@ export const adminAdjustCredits = onCall({ region: REGION }, async (request) => 
   return rezultats;
 });
 
+/* ================= adminDeleteUser ================= */
+
+// Pilnībā dzēš lietotāja kontu: Firebase Auth ierakstu un users/{uid}
+// dokumentu. Vēsture (bookings, payments, creditTransactions) paliek —
+// virsgrāmatu nekad nedzēšam. Aizsardzība: nevar dzēst sevi, citu adminu
+// vai lietotāju ar gaidāmām rezervācijām (tās vispirms jāatceļ kalendārā).
+export const adminDeleteUser = onCall({ region: REGION }, async (request) => {
+  assertAppCheck(request);
+  const adminUid = assertAdmin(request);
+
+  const userId = reqString(request.data?.userId, "userId", 128);
+  if (userId === adminUid) {
+    throw new HttpsError("failed-precondition", "Nevar dzēst pats savu kontu.");
+  }
+
+  // Cita admina kontu nedzēšam.
+  try {
+    const konts = await adminAuth.getUser(userId);
+    if (konts.customClaims?.admin === true) {
+      throw new HttpsError("failed-precondition", "Nevar dzēst administratora kontu.");
+    }
+  } catch (e) {
+    if (e instanceof HttpsError) throw e;
+    // Auth konta nav (piem., jau dzēsts) — turpinām, iztīrīsim dokumentu.
+  }
+
+  // Gaidāmās rezervācijas bloķē dzēšanu — tās vispirms jāatceļ.
+  const rezSnap = await db
+    .collection(COL.bookings)
+    .where("userId", "==", userId)
+    .where("status", "==", "confirmed")
+    .get();
+  const tagadMillis = Timestamp.now().toMillis();
+  const gaidamas = rezSnap.docs.filter((d) => d.data().startAt.toMillis() > tagadMillis).length;
+  if (gaidamas > 0) {
+    throw new HttpsError(
+      "failed-precondition",
+      `Lietotājam ir ${gaidamas} gaidāmas rezervācijas — vispirms atcel tās kalendārā.`
+    );
+  }
+
+  try {
+    await adminAuth.deleteUser(userId);
+  } catch {
+    // Konts jau neeksistē — nav kļūda.
+  }
+  await db.collection(COL.users).doc(userId).delete();
+
+  return { ok: true };
+});
+
 /* ================= adminSyncUserProfiles ================= */
 
 // Papildina users/{uid} dokumentus ar e-pastu un vārdu no Firebase Auth

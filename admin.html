@@ -320,6 +320,14 @@
 
       <h2 style="margin-top:20px">Rezervācijas</h2>
       <div id="audzeknaRezervacijas" class="tabula-riti"></div>
+
+      <h2 style="margin-top:20px">Konta dzēšana</h2>
+      <p class="h2-piezime">
+        Neatgriezeniski dzēš lietotāja kontu un profilu — lietotājs vairs nevarēs pieteikties,
+        un e-pastu varēs reģistrēt no jauna. Maksājumu un rezervāciju vēsture saglabājas.
+        Ja ir gaidāmas rezervācijas, vispirms atcel tās kalendārā.
+      </p>
+      <button class="maza-poga dzest" id="pogaDzestKontu" style="padding:12px 16px">Dzēst kontu</button>
     </div>
   </section>
 
@@ -1119,6 +1127,37 @@ el("pogaNodzestBilanci").addEventListener("click", async () => {
     poga.disabled = false;
     poga.dataset.apstiprinats = "";
     poga.textContent = "Nodzēst bilanci";
+  }
+});
+
+// Konta dzēšana — neatgriezeniska, tāpēc jāieraksta lietotāja e-pasts.
+el("pogaDzestKontu").addEventListener("click", async () => {
+  if (!atvertaisAudzeknis) return;
+  const poga = el("pogaDzestKontu");
+  const epasts = atvertaisAudzeknis.dati.epasts || "";
+  const ievade = prompt(
+    `Konta dzēšana ir neatgriezeniska.\nIeraksti lietotāja e-pastu, lai apstiprinātu:\n${epasts}`
+  );
+  if (ievade === null) return;
+  if (ievade.trim().toLowerCase() !== epasts.toLowerCase() || !epasts) {
+    tosts("E-pasts nesakrīt — konts nav dzēsts.");
+    return;
+  }
+  poga.disabled = true;
+  poga.textContent = "Dzēš…";
+  try {
+    await izsauktFunkciju("adminDeleteUser", { userId: atvertaisAudzeknis.id });
+    lietotajuKese.delete(atvertaisAudzeknis.id);
+    atvertaisAudzeknis = null;
+    el("audzeknaKarte").hidden = true;
+    tosts("Konts dzēsts.");
+    ieladetAudzeknus(true);
+  } catch (e) {
+    console.error("adminDeleteUser kļūda:", e);
+    tosts(funkcijasKluda(e));
+  } finally {
+    poga.disabled = false;
+    poga.textContent = "Dzēst kontu";
   }
 });
 
