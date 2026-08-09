@@ -225,11 +225,14 @@
 
   <div class="rezima-saturs">
 
+  <!-- Sekciju navigācija: katram režīmam sava — "Gaida" tikai Pirmajā nodarbībā,
+       "Audzēkņi" tikai Nodarbībās; aktīvā sadaļa katram režīmam atceras atsevišķi. -->
   <nav class="sekciju-nav" role="tablist">
     <button class="nav-poga aktiva" data-sadala="sadalaKalendars">🗓️ Kalendārs</button>
     <button class="nav-poga" data-sadala="sadalaLaiki">⏰ Darba laiki</button>
     <button class="nav-poga" data-sadala="sadalaBrivdienas">🌴 Brīvdienas</button>
-    <button class="nav-poga" data-sadala="sadalaAudzekni">👥 Audzēkņi</button>
+    <button class="nav-poga" data-sadala="sadalaGaida" data-rezims="pirma" hidden>⏳ Gaida</button>
+    <button class="nav-poga" data-sadala="sadalaAudzekni" data-rezims="parastas">👥 Audzēkņi</button>
     <button class="nav-poga" data-sadala="sadalaMaksajumi">💳 Maksājumi</button>
     <button class="nav-poga" data-sadala="sadalaVeidi">🎵 Veidi un paketes</button>
     <button class="nav-poga" data-sadala="sadalaIestatijumi">⚙️ Iestatījumi</button>
@@ -257,6 +260,24 @@
       Klikšķis uz brīvas vietas izveido jaunu nodarbību, klikšķis uz nodarbības — atver detaļas.
       Pelēkais fons ir brīvdienas, bloķētie periodi un laiks ārpus darba laika.
     </p>
+  </section>
+
+  <!-- ============ GAIDA (Pirmās nodarbības rinda) ============ -->
+  <section class="sadala" id="sadalaGaida">
+    <div class="karte">
+      <h2>Gaida pirmo nodarbību</h2>
+      <p class="h2-piezime">
+        Jaunie reģistrētie, kas vēl nav apstiprināti. "Atļaut rezervēt" — lietotājs var apmaksāt
+        un izvēlēties pirmās nodarbības laiku. "Pilnā piekļuve" — atveras viss profils ar pakešu pirkšanu.
+      </p>
+      <div class="tabula-riti">
+        <table>
+          <thead><tr><th>Vecāks</th><th>E-pasts</th><th>Bērns</th><th>Statuss</th><th></th></tr></thead>
+          <tbody id="gaidaTabula"></tbody>
+        </table>
+      </div>
+      <button class="maza-poga" id="pogaGaidaAtjaunot" style="margin-top:10px">Atjaunot sarakstu</button>
+    </div>
   </section>
 
   <!-- ============ AUDZĒKŅI ============ -->
@@ -554,6 +575,7 @@ function uzstaditRezimu(jauns) {
   el("rezimsPirma").classList.toggle("aktiva", rezims === "pirma");
   el("rezimsParastas").classList.toggle("aktiva", rezims === "parastas");
   atjaunotJaunaVeidus();
+  atjaunotSekcijas();
   if (kalendars) kalendars.refetchEvents();
 }
 el("rezimsPirma").addEventListener("click", () => uzstaditRezimu("pirma"));
@@ -569,14 +591,75 @@ function atjaunotJaunaVeidus() {
     .join("");
 }
 
-/* ---------- Navigācija ---------- */
+/* ---------- Navigācija: katram režīmam sava aktīvā sadaļa ---------- */
+const aktivasSadalas = { pirma: "sadalaKalendars", parastas: "sadalaKalendars" };
+function atjaunotSekcijas() {
+  const aktiva = aktivasSadalas[rezims];
+  document.querySelectorAll(".sekciju-nav .nav-poga").forEach((p) => {
+    p.hidden = !!p.dataset.rezims && p.dataset.rezims !== rezims;
+    p.classList.toggle("aktiva", p.dataset.sadala === aktiva);
+  });
+  document.querySelectorAll(".sadala").forEach((s) => s.classList.toggle("aktiva", s.id === aktiva));
+  if (aktiva === "sadalaKalendars" && kalendars) kalendars.updateSize();
+  if (aktiva === "sadalaGaida") ieladetGaidosos();
+}
 document.querySelectorAll(".sekciju-nav .nav-poga").forEach((poga) => {
   poga.addEventListener("click", () => {
-    document.querySelectorAll(".sekciju-nav .nav-poga").forEach((p) => p.classList.toggle("aktiva", p === poga));
-    document.querySelectorAll(".sadala").forEach((s) => s.classList.toggle("aktiva", s.id === poga.dataset.sadala));
-    if (poga.dataset.sadala === "sadalaKalendars" && kalendars) kalendars.updateSize();
+    aktivasSadalas[rezims] = poga.dataset.sadala;
+    atjaunotSekcijas();
   });
 });
+
+/* ---------- Gaida: pirmās nodarbības rinda ---------- */
+const GAIDA_STATUSI = { jauns: "Rindā", atlauts: "Atļauts rezervēt", pieteikts: "Apmaksājis" };
+async function ieladetGaidosos() {
+  const tb = el("gaidaTabula");
+  tb.innerHTML = '<tr><td colspan="5" style="color:var(--muted)">Ielādē…</td></tr>';
+  try {
+    const snap = await getDocs(query(
+      collection(db, "users"),
+      where("uznemsanasStatuss", "in", ["jauns", "atlauts", "pieteikts"]),
+    ));
+    const rindas = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    if (!rindas.length) {
+      tb.innerHTML = '<tr><td colspan="5" style="color:var(--muted)">Šobrīd neviens negaida.</td></tr>';
+      return;
+    }
+    rindas.sort((a, b) => (a.epasts || "").localeCompare(b.epasts || ""));
+    tb.innerHTML = rindas.map((u) => {
+      const berns = (u.berni || []).map((b) => b.berna_vards).filter(Boolean).join(", ") || "—";
+      const statuss = GAIDA_STATUSI[u.uznemsanasStatuss] || u.uznemsanasStatuss;
+      const atlaut = u.uznemsanasStatuss === "jauns"
+        ? `<button class="maza-poga" data-atlaut="${u.id}">Atļaut rezervēt</button> `
+        : "";
+      return `<tr>
+        <td>${escapeHTML(u.vards || "—")}</td>
+        <td>${escapeHTML(u.epasts || "")}</td>
+        <td>${escapeHTML(berns)}</td>
+        <td>${escapeHTML(statuss)}</td>
+        <td style="white-space:nowrap">${atlaut}<button class="maza-poga" data-pilna="${u.id}">Pilnā piekļuve</button></td>
+      </tr>`;
+    }).join("");
+    tb.querySelectorAll("[data-atlaut]").forEach((p) =>
+      p.addEventListener("click", () => mainitUznemsanu(p.dataset.atlaut, "atlauts")));
+    tb.querySelectorAll("[data-pilna]").forEach((p) =>
+      p.addEventListener("click", () => mainitUznemsanu(p.dataset.pilna, "apstiprinats")));
+  } catch (e) {
+    console.error("Gaidošo ielādes kļūda:", e);
+    tb.innerHTML = '<tr><td colspan="5" style="color:var(--sarkana)">Neizdevās ielādēt sarakstu.</td></tr>';
+  }
+}
+async function mainitUznemsanu(uid, statuss) {
+  try {
+    await setDoc(doc(db, "users", uid), { uznemsanasStatuss: statuss }, { merge: true });
+    tosts(statuss === "atlauts" ? "Atļauts rezervēt pirmo nodarbību." : "Piešķirta pilnā piekļuve.");
+    ieladetGaidosos();
+  } catch (e) {
+    console.error("Statusa maiņas kļūda:", e);
+    tosts("Neizdevās mainīt statusu.");
+  }
+}
+el("pogaGaidaAtjaunot").addEventListener("click", ieladetGaidosos);
 el("pogaIziet").addEventListener("click", async () => {
   await izrakstities();
   window.location.href = "index.html";

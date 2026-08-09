@@ -483,8 +483,17 @@
 
     <!-- ---------- SADAĻA: PIRMĀ NODARBĪBA (jauniem lietotājiem līdz apstiprināšanai) ---------- -->
     <section class="sadala" id="sadalaIepazisanas" role="tabpanel" aria-labelledby="navIepazisanas">
-      <h1 class="virsraksts">Iepazīšanās <em>nodarbība</em></h1>
-      <p class="ievads">Viss sākas ar vienu iepazīšanās nodarbību.<br>Pēc tās apstiprināsim turpmākās mācības, un atvērsies pilnais profils.</p>
+      <h1 class="virsraksts">Pirmā <em>nodarbība</em></h1>
+      <p class="ievads" id="iepazIevads">Viss sākas ar vienu iepazīšanās nodarbību.</p>
+
+      <!-- Rindas paziņojums (statuss: jauns — vēl nav atļaujas rezervēt) -->
+      <section class="karte paslepts" id="iepazRindaKarte">
+        <h2>Iestājies rindā uz pirmo nodarbību</h2>
+        <p class="h2-piezime" style="margin-bottom:0">
+          Tiklīdz apstiprināsim brīvu vietu, šeit varēsi apmaksāt un rezervēt pirmās
+          nodarbības laiku. Pa to laiku vari aizpildīt anketu par bērnu zemāk.
+        </p>
+      </section>
 
       <section class="karte">
         <h2>1 · Pastāsti par bērnu</h2>
@@ -492,14 +501,14 @@
         <button class="poga-pievienot" id="pogaIepazBerns" type="button">+ Pievienot bērnu</button>
       </section>
 
-      <section class="karte">
+      <section class="karte paslepts" id="iepazMaksasKarte">
         <h2>2 · Apmaksā iepazīšanās nodarbību</h2>
         <p class="h2-piezime" id="iepazMaksasTeksts">Iepazīšanās nodarbība · 20€</p>
         <button class="cta cta-auto" id="pogaIepazApmaksat" type="button">Apmaksāt</button>
         <p class="h2-piezime" style="margin:12px 0 0">Droša apmaksa. Veicot apmaksu, tu apstiprini, ka piekrīti <a href="distances-ligums.html" target="_blank" rel="noopener">distances līgumam</a>.</p>
       </section>
 
-      <section class="karte">
+      <section class="karte paslepts" id="iepazRezerveKarte">
         <h2>3 · Rezervē laiku</h2>
         <p class="h2-piezime">Kad nodarbība apmaksāta, izvēlies sev ērtu laiku.</p>
         <button class="cta cta-auto" id="pogaIepazRezervet" type="button">Izvēlēties laiku</button>
@@ -1678,8 +1687,17 @@ function piemerotUznemsanu() {
   el('pogaTalak').classList.toggle('paslepts', pilns);
 }
 
-// Iepazīšanās sadaļas soļu statusi (audzēknis, apmaksa).
+// Iepazīšanās sadaļas skats: rindā gaidošie redz tikai paziņojumu un bērna
+// anketu; pēc atļaujas ("atlauts") atveras apmaksa un laika rezervācija.
 function atjaunotIepazSkatu() {
+  const rinda = uznemsanas === 'jauns';
+  el('iepazRindaKarte').classList.toggle('paslepts', !rinda);
+  el('iepazMaksasKarte').classList.toggle('paslepts', rinda);
+  el('iepazRezerveKarte').classList.toggle('paslepts', rinda);
+  el('iepazIevads').innerHTML = rinda
+    ? 'Viss sākas ar vienu iepazīšanās nodarbību.<br>Esi rindā — par apstiprinājumu paziņosim.'
+    : 'Vieta apstiprināta!<br>Apmaksā iepazīšanās nodarbību un izvēlies laiku.';
+
   if (berni.length > 0) {
     const vardi = berni.map((b) => b.berna_vards).filter(Boolean).join(', ');
     el('iepazBernaTeksts').textContent = `Audzēknis pievienots${vardi ? ': ' + vardi : ''} ✓`;
@@ -1722,10 +1740,12 @@ el('pogaIepazApmaksat').onclick = async () => {
   }
 };
 
-// Pagaidu "Tālāk" — atver pilno profilu bez admin apstiprinājuma.
+// Pagaidu "Tālāk" — izlaiž uzņemšanas soļus bez admin paneļa:
+// rindā → atļauts rezervēt → pilnais profils.
 el('pogaTalak').onclick = async () => {
   try {
-    await saglabatProfilu(uid, { uznemsanasStatuss: 'apstiprinats' });
+    const nakamais = uznemsanas === 'jauns' ? 'atlauts' : 'apstiprinats';
+    await saglabatProfilu(uid, { uznemsanasStatuss: nakamais });
     location.reload();
   } catch (err) {
     console.error('Statusa maiņas kļūda:', err);
@@ -1858,10 +1878,22 @@ prasitPieteiksanos(async (user) => {
   atjaunotAudzeknuIzveli();
   atjaunotIepazSkatu();
 
-  // Bilance realtime — atjaunojas arī tad, kad webhook ieskaita pirkumu.
+  // Bilance un uzņemšanas statuss realtime — atjaunojas arī tad, kad webhook
+  // ieskaita pirkumu vai admins "Gaida" sarakstā dod atļauju.
   onSnapshot(doc(db, 'users', uid), (snap) => {
     bilance = typeof snap.data()?.creditBalance === 'number' ? snap.data().creditBalance : 0;
     atjaunotBilanci();
+    const jaunais = snap.data()?.uznemsanasStatuss;
+    if (jaunais && jaunais !== uznemsanas) {
+      if (jaunais === 'apstiprinats' || uznemsanas === 'apstiprinats') {
+        // Pilnā piekļuve maina arī veidu/pakešu sarakstus — vienkāršāk pārlādēt.
+        location.reload();
+        return;
+      }
+      uznemsanas = jaunais;
+      piemerotUznemsanu();
+      tosts('Vieta apstiprināta — vari rezervēt pirmo nodarbību!', 'labi');
+    }
     atjaunotIepazSkatu();
   });
 
@@ -1899,7 +1931,7 @@ prasitPieteiksanos(async (user) => {
   if (parametri.get('maksajums') === 'ok') {
     if (uznemsanas !== 'apstiprinats') {
       // Iepazīšanās nodarbība apmaksāta — atzīmējam un paliekam iepazīšanās plūsmā.
-      if (uznemsanas === 'jauns') {
+      if (uznemsanas === 'jauns' || uznemsanas === 'atlauts') {
         uznemsanas = 'pieteikts';
         saglabatProfilu(uid, { uznemsanasStatuss: 'pieteikts' }).catch(() => {});
       }
