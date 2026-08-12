@@ -83,10 +83,18 @@
   }
   .rindas-virsraksts{
     font-family:Georgia,serif;font-weight:400;font-size:clamp(26px,4vw,34px);
-    line-height:1.2;margin-bottom:10px;
+    line-height:1.2;margin-bottom:26px;
   }
   .rindas-virsraksts em{font-style:italic;color:var(--accent-dark)}
-  .rindas-ievads{font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:30px}
+
+  /* 2. skats: pilnais profils bez "Dāvināt"; Maksājumos iepazīšanās
+     nodarbību kartītes parasto pakešu vietā. */
+  #iepazKarte{display:none}
+  body.skats2 #iepazKarte{display:block}
+  body.skats2 #paketuKarte,
+  body.skats2 #pirkumaKopsavilkums,
+  body.skats2 #navDavinat,
+  body.skats2 #sadalaDavinat{display:none !important}
   .rindas-soli{
     list-style:none;text-align:left;margin:0 auto 32px;max-width:340px;
     display:flex;flex-direction:column;gap:14px;
@@ -489,7 +497,7 @@
     <a class="logo" href="index.html">skanudarbnica.lv</a>
     <nav class="skatu-parslegs" aria-label="Klienta skati">
       <button class="skata-poga" id="skataPoga1" type="button" title="1 · Rinda">1</button>
-      <button class="skata-poga" id="skataPoga2" type="button" title="2 · Pagaidām brīvs">2</button>
+      <button class="skata-poga" id="skataPoga2" type="button" title="2 · Iepazīšanās nodarbības">2</button>
       <button class="skata-poga" id="skataPoga3" type="button" title="3 · Pilnais profils">3</button>
     </nav>
   </div>
@@ -510,7 +518,6 @@
   <section class="rindas-karte">
     <span class="rindas-birka">Uzņemšana rindas kārtībā</span>
     <h1 class="rindas-virsraksts">Pievienojies <em>rindai</em></h1>
-    <p class="rindas-ievads">Jaunos audzēkņus uzņemam pakāpeniski, lai katram pietiktu uzmanības.</p>
 
     <ol class="rindas-soli">
       <li><span class="sola-nr">1</span> Piesakies rindā</li>
@@ -523,6 +530,14 @@
         <label for="rindasEpasts">Tavs e-pasts</label>
         <input type="email" id="rindasEpasts" autocomplete="email" placeholder="vards@epasts.lv">
       </div>
+      <div class="lauks">
+        <label for="rindasTel">Tavs tel.</label>
+        <input type="tel" id="rindasTel" autocomplete="tel" placeholder="+371 20 000 000">
+      </div>
+      <div class="lauks">
+        <label for="rindasVecums">Cik gadus vecs ir audzēknis?</label>
+        <select id="rindasVecums"></select>
+      </div>
       <button class="cta" id="pogaRindaPieteikties" type="button">Pieteikties</button>
       <p class="rindas-piezime">Par apstiprinājumu paziņosim uz šo e-pastu.</p>
     </div>
@@ -533,14 +548,6 @@
       <p>Tiklīdz atbrīvosies vieta, nosūtīsim apstiprinājumu uz
         <strong id="rindasApstEpasts"></strong> — tad varēsi rezervēt laiku pirmajai nodarbībai.</p>
     </div>
-  </section>
-</div>
-
-<!-- ======== 2. SKATS: pagaidām brīvs ======== -->
-<div class="skats paslepts" id="skatsOtrs">
-  <section class="rindas-karte">
-    <span class="rindas-birka">2. skats</span>
-    <p class="rindas-ievads" style="margin:16px 0 0">Šis skats pagaidām ir brīvs.</p>
   </section>
 </div>
 
@@ -777,9 +784,29 @@
     <section class="sadala" id="sadalaPirkumi" role="tabpanel" aria-labelledby="navPirkumi">
       <h1 class="virsraksts">Iegādājies <em>nodarbību</em></h1>
 
-      <section class="karte">
-        <h2>Nodarbību paketes</h2>
+      <section class="karte" id="paketuKarte">
         <div class="paketes" id="paketuSaraksts"><p class="tukss">Ielādē…</p></div>
+      </section>
+
+      <!-- Iepazīšanās nodarbības (redzamas tikai 2. skatā parasto pakešu vietā) -->
+      <section class="karte" id="iepazKarte">
+        <div class="paketes">
+          <div class="pakete">
+            <div class="pakete-nosaukums">Iepazīsti Skaņu Darbnīcu</div>
+            <div class="pakete-krediti">20 min nodarbība</div>
+            <div class="pakete-cena">20 €</div>
+          </div>
+          <div class="pakete">
+            <div class="pakete-nosaukums">Iepazīsti Skaņu Darbnīcu</div>
+            <div class="pakete-krediti">30 min nodarbība</div>
+            <div class="pakete-cena">30 €</div>
+          </div>
+          <div class="pakete">
+            <div class="pakete-nosaukums">Iepazīsti Skaņu Darbnīcu</div>
+            <div class="pakete-krediti">30 min nodarbība</div>
+            <div class="pakete-cena">30 €</div>
+          </div>
+        </div>
       </section>
 
       <!-- Pirkuma kopsavilkums — parādās, kad izvēlēta pakete -->
@@ -946,13 +973,15 @@ navPogas.forEach(({ poga, sadala }) => { el(poga).onclick = () => paradietSadalu
 
 /* ---------- Skati 1·2·3 (galvenes pogas) ---------- */
 // Hronoloģiskie skati, kā jaunais klients redz lapu:
-// 1 = rinda (gaidīšanas saraksts), 2 = pagaidām brīvs, 3 = pilnais profils.
-const skati = { 1: 'skatsRinda', 2: 'skatsOtrs', 3: 'izkartojums' };
+// 1 = rinda (gaidīšanas saraksts), 2 = profils bez "Dāvināt" ar iepazīšanās
+// nodarbībām Maksājumos, 3 = pilnais profils.
 function paraditSkatu(nr) {
-  Object.entries(skati).forEach(([n, id]) => {
-    el(id).classList.toggle('paslepts', Number(n) !== nr);
-    el('skataPoga' + n).classList.toggle('aktiva', Number(n) === nr);
-  });
+  el('skatsRinda').classList.toggle('paslepts', nr !== 1);
+  el('izkartojums').classList.toggle('paslepts', nr === 1);
+  document.body.classList.toggle('skats2', nr === 2);
+  [1, 2, 3].forEach((n) => el('skataPoga' + n).classList.toggle('aktiva', n === nr));
+  // 2. skatā "Dāvināt" sadaļas nav — ja tā atvērta, pārejam uz Maksājumiem.
+  if (nr === 2 && el('sadalaDavinat').classList.contains('aktiva')) paradietSadalu('sadalaPirkumi');
   window.scrollTo({ top: 0 });
 }
 [1, 2, 3].forEach((n) => { el('skataPoga' + n).onclick = () => paraditSkatu(n); });
@@ -961,21 +990,32 @@ el('navProfils').addEventListener('click', () => paraditSkatu(3));
 
 /* ---------- Rindas skats (1. skats) ---------- */
 let rindaPieteikta = false; // users.rindaPieteikta — vai jau nospiests "Pieteikties"
+el('rindasVecums').innerHTML = '<option value="">Izvēlies vecumu</option>'
+  + Array.from({ length: 30 }, (_, i) => `<option value="${i + 1}">${i + 1}</option>`).join('');
 function atjaunotRindasSkatu() {
   el('rindasForma').classList.toggle('paslepts', rindaPieteikta);
   el('rindasApstiprinajums').classList.toggle('paslepts', !rindaPieteikta);
 }
 el('pogaRindaPieteikties').onclick = async () => {
   const epasts = el('rindasEpasts').value.trim();
+  const tel = el('rindasTel').value.trim();
+  const vecums = el('rindasVecums').value;
   if (!/^\S+@\S+\.\S+$/.test(epasts)) {
     tosts('Lūdzu, ievadi derīgu e-pastu.', 'kluda');
+    return;
+  }
+  if (!tel || !vecums) {
+    tosts('Lūdzu, aizpildi visus laukus.', 'kluda');
     return;
   }
   const poga = el('pogaRindaPieteikties');
   poga.disabled = true;
   poga.textContent = 'Piesaka…';
   try {
-    await saglabatProfilu(uid, { rindaPieteikta: true, rindasEpasts: epasts });
+    await saglabatProfilu(uid, {
+      rindaPieteikta: true, rindasEpasts: epasts,
+      rindasTel: tel, rindasVecums: Number(vecums),
+    });
     rindaPieteikta = true;
     el('rindasApstEpasts').textContent = epasts;
     atjaunotRindasSkatu();
@@ -2024,6 +2064,8 @@ prasitPieteiksanos(async (user) => {
   // Rindas skata (1. skata) stāvoklis.
   rindaPieteikta = !!p?.rindaPieteikta;
   el('rindasEpasts').value = p?.rindasEpasts || user.email || '';
+  el('rindasTel').value = p?.rindasTel || p?.telefons || '';
+  if (p?.rindasVecums) el('rindasVecums').value = String(p.rindasVecums);
   el('rindasApstEpasts').textContent = p?.rindasEpasts || user.email || '';
   atjaunotRindasSkatu();
 
