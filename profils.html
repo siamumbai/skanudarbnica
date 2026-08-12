@@ -87,14 +87,50 @@
   }
   .rindas-virsraksts em{font-style:italic;color:var(--accent-dark)}
 
-  /* 2. skats: pilnais profils bez "Dāvināt"; Maksājumos iepazīšanās
-     nodarbību kartītes parasto pakešu vietā. */
-  #iepazKarte{display:none}
-  body.skats2 #iepazKarte{display:block}
-  body.skats2 #paketuKarte,
-  body.skats2 #pirkumaKopsavilkums,
+  /* 2. skats: pilnais profils bez "Dāvināt" un "Maksājumi"; Rezervēt sadaļā
+     iepazīšanās pirkumu kartītes un atvērts kalendāra makets. */
+  #iepazKarte,#iepazGaitaKarte{display:none}
+  body.skats2 #iepazKarte,
+  body.skats2 #iepazGaitaKarte{display:block}
   body.skats2 #navDavinat,
-  body.skats2 #sadalaDavinat{display:none !important}
+  body.skats2 #sadalaDavinat,
+  body.skats2 #navPirkumi,
+  body.skats2 #sadalaPirkumi,
+  body.skats2 #bilanceKarte,
+  body.skats2 #slotuKarte,
+  body.skats2 #nevarKarte,
+  body.skats2 #apstiprinatJosla{display:none !important}
+
+  /* Pirkšanas pogas un "vēl nepieejamās" (bālās) kartītes 2. skatā */
+  .pakete.bala{opacity:.45}
+  .pirkt-poga{
+    margin-top:10px;align-self:flex-start;
+    background:var(--accent-dark);color:var(--bg);
+    border:none;border-radius:100px;padding:10px 22px;
+    font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;
+    transition:background .15s;
+  }
+  .pirkt-poga:hover:not(:disabled){background:var(--accent)}
+  .pirkt-poga:disabled{cursor:not-allowed}
+
+  /* Iepazīšanās nodarbību gaita (3 soļi virs kalendāra maketa) */
+  .gaita{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:22px}
+  .gaitas-solis{
+    flex:1;min-width:190px;display:flex;gap:12px;align-items:center;
+    background:var(--bg);border:1.5px solid var(--border);
+    border-radius:14px;padding:14px 16px;
+  }
+  .gaitas-solis.bals{opacity:.45}
+  .gaitas-solis.iedegts{border-color:var(--accent-dark);background:#F1E6C8}
+  .gaitas-nr{
+    flex-shrink:0;width:30px;height:30px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    border:0.5px solid var(--accent-dark);color:var(--accent-dark);
+    font-size:13px;font-weight:700;background:var(--bg);
+  }
+  .gaitas-solis.iedegts .gaitas-nr{background:var(--accent-dark);color:var(--bg)}
+  .gaitas-nos{font-size:13.5px;font-weight:700}
+  .gaitas-laiks{font-size:12px;color:var(--muted);margin-top:2px}
   .rindas-soli{
     list-style:none;text-align:left;margin:0 auto 32px;max-width:340px;
     display:flex;flex-direction:column;gap:14px;
@@ -744,7 +780,8 @@
         <div id="slotuSaraksts"><p class="tukss">Vispirms izvēlies nodarbības veidu.</p></div>
       </section>
 
-      <!-- Iepazīšanās nodarbības (redzamas tikai 2. skatā) — pirms slēgtā kalendāra piezīmes -->
+      <!-- Iepazīšanās nodarbības (redzamas tikai 2. skatā) — hronoloģiski var
+           nopirkt tikai pirmo (20 min); pārējās atveras vēlāk, tāpēc bālas. -->
       <section class="karte" id="iepazKarte">
         <h2>Iegādājies nodarbību</h2>
         <div class="paketes">
@@ -752,18 +789,72 @@
             <div class="pakete-nosaukums">Iepazīsti Skaņu Darbnīcu</div>
             <div class="pakete-krediti">20 min nodarbība</div>
             <div class="pakete-cena">20 €</div>
+            <button class="pirkt-poga" id="pogaPirktIepaz1" type="button">Pirkt</button>
           </div>
-          <div class="pakete">
+          <div class="pakete bala">
             <div class="pakete-nosaukums">Iepazīsti Skaņu Darbnīcu</div>
             <div class="pakete-krediti">30 min nodarbība</div>
             <div class="pakete-cena">30 €</div>
+            <button class="pirkt-poga" type="button" disabled>Pirkt</button>
           </div>
-          <div class="pakete">
+          <div class="pakete bala">
             <div class="pakete-nosaukums">Iepazīsti Skaņu Darbnīcu</div>
             <div class="pakete-krediti">30 min nodarbība</div>
             <div class="pakete-cena">30 €</div>
+            <button class="pirkt-poga" type="button" disabled>Pirkt</button>
           </div>
         </div>
+        <div class="paketes" style="margin-top:14px">
+          <div class="pakete bala">
+            <div class="pakete-nosaukums">Viena nodarbība</div>
+            <div class="pakete-krediti">1 nodarbība</div>
+            <div class="pakete-cena">80 €</div>
+            <button class="pirkt-poga" type="button" disabled>Pirkt</button>
+          </div>
+          <div class="pakete bala">
+            <div class="pakete-nosaukums">4 nodarbības</div>
+            <div class="pakete-krediti">4 nodarbības</div>
+            <div class="pakete-cena">70 € <span class="par-nodarbibu">/ nodarbība</span></div>
+            <button class="pirkt-poga" type="button" disabled>Pirkt</button>
+          </div>
+          <div class="pakete bala">
+            <div class="pakete-nosaukums">8 nodarbības</div>
+            <div class="pakete-krediti">8 nodarbības</div>
+            <div class="pakete-cena">60 € <span class="par-nodarbibu">/ nodarbība</span></div>
+            <button class="pirkt-poga" type="button" disabled>Pirkt</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. skats: iepazīšanās gaita un atvērtais kalendāra makets.
+           Klikšķis uz brīva laika "iededz" 1. nodarbību; 2. un 3. atvērsies
+           pēc iepriekšējās nodarbības un atļaujas (maketā vienmēr bālas). -->
+      <section class="karte" id="iepazGaitaKarte">
+        <h2>Tavas iepazīšanās nodarbības</h2>
+        <div class="gaita">
+          <div class="gaitas-solis" id="gaitasSolis1">
+            <span class="gaitas-nr">1</span>
+            <div>
+              <div class="gaitas-nos">Iepazīsti Skaņu Darbnīcu</div>
+              <div class="gaitas-laiks" id="gaitasLaiks1">Izvēlies laiku kalendārā zemāk</div>
+            </div>
+          </div>
+          <div class="gaitas-solis bals" id="gaitasSolis2">
+            <span class="gaitas-nr">2</span>
+            <div>
+              <div class="gaitas-nos">Iepazīsti Skaņu Darbnīcu</div>
+              <div class="gaitas-laiks">Atvērsies pēc 1. nodarbības</div>
+            </div>
+          </div>
+          <div class="gaitas-solis bals" id="gaitasSolis3">
+            <span class="gaitas-nr">3</span>
+            <div>
+              <div class="gaitas-nos">Iepazīsti Skaņu Darbnīcu</div>
+              <div class="gaitas-laiks">Atvērsies pēc 2. nodarbības</div>
+            </div>
+          </div>
+        </div>
+        <div id="mockKalendars"></div>
       </section>
 
       <section class="karte paslepts" id="nevarKarte">
@@ -981,8 +1072,9 @@ function paraditSkatu(nr) {
   el('izkartojums').classList.toggle('paslepts', nr === 1);
   document.body.classList.toggle('skats2', nr === 2);
   [1, 2, 3].forEach((n) => el('skataPoga' + n).classList.toggle('aktiva', n === nr));
-  // 2. skatā "Dāvināt" sadaļas nav — ja tā atvērta, pārejam uz Maksājumiem.
-  if (nr === 2 && el('sadalaDavinat').classList.contains('aktiva')) paradietSadalu('sadalaPirkumi');
+  // 2. skatā nav "Dāvināt" un "Maksājumi" — ja kāda no tām atvērta, pārejam uz Rezervēt.
+  if (nr === 2 && (el('sadalaDavinat').classList.contains('aktiva')
+    || el('sadalaPirkumi').classList.contains('aktiva'))) paradietSadalu('sadalaRezervet');
   window.scrollTo({ top: 0 });
 }
 [1, 2, 3].forEach((n) => { el('skataPoga' + n).onclick = () => paraditSkatu(n); });
@@ -1026,6 +1118,64 @@ el('pogaRindaPieteikties').onclick = async () => {
   }
   poga.disabled = false;
   poga.textContent = 'Pieteikties';
+};
+
+/* ---------- 2. skats: iepazīšanās makets ---------- */
+// Atvērts kalendārs ar izdomātiem laikiem — īstas rezervācijas šeit nenotiek.
+// Klikšķis uz brīva laika "iededz" 1. iepazīšanās nodarbību gaitā.
+let mockNobide = 0; // rādāmā maketa nedēļa: 0 = tekošā
+function zimetMockKalendaru() {
+  const pirmdiena = nedelasPirmdiena(mockNobide);
+  const sodien = sodienISO();
+  const kolonnas = [];
+  for (let d = 0; d < 7; d++) {
+    const datums = datumsISO(new Date(pirmdiena.getTime() + d * 86_400_000));
+    const pusdienlaiks = new Date(datums + 'T12:00:00');
+    const virsraksts = `
+      <div class="kolonna-virsraksts">
+        <div class="kolonna-diena">${fmtNedelasDiena.format(pusdienlaiks)}</div>
+        <div class="kolonna-datums">${fmtDatumsIss.format(pusdienlaiks)}</div>
+      </div>`;
+    if (datums < sodien) {
+      kolonnas.push(`<div class="diena-kolonna briva">${virsraksts}<div class="brivs-bloks">Pagājusi</div></div>`);
+      continue;
+    }
+    if (d === 6) { // svētdiena — brīvdiena
+      kolonnas.push(`<div class="diena-kolonna briva">${virsraksts}<div class="brivs-bloks">Brīvdiena</div></div>`);
+      continue;
+    }
+    const sloti = [];
+    for (let st = 10; st <= 17; st++) {
+      const startMillis = new Date(`${datums}T${String(st).padStart(2, '0')}:00:00`).getTime();
+      const aiznemts = (d * 3 + st) % 5 === 0; // maketa "aizņemtie" laiki
+      sloti.push(aiznemts
+        ? `<button class="laiks aiznemts" type="button" disabled title="Aizņemts">${String(st).padStart(2, '0')}:00</button>`
+        : `<button class="laiks" data-start="${startMillis}" type="button">${String(st).padStart(2, '0')}:00</button>`);
+    }
+    kolonnas.push(`<div class="diena-kolonna">${virsraksts}${sloti.join('')}</div>`);
+  }
+  el('mockKalendars').innerHTML = `
+    <div class="ritjoslas-galva">
+      <button class="riti-poga" id="mockPaKreisi" type="button" ${mockNobide > 0 ? '' : 'disabled'} aria-label="Iepriekšējā nedēļa">‹</button>
+      <button class="riti-poga" id="mockPaLabi" type="button" ${mockNobide < 3 ? '' : 'disabled'} aria-label="Nākamā nedēļa">›</button>
+    </div>
+    <div class="dienu-skats"><div class="dienu-riti">${kolonnas.join('')}</div></div>`;
+  el('mockPaKreisi').onclick = () => { if (mockNobide > 0) { mockNobide--; zimetMockKalendaru(); } };
+  el('mockPaLabi').onclick = () => { if (mockNobide < 3) { mockNobide++; zimetMockKalendaru(); } };
+  el('mockKalendars').querySelectorAll('.laiks:not(.aiznemts)').forEach((poga) => {
+    poga.onclick = () => {
+      el('mockKalendars').querySelectorAll('.laiks').forEach((p) => p.classList.toggle('aktivs', p === poga));
+      const kad = new Date(Number(poga.dataset.start));
+      el('gaitasSolis1').classList.add('iedegts');
+      el('gaitasLaiks1').textContent = `${arLieloBurtu(fmtDiena.format(kad))} plkst. ${fmtLaiks.format(kad)}`;
+    };
+  });
+}
+zimetMockKalendaru();
+
+// "Pirkt" 20 min nodarbībai — maketā ved pie kalendāra laika izvēlei.
+el('pogaPirktIepaz1').onclick = () => {
+  el('iepazGaitaKarte').scrollIntoView({ behavior: 'smooth' });
 };
 
 /* ---------- Radio pogu palīgfunkcijas ---------- */
