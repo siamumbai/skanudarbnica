@@ -744,6 +744,28 @@
         <div id="slotuSaraksts"><p class="tukss">Vispirms izvēlies nodarbības veidu.</p></div>
       </section>
 
+      <!-- Iepazīšanās nodarbības (redzamas tikai 2. skatā) — pirms slēgtā kalendāra piezīmes -->
+      <section class="karte" id="iepazKarte">
+        <h2>Iegādājies nodarbību</h2>
+        <div class="paketes">
+          <div class="pakete">
+            <div class="pakete-nosaukums">Iepazīsti Skaņu Darbnīcu</div>
+            <div class="pakete-krediti">20 min nodarbība</div>
+            <div class="pakete-cena">20 €</div>
+          </div>
+          <div class="pakete">
+            <div class="pakete-nosaukums">Iepazīsti Skaņu Darbnīcu</div>
+            <div class="pakete-krediti">30 min nodarbība</div>
+            <div class="pakete-cena">30 €</div>
+          </div>
+          <div class="pakete">
+            <div class="pakete-nosaukums">Iepazīsti Skaņu Darbnīcu</div>
+            <div class="pakete-krediti">30 min nodarbība</div>
+            <div class="pakete-cena">30 €</div>
+          </div>
+        </div>
+      </section>
+
       <section class="karte paslepts" id="nevarKarte">
         <p style="font-size:15px;font-weight:600;line-height:1.6;margin-bottom:16px">Kalendārs atvērsies, kad nopirksiet vismaz 1 nodarbību.</p>
         <button class="cta cta-auto" id="pogaUzPaketem">Pirkt nodarbību</button>
@@ -786,27 +808,6 @@
 
       <section class="karte" id="paketuKarte">
         <div class="paketes" id="paketuSaraksts"><p class="tukss">Ielādē…</p></div>
-      </section>
-
-      <!-- Iepazīšanās nodarbības (redzamas tikai 2. skatā parasto pakešu vietā) -->
-      <section class="karte" id="iepazKarte">
-        <div class="paketes">
-          <div class="pakete">
-            <div class="pakete-nosaukums">Iepazīsti Skaņu Darbnīcu</div>
-            <div class="pakete-krediti">20 min nodarbība</div>
-            <div class="pakete-cena">20 €</div>
-          </div>
-          <div class="pakete">
-            <div class="pakete-nosaukums">Iepazīsti Skaņu Darbnīcu</div>
-            <div class="pakete-krediti">30 min nodarbība</div>
-            <div class="pakete-cena">30 €</div>
-          </div>
-          <div class="pakete">
-            <div class="pakete-nosaukums">Iepazīsti Skaņu Darbnīcu</div>
-            <div class="pakete-krediti">30 min nodarbība</div>
-            <div class="pakete-cena">30 €</div>
-          </div>
-        </div>
       </section>
 
       <!-- Pirkuma kopsavilkums — parādās, kad izvēlēta pakete -->
@@ -990,7 +991,7 @@ el('navProfils').addEventListener('click', () => paraditSkatu(3));
 
 /* ---------- Rindas skats (1. skats) ---------- */
 let rindaPieteikta = false; // users.rindaPieteikta — vai jau nospiests "Pieteikties"
-el('rindasVecums').innerHTML = '<option value="">Izvēlies vecumu</option>'
+el('rindasVecums').innerHTML = '<option value="">Vecums</option>'
   + Array.from({ length: 30 }, (_, i) => `<option value="${i + 1}">${i + 1}</option>`).join('');
 function atjaunotRindasSkatu() {
   el('rindasForma').classList.toggle('paslepts', rindaPieteikta);
@@ -1240,8 +1241,10 @@ document.addEventListener('click', (e) => {
 let atpakalUzRezervet = false;
 el('pogaJaunsAudzeknis').onclick = () => {
   atpakalUzRezervet = true;
+  // Vispirms parādām "Pievienot bērnu" sadaļu un tikai pēc brīža automātiski
+  // atveram anketu — lai sajūt, ka tas ir solis atpakaļ.
   paradietSadalu('sadalaPieteikties');
-  atvertAnketu(null);
+  setTimeout(() => atvertAnketu(null), 1000);
 };
 
 /* ---------- Nodarbību veidi ---------- */
@@ -2063,7 +2066,7 @@ prasitPieteiksanos(async (user) => {
 
   // Rindas skata (1. skata) stāvoklis.
   rindaPieteikta = !!p?.rindaPieteikta;
-  el('rindasEpasts').value = p?.rindasEpasts || user.email || '';
+  el('rindasEpasts').value = user.email || p?.rindasEpasts || '';
   el('rindasTel').value = p?.rindasTel || p?.telefons || '';
   if (p?.rindasVecums) el('rindasVecums').value = String(p.rindasVecums);
   el('rindasApstEpasts').textContent = p?.rindasEpasts || user.email || '';
