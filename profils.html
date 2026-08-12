@@ -55,6 +55,61 @@
   .profils-ikona:hover{border-color:var(--accent-dark);background:var(--bg2)}
   .profils-ikona.aktiva{background:var(--accent-dark);border-color:var(--accent-dark)}
 
+  /* Galvenes skatu pārslēgs 1·2·3 — hronoloģiskie skati, kā jaunais klients
+     redz lapu (1 = rinda, 2 = pagaidām brīvs, 3 = pilnais profils). Paliek pastāvīgi. */
+  .josla-kreisa{display:flex;align-items:center;gap:16px}
+  .skatu-parslegs{display:flex;gap:6px}
+  .skata-poga{
+    width:27px;height:27px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    background:transparent;border:0.5px solid var(--border);
+    font-family:inherit;font-size:12.5px;font-weight:600;color:var(--muted);
+    cursor:pointer;transition:background .15s,border-color .15s,color .15s;
+  }
+  .skata-poga:hover{border-color:var(--accent-dark);color:var(--accent-dark)}
+  .skata-poga.aktiva{background:var(--accent-dark);border-color:var(--accent-dark);color:var(--bg)}
+
+  /* --- 1. skats: rinda (gaidīšanas saraksts jaunajiem) --- */
+  .skats{max-width:620px;margin:0 auto;padding:56px 32px 90px}
+  .rindas-karte{
+    background:var(--bg2);border:0.5px solid var(--border);
+    border-radius:18px;padding:42px 36px;text-align:center;
+  }
+  .rindas-birka{
+    display:inline-block;font-size:11px;font-weight:800;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--accent-dark);
+    border:0.5px solid var(--border);border-radius:100px;
+    padding:7px 14px;margin-bottom:20px;background:var(--bg);
+  }
+  .rindas-virsraksts{
+    font-family:Georgia,serif;font-weight:400;font-size:clamp(26px,4vw,34px);
+    line-height:1.2;margin-bottom:10px;
+  }
+  .rindas-virsraksts em{font-style:italic;color:var(--accent-dark)}
+  .rindas-ievads{font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:30px}
+  .rindas-soli{
+    list-style:none;text-align:left;margin:0 auto 32px;max-width:340px;
+    display:flex;flex-direction:column;gap:14px;
+  }
+  .rindas-soli li{display:flex;align-items:center;gap:14px;font-size:14.5px}
+  .sola-nr{
+    flex-shrink:0;width:30px;height:30px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    border:0.5px solid var(--accent-dark);color:var(--accent-dark);
+    font-size:13px;font-weight:700;background:var(--bg);
+  }
+  .rindas-forma{max-width:380px;margin:0 auto;text-align:left}
+  .rindas-forma .cta{margin-top:12px}
+  .rindas-piezime{font-size:12.5px;color:var(--muted);text-align:center;margin-top:14px;line-height:1.5}
+  .rindas-apstiprinajums{max-width:400px;margin:0 auto}
+  .rindas-kekss{
+    width:52px;height:52px;border-radius:50%;margin:0 auto 16px;
+    display:flex;align-items:center;justify-content:center;
+    background:var(--zala);color:#fff;font-size:24px;
+  }
+  .rindas-apstiprinajums h3{font-family:Georgia,serif;font-weight:400;font-size:22px;margin-bottom:8px}
+  .rindas-apstiprinajums p{font-size:14px;color:var(--muted);line-height:1.6}
+
   /* --- Izkārtojums: sānu navigācija + saturs --- */
   .izkartojums{
     max-width:1180px;margin:0 auto;padding:36px 32px 90px;
@@ -417,6 +472,9 @@
     .nav-poga{white-space:nowrap;padding:10px 14px;font-size:13px;width:auto}
     .josla{padding:16px 18px}
     .josla-epasts{display:none}
+    .josla-kreisa{gap:12px}
+    .skats{padding:40px 18px 70px}
+    .rindas-karte{padding:32px 22px}
     .rinda{grid-template-columns:1fr}
     .bilance{padding:13px 16px}
     .bilance-aplis{width:44px;height:44px;font-size:20px}
@@ -427,7 +485,14 @@
 <body>
 
 <header class="josla">
-  <a class="logo" href="index.html">skanudarbnica.lv</a>
+  <div class="josla-kreisa">
+    <a class="logo" href="index.html">skanudarbnica.lv</a>
+    <nav class="skatu-parslegs" aria-label="Klienta skati">
+      <button class="skata-poga" id="skataPoga1" type="button" title="1 · Rinda">1</button>
+      <button class="skata-poga" id="skataPoga2" type="button" title="2 · Pagaidām brīvs">2</button>
+      <button class="skata-poga" id="skataPoga3" type="button" title="3 · Pilnais profils">3</button>
+    </nav>
+  </div>
   <div class="josla-labi">
     <span class="josla-epasts" id="joslaEpasts"></span>
     <button class="profils-ikona" id="navProfils" aria-controls="sadalaProfils" aria-label="Mans profils" title="Mans profils">
@@ -439,6 +504,45 @@
 
 <!-- Ielādes stāvoklis -->
 <p class="ielade" id="ielade">Ielādē profilu…</p>
+
+<!-- ======== 1. SKATS: RINDA (gaidīšanas saraksts jaunajiem) ======== -->
+<div class="skats paslepts" id="skatsRinda">
+  <section class="rindas-karte">
+    <span class="rindas-birka">Uzņemšana rindas kārtībā</span>
+    <h1 class="rindas-virsraksts">Pievienojies <em>rindai</em></h1>
+    <p class="rindas-ievads">Jaunos audzēkņus uzņemam pakāpeniski, lai katram pietiktu uzmanības.</p>
+
+    <ol class="rindas-soli">
+      <li><span class="sola-nr">1</span> Piesakies rindā</li>
+      <li><span class="sola-nr">2</span> Sagaidi apstiprinājumu</li>
+      <li><span class="sola-nr">3</span> Rezervē laiku pirmajai nodarbībai</li>
+    </ol>
+
+    <div class="rindas-forma" id="rindasForma">
+      <div class="lauks">
+        <label for="rindasEpasts">Tavs e-pasts</label>
+        <input type="email" id="rindasEpasts" autocomplete="email" placeholder="vards@epasts.lv">
+      </div>
+      <button class="cta" id="pogaRindaPieteikties" type="button">Pieteikties</button>
+      <p class="rindas-piezime">Par apstiprinājumu paziņosim uz šo e-pastu.</p>
+    </div>
+
+    <div class="rindas-apstiprinajums paslepts" id="rindasApstiprinajums">
+      <div class="rindas-kekss" aria-hidden="true">✓</div>
+      <h3>Tu esi rindā!</h3>
+      <p>Tiklīdz atbrīvosies vieta, nosūtīsim apstiprinājumu uz
+        <strong id="rindasApstEpasts"></strong> — tad varēsi rezervēt laiku pirmajai nodarbībai.</p>
+    </div>
+  </section>
+</div>
+
+<!-- ======== 2. SKATS: pagaidām brīvs ======== -->
+<div class="skats paslepts" id="skatsOtrs">
+  <section class="rindas-karte">
+    <span class="rindas-birka">2. skats</span>
+    <p class="rindas-ievads" style="margin:16px 0 0">Šis skats pagaidām ir brīvs.</p>
+  </section>
+</div>
 
 <!-- Galvenais saturs -->
 <div class="izkartojums paslepts" id="izkartojums">
@@ -839,6 +943,49 @@ function paradietSadalu(sadalasId) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 navPogas.forEach(({ poga, sadala }) => { el(poga).onclick = () => paradietSadalu(sadala); });
+
+/* ---------- Skati 1·2·3 (galvenes pogas) ---------- */
+// Hronoloģiskie skati, kā jaunais klients redz lapu:
+// 1 = rinda (gaidīšanas saraksts), 2 = pagaidām brīvs, 3 = pilnais profils.
+const skati = { 1: 'skatsRinda', 2: 'skatsOtrs', 3: 'izkartojums' };
+function paraditSkatu(nr) {
+  Object.entries(skati).forEach(([n, id]) => {
+    el(id).classList.toggle('paslepts', Number(n) !== nr);
+    el('skataPoga' + n).classList.toggle('aktiva', Number(n) === nr);
+  });
+  window.scrollTo({ top: 0 });
+}
+[1, 2, 3].forEach((n) => { el('skataPoga' + n).onclick = () => paraditSkatu(n); });
+// Galvenes profila ikona ved uz sadaļu pilnajā profilā — pārslēdzam 3. skatu.
+el('navProfils').addEventListener('click', () => paraditSkatu(3));
+
+/* ---------- Rindas skats (1. skats) ---------- */
+let rindaPieteikta = false; // users.rindaPieteikta — vai jau nospiests "Pieteikties"
+function atjaunotRindasSkatu() {
+  el('rindasForma').classList.toggle('paslepts', rindaPieteikta);
+  el('rindasApstiprinajums').classList.toggle('paslepts', !rindaPieteikta);
+}
+el('pogaRindaPieteikties').onclick = async () => {
+  const epasts = el('rindasEpasts').value.trim();
+  if (!/^\S+@\S+\.\S+$/.test(epasts)) {
+    tosts('Lūdzu, ievadi derīgu e-pastu.', 'kluda');
+    return;
+  }
+  const poga = el('pogaRindaPieteikties');
+  poga.disabled = true;
+  poga.textContent = 'Piesaka…';
+  try {
+    await saglabatProfilu(uid, { rindaPieteikta: true, rindasEpasts: epasts });
+    rindaPieteikta = true;
+    el('rindasApstEpasts').textContent = epasts;
+    atjaunotRindasSkatu();
+  } catch (err) {
+    console.error('Rindas pieteikuma kļūda:', err);
+    tosts(kludasTeksts(err), 'kluda');
+  }
+  poga.disabled = false;
+  poga.textContent = 'Pieteikties';
+};
 
 /* ---------- Radio pogu palīgfunkcijas ---------- */
 function iestatitRadio(nosaukums, vertiba) {
@@ -1874,6 +2021,12 @@ prasitPieteiksanos(async (user) => {
   }
   piemerotUznemsanu();
 
+  // Rindas skata (1. skata) stāvoklis.
+  rindaPieteikta = !!p?.rindaPieteikta;
+  el('rindasEpasts').value = p?.rindasEpasts || user.email || '';
+  el('rindasApstEpasts').textContent = p?.rindasEpasts || user.email || '';
+  atjaunotRindasSkatu();
+
   zimetBernuKartes();
   atjaunotAudzeknuIzveli();
   atjaunotIepazSkatu();
@@ -1892,6 +2045,9 @@ prasitPieteiksanos(async (user) => {
       }
       uznemsanas = jaunais;
       piemerotUznemsanu();
+      // No rindas skata pārejam uz pilno profilu ar iepazīšanās soļiem.
+      paraditSkatu(3);
+      paradietSadalu('sadalaIepazisanas');
       tosts('Vieta apstiprināta — vari rezervēt pirmo nodarbību!', 'labi');
     }
     atjaunotIepazSkatu();
@@ -1919,7 +2075,8 @@ prasitPieteiksanos(async (user) => {
   if (izveletaisVeids) ieladetSlotus();
 
   el('ielade').classList.add('paslepts');
-  el('izkartojums').classList.remove('paslepts');
+  // Jaunie (rindā gaidošie) sāk ar 1. skatu — rindu; pārējie ar pilno profilu.
+  paraditSkatu(uznemsanas === 'jauns' ? 1 : 3);
 
   ieladetGaidamas();
   ieladetPaketes();
