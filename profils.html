@@ -588,6 +588,10 @@
       <li><span class="sola-nr">3</span> Rezervē laiku pirmajai nodarbībai</li>
     </ol>
   </section>
+
+  <!-- Pagaidu testēšanas poga — atiestata pieteikumu, lai var pieteikties vēlreiz -->
+  <button class="cta cta-auto" id="pogaRindaAtiestatit" type="button"
+    style="position:fixed;left:24px;bottom:24px;z-index:50;box-shadow:0 8px 26px rgba(0,0,0,.25)">↺ No jauna</button>
 </div>
 
 <!-- Galvenais saturs -->
@@ -1126,10 +1130,25 @@ el('pogaRindaPieteikties').onclick = async () => {
   poga.textContent = 'Pieteikties';
 };
 
+// Pagaidu testēšanas poga — atiestata rindas pieteikumu, lai formu var
+// aizpildīt un nosūtīt vēlreiz.
+el('pogaRindaAtiestatit').onclick = async () => {
+  try {
+    await saglabatProfilu(uid, { rindaPieteikta: false });
+    rindaPieteikta = false;
+    atjaunotRindasSkatu();
+    tosts('Pieteikums atiestatīts — vari pieteikties vēlreiz.', 'labi');
+  } catch (err) {
+    console.error('Rindas atiestatīšanas kļūda:', err);
+    tosts(kludasTeksts(err), 'kluda');
+  }
+};
+
 /* ---------- 2. skats: iepazīšanās makets ---------- */
 // Atvērts kalendārs ar izdomātiem laikiem — īstas rezervācijas šeit nenotiek.
 // Klikšķis uz brīva laika "iededz" 1. iepazīšanās nodarbību gaitā.
 let mockNobide = 0; // rādāmā maketa nedēļa: 0 = tekošā
+let mockSlide = 0;  // nedēļas maiņas animācija: 1 = uz priekšu, -1 = atpakaļ
 function zimetMockKalendaru() {
   const pirmdiena = nedelasPirmdiena(mockNobide);
   const sodien = sodienISO();
@@ -1160,14 +1179,17 @@ function zimetMockKalendaru() {
     }
     kolonnas.push(`<div class="diena-kolonna">${virsraksts}${sloti.join('')}</div>`);
   }
+  // Tā pati slīdēšanas animācija kā īstajam kalendāram 3. skatā.
+  const animKlase = mockSlide > 0 ? ' no-labas' : mockSlide < 0 ? ' no-kreisas' : '';
+  mockSlide = 0;
   el('mockKalendars').innerHTML = `
     <div class="ritjoslas-galva">
       <button class="riti-poga" id="mockPaKreisi" type="button" ${mockNobide > 0 ? '' : 'disabled'} aria-label="Iepriekšējā nedēļa">‹</button>
       <button class="riti-poga" id="mockPaLabi" type="button" ${mockNobide < 3 ? '' : 'disabled'} aria-label="Nākamā nedēļa">›</button>
     </div>
-    <div class="dienu-skats"><div class="dienu-riti">${kolonnas.join('')}</div></div>`;
-  el('mockPaKreisi').onclick = () => { if (mockNobide > 0) { mockNobide--; zimetMockKalendaru(); } };
-  el('mockPaLabi').onclick = () => { if (mockNobide < 3) { mockNobide++; zimetMockKalendaru(); } };
+    <div class="dienu-skats"><div class="dienu-riti${animKlase}">${kolonnas.join('')}</div></div>`;
+  el('mockPaKreisi').onclick = () => { if (mockNobide > 0) { mockNobide--; mockSlide = -1; zimetMockKalendaru(); } };
+  el('mockPaLabi').onclick = () => { if (mockNobide < 3) { mockNobide++; mockSlide = 1; zimetMockKalendaru(); } };
   el('mockKalendars').querySelectorAll('.laiks:not(.aiznemts)').forEach((poga) => {
     poga.onclick = () => {
       el('mockKalendars').querySelectorAll('.laiks').forEach((p) => p.classList.toggle('aktivs', p === poga));
