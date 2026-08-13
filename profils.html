@@ -135,6 +135,17 @@
   /* Karšu apmaksas makets — atveras tikai 2. skatā pēc "Pirkt" */
   #mockMaksaKarte{display:none}
   body.skats2 #mockMaksaKarte.atverts{display:block}
+  /* 2. skata bērnu karte Rezervēt sadaļā */
+  #rezBerniKarte{display:none}
+  body.skats2 #rezBerniKarte{display:block}
+  body.skats2 #pogaJaunsAudzeknis{display:none !important}
+  .berna-rinda{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:12px 2px;border-bottom:0.5px solid var(--border);
+    font-size:14.5px;font-weight:600;
+  }
+  .berna-rinda:last-child{border-bottom:none;padding-bottom:2px}
+  #rezBernuRindas:not(:empty){margin-top:14px}
   /* "+ Pievienot bērnu" pogas iemirdzināšana, ja laiks izvēlēts bez bērna anketas */
   @keyframes mirgot{
     0%,100%{box-shadow:none;transform:none}
@@ -617,7 +628,7 @@
       <span class="nav-ik" aria-hidden="true">🗓️</span> Rezervēt
     </button>
     <button class="nav-poga" id="navNodarbibas" role="tab" aria-selected="false" aria-controls="sadalaNodarbibas">
-      <span class="nav-ik" aria-hidden="true">🎵</span> Manas nodarbības
+      <span class="nav-ik" aria-hidden="true">🎵</span> Rezervētās nodarbības
       <span class="nav-skaits paslepts" id="navNodarbibasSkaits" aria-label="Gaidāmās nodarbības"></span>
     </button>
     <button class="nav-poga" id="navPirkumi" role="tab" aria-selected="false" aria-controls="sadalaPirkumi">
@@ -769,6 +780,12 @@
       <h1 class="virsraksts">Rezervē <em>nodarbību</em></h1>
       <p class="ievads">Izvēlies nodarbības veidu un sev ērtu laiku.<br>Rezervācija uzreiz tiek apstiprināta.</p>
 
+      <!-- 2. skats: bērnu pievienošana un saraksts — vienmēr pieejama, pirms audzēkņa izvēles -->
+      <section class="karte" id="rezBerniKarte">
+        <button class="poga-pievienot" id="pogaRezPievienotBernu" type="button">+ Pievienot bērnu</button>
+        <div id="rezBernuRindas"></div>
+      </section>
+
       <section class="karte">
         <h2 id="veiduVirsraksts">1 · Nodarbības veids</h2>
         <div class="veidi" id="veiduSaraksts"></div>
@@ -887,7 +904,7 @@
 
     <!-- ---------- SADAĻA: MANAS NODARBĪBAS ---------- -->
     <section class="sadala" id="sadalaNodarbibas" role="tabpanel" aria-labelledby="navNodarbibas">
-      <h1 class="virsraksts">Manas <em>nodarbības</em></h1>
+      <h1 class="virsraksts">Rezervētās <em>nodarbības</em></h1>
 
       <section class="karte">
         <h2>Gaidāmās nodarbības</h2>
@@ -1159,6 +1176,28 @@ el('pogaRindaAtiestatit').onclick = async () => {
 let mockNobide = 0; // rādāmā maketa nedēļa: 0 = tekošā
 let mockSlide = 0;  // nedēļas maiņas animācija: 1 = uz priekšu, -1 = atpakaļ
 let mockGaidaSlots = null; // pirms bērna pievienošanas izvēlētais laiks (millis)
+
+// Bērnu saraksts Rezervēt sadaļā (2. skats): katrs bērns savā rindā ar "Labot".
+function zimetRezBernuRindas() {
+  const k = el('rezBernuRindas');
+  k.innerHTML = berni.map((b, i) => `
+    <div class="berna-rinda">
+      <span>${escapeHTML(b.berna_vards || 'Audzēknis')}</span>
+      <button class="maza-poga neitrala" data-i="${i}" type="button">Labot</button>
+    </div>`).join('');
+  k.querySelectorAll('button').forEach((p) => {
+    p.onclick = () => {
+      atpakalUzRezervet = true;
+      paradietSadalu('sadalaPieteikties');
+      atvertAnketu(Number(p.dataset.i));
+    };
+  });
+}
+el('pogaRezPievienotBernu').onclick = () => {
+  atpakalUzRezervet = true;
+  paradietSadalu('sadalaPieteikties');
+  setTimeout(() => atvertAnketu(null), 1000);
+};
 function zimetMockKalendaru() {
   const pirmdiena = nedelasPirmdiena(mockNobide);
   const sodien = sodienISO();
@@ -1206,7 +1245,7 @@ function zimetMockKalendaru() {
       // bērnu" pogu un atceramies laiku, lai pēc pievienošanas to iekrāsotu.
       if (berni.length === 0) {
         mockGaidaSlots = poga.dataset.start;
-        const pp = el('pogaJaunsAudzeknis');
+        const pp = el('pogaRezPievienotBernu');
         pp.classList.remove('mirgo');
         void pp.offsetWidth; // restartē animāciju, ja spiež atkārtoti
         pp.classList.add('mirgo');
@@ -1358,6 +1397,9 @@ function zimetBernuKartes(izlaistoIndekss = null) {
 
     konteiners.appendChild(karte);
   });
+
+  // Rezervēt sadaļas bērnu saraksts (2. skats) rāda tos pašus datus.
+  zimetRezBernuRindas();
 }
 
 async function dzestBernu(indekss) {
