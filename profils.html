@@ -86,20 +86,14 @@
     line-height:1.2;margin-bottom:26px;
   }
   .rindas-virsraksts em{font-style:italic;color:var(--accent-dark)}
-  /* Cipars pie virsraksta — pieteikšanās rindai ir 1. solis */
-  .virsraksta-nr{
-    display:inline-flex;align-items:center;justify-content:center;
-    width:38px;height:38px;border-radius:50%;flex-shrink:0;
-    border:1px solid var(--accent-dark);color:var(--accent-dark);
-    font-family:'Raleway',sans-serif;font-size:17px;font-weight:700;
-    vertical-align:middle;margin-right:12px;background:var(--bg);
-  }
-  /* Nākošie soļi zem "Pieteikties" pogas */
+  /* Soļi zem "Pieteikties" pogas */
   .rindas-soli.nakosie{
     margin:24px auto 0;max-width:380px;
     padding-top:22px;border-top:0.5px solid var(--border);
   }
   .rindas-soli.nakosie li{color:var(--muted)}
+  /* Izpildīts solis — cipars pārtop zaļā ķeksī */
+  .sola-nr.izpildits{background:var(--zala);border-color:var(--zala);color:#fff}
 
   /* 2. skats: pilnais profils bez "Dāvināt" un "Maksājumi"; Rezervēt sadaļā
      iepazīšanās pirkumu kartītes un atvērts kalendāra makets. */
@@ -129,24 +123,16 @@
   .pirkt-poga:hover:not(:disabled){background:var(--accent)}
   .pirkt-poga:disabled{cursor:not-allowed}
 
-  /* Iepazīšanās nodarbību gaita (3 soļi virs kalendāra maketa) */
-  .gaita{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:22px}
-  .gaitas-solis{
-    flex:1;min-width:190px;display:flex;gap:12px;align-items:center;
-    background:var(--bg);border:1.5px solid var(--border);
-    border-radius:14px;padding:14px 16px;
+  /* Izpildīta iepazīšanās nodarbība — zaļš ķeksis pirkumu kartītē */
+  .pakete.izpildita{border-color:var(--zala)}
+  .pakete-kekss{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:20px;height:20px;border-radius:50%;margin-left:6px;
+    background:var(--zala);color:#fff;font-size:12px;vertical-align:middle;
   }
-  .gaitas-solis.bals{opacity:.45}
-  .gaitas-solis.iedegts{border-color:var(--accent-dark);background:#F1E6C8}
-  .gaitas-nr{
-    flex-shrink:0;width:30px;height:30px;border-radius:50%;
-    display:flex;align-items:center;justify-content:center;
-    border:0.5px solid var(--accent-dark);color:var(--accent-dark);
-    font-size:13px;font-weight:700;background:var(--bg);
-  }
-  .gaitas-solis.iedegts .gaitas-nr{background:var(--accent-dark);color:var(--bg)}
-  .gaitas-nos{font-size:13.5px;font-weight:700}
-  .gaitas-laiks{font-size:12px;color:var(--muted);margin-top:2px}
+  /* Karšu apmaksas makets — atveras tikai 2. skatā pēc "Pirkt" */
+  #mockMaksaKarte{display:none}
+  body.skats2 #mockMaksaKarte.atverts{display:block}
   .rindas-soli{
     list-style:none;text-align:left;margin:0 auto 32px;max-width:340px;
     display:flex;flex-direction:column;gap:14px;
@@ -569,7 +555,7 @@
 <div class="skats paslepts" id="skatsRinda">
   <section class="rindas-karte">
     <span class="rindas-birka">Uzņemšana rindas kārtībā</span>
-    <h1 class="rindas-virsraksts"><span class="virsraksta-nr">1</span>Pievienojies <em>rindai</em></h1>
+    <h1 class="rindas-virsraksts">Pievienojies <em>rindai</em></h1>
 
     <div class="rindas-forma" id="rindasForma">
       <div class="lauks">
@@ -585,13 +571,7 @@
         <select id="rindasVecums"></select>
       </div>
       <button class="cta" id="pogaRindaPieteikties" type="button">Pieteikties</button>
-      <p class="rindas-piezime">Par apstiprinājumu paziņosim uz šo e-pastu.</p>
-
-      <!-- Nākošie soļi — redzami zem pogas, lai pieteikšanās sajūtas kā 1. solis -->
-      <ol class="rindas-soli nakosie">
-        <li><span class="sola-nr">2</span> Sagaidi apstiprinājumu</li>
-        <li><span class="sola-nr">3</span> Rezervē laiku pirmajai nodarbībai</li>
-      </ol>
+      <p class="rindas-piezime">Par apstiprinājumu paziņosim e-pastā.</p>
     </div>
 
     <div class="rindas-apstiprinajums paslepts" id="rindasApstiprinajums">
@@ -600,6 +580,13 @@
       <p>Tiklīdz atbrīvosies vieta, nosūtīsim apstiprinājumu uz
         <strong id="rindasApstEpasts"></strong> — tad varēsi rezervēt laiku pirmajai nodarbībai.</p>
     </div>
+
+    <!-- Soļi zem pogas: pēc veiksmīgas pieteikšanās 1. cipars pārtop zaļā ķeksī -->
+    <ol class="rindas-soli nakosie">
+      <li><span class="sola-nr" id="solaNr1">1</span> Piesakies rindā</li>
+      <li><span class="sola-nr">2</span> Sagaidi apstiprinājumu</li>
+      <li><span class="sola-nr">3</span> Rezervē laiku pirmajai nodarbībai</li>
+    </ol>
   </section>
 </div>
 
@@ -796,22 +783,31 @@
         <div id="slotuSaraksts"><p class="tukss">Vispirms izvēlies nodarbības veidu.</p></div>
       </section>
 
+      <!-- 2. skats: atvērtais kalendāra makets tūlīt aiz audzēkņa izvēles.
+           Klikšķis uz brīva laika "rezervē" 1. nodarbību — pirkumu kartītē
+           parādās zaļš ķeksis un atveras 2. nodarbības pirkšana. -->
+      <section class="karte" id="iepazGaitaKarte">
+        <h2>Rezervē nodarbību</h2>
+        <div id="mockKalendars"></div>
+      </section>
+
       <!-- Iepazīšanās nodarbības (redzamas tikai 2. skatā) — hronoloģiski var
            nopirkt tikai pirmo (20 min); pārējās atveras vēlāk, tāpēc bālas. -->
       <section class="karte" id="iepazKarte">
         <h2>Iegādājies nodarbību</h2>
         <div class="paketes">
-          <div class="pakete">
-            <div class="pakete-nosaukums">Iepazīsti Skaņu Darbnīcu</div>
+          <div class="pakete" id="iepazKartite1">
+            <div class="pakete-nosaukums">Iepazīsti Skaņu Darbnīcu
+              <span class="pakete-kekss paslepts" id="iepazKekss1" aria-hidden="true">✓</span></div>
             <div class="pakete-krediti">1. nodarbība</div>
             <div class="pakete-cena">20 € <span class="par-nodarbibu">· 20 min</span></div>
             <button class="pirkt-poga" id="pogaPirktIepaz1" type="button">Pirkt</button>
           </div>
-          <div class="pakete bala">
+          <div class="pakete bala" id="iepazKartite2">
             <div class="pakete-nosaukums">Iepazīsti Skaņu Darbnīcu</div>
             <div class="pakete-krediti">2. nodarbība</div>
             <div class="pakete-cena">30 € <span class="par-nodarbibu">· 30 min</span></div>
-            <button class="pirkt-poga" type="button" disabled>Pirkt</button>
+            <button class="pirkt-poga" id="pogaPirktIepaz2" type="button" disabled>Pirkt</button>
           </div>
           <div class="pakete bala">
             <div class="pakete-nosaukums">Iepazīsti Skaņu Darbnīcu</div>
@@ -842,35 +838,26 @@
         </div>
       </section>
 
-      <!-- 2. skats: iepazīšanās gaita un atvērtais kalendāra makets.
-           Klikšķis uz brīva laika "iededz" 1. nodarbību; 2. un 3. atvērsies
-           pēc iepriekšējās nodarbības un atļaujas (maketā vienmēr bālas). -->
-      <section class="karte" id="iepazGaitaKarte">
-        <h2>Tavas iepazīšanās nodarbības</h2>
-        <div class="gaita">
-          <div class="gaitas-solis" id="gaitasSolis1">
-            <span class="gaitas-nr">1</span>
-            <div>
-              <div class="gaitas-nos">Iepazīsti Skaņu Darbnīcu</div>
-              <div class="gaitas-laiks" id="gaitasLaiks1">Izvēlies laiku kalendārā zemāk</div>
-            </div>
+      <!-- 2. skats: karšu apmaksas makets — atveras zem "Iegādājies nodarbību",
+           kad nospiež aktīvo "Pirkt" pogu. Īsta maksa šeit nenotiek. -->
+      <section class="karte" id="mockMaksaKarte">
+        <h2>Apmaksa</h2>
+        <p class="h2-piezime" id="mockMaksaApraksts"></p>
+        <div class="lauks">
+          <label for="mockKartesNr">Kartes numurs</label>
+          <input id="mockKartesNr" inputmode="numeric" autocomplete="off" placeholder="1234 5678 9012 3456">
+        </div>
+        <div class="rinda">
+          <div class="lauks">
+            <label for="mockTermins">Derīguma termiņš</label>
+            <input id="mockTermins" inputmode="numeric" autocomplete="off" placeholder="MM / GG">
           </div>
-          <div class="gaitas-solis bals" id="gaitasSolis2">
-            <span class="gaitas-nr">2</span>
-            <div>
-              <div class="gaitas-nos">Iepazīsti Skaņu Darbnīcu</div>
-              <div class="gaitas-laiks">Atvērsies pēc 1. nodarbības</div>
-            </div>
-          </div>
-          <div class="gaitas-solis bals" id="gaitasSolis3">
-            <span class="gaitas-nr">3</span>
-            <div>
-              <div class="gaitas-nos">Iepazīsti Skaņu Darbnīcu</div>
-              <div class="gaitas-laiks">Atvērsies pēc 2. nodarbības</div>
-            </div>
+          <div class="lauks">
+            <label for="mockCVC">CVC</label>
+            <input id="mockCVC" inputmode="numeric" autocomplete="off" placeholder="123">
           </div>
         </div>
-        <div id="mockKalendars"></div>
+        <button class="cta cta-auto" id="pogaMockMaksat" type="button">Apmaksāt</button>
       </section>
 
       <section class="karte paslepts" id="nevarKarte">
@@ -1104,6 +1091,9 @@ el('rindasVecums').innerHTML = '<option value="">Vecums</option>'
 function atjaunotRindasSkatu() {
   el('rindasForma').classList.toggle('paslepts', rindaPieteikta);
   el('rindasApstiprinajums').classList.toggle('paslepts', !rindaPieteikta);
+  // 1. solis izpildīts — cipars pārtop zaļā ķeksī.
+  el('solaNr1').textContent = rindaPieteikta ? '✓' : '1';
+  el('solaNr1').classList.toggle('izpildits', rindaPieteikta);
 }
 el('pogaRindaPieteikties').onclick = async () => {
   const epasts = el('rindasEpasts').value.trim();
@@ -1182,15 +1172,29 @@ function zimetMockKalendaru() {
     poga.onclick = () => {
       el('mockKalendars').querySelectorAll('.laiks').forEach((p) => p.classList.toggle('aktivs', p === poga));
       const kad = new Date(Number(poga.dataset.start));
-      el('gaitasSolis1').classList.add('iedegts');
-      el('gaitasLaiks1').textContent = `${arLieloBurtu(fmtDiena.format(kad))} plkst. ${fmtLaiks.format(kad)}`;
+      // 1. nodarbība rezervēta — pirkumu kartītē zaļš ķeksis un atveras 2. pirkšana.
+      el('iepazKartite1').classList.add('izpildita');
+      el('iepazKekss1').classList.remove('paslepts');
+      el('iepazKartite2').classList.remove('bala');
+      el('pogaPirktIepaz2').disabled = false;
+      tosts(`1. nodarbība: ${arLieloBurtu(fmtDiena.format(kad))} plkst. ${fmtLaiks.format(kad)}`, 'labi');
     };
   });
 }
 zimetMockKalendaru();
 
-// "Pirkt" 20 min nodarbībai — maketā ved pie kalendāra laika izvēlei.
-el('pogaPirktIepaz1').onclick = () => {
+// "Pirkt" — zem "Iegādājies nodarbību" atveras karšu apmaksas makets.
+function atvertMockMaksu(apraksts, cena) {
+  el('mockMaksaApraksts').textContent = `${apraksts} · ${cena}`;
+  el('pogaMockMaksat').textContent = `Apmaksāt ${cena}`;
+  el('mockMaksaKarte').classList.add('atverts');
+  el('mockMaksaKarte').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+el('pogaPirktIepaz1').onclick = () => atvertMockMaksu('Iepazīsti Skaņu Darbnīcu · 1. nodarbība', '20 €');
+el('pogaPirktIepaz2').onclick = () => atvertMockMaksu('Iepazīsti Skaņu Darbnīcu · 2. nodarbība', '30 €');
+el('pogaMockMaksat').onclick = () => {
+  el('mockMaksaKarte').classList.remove('atverts');
+  tosts('Apmaksāts ✓ — izvēlies laiku kalendārā.', 'labi');
   el('iepazGaitaKarte').scrollIntoView({ behavior: 'smooth' });
 };
 
