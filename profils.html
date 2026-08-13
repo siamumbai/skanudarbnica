@@ -505,6 +505,7 @@
   .tosts.redzams{opacity:1;transform:translateX(-50%) translateY(0)}
   .tosts.labi{background:var(--zala)}
   .tosts.kluda{background:var(--sarkana)}
+  .tosts.dzeltens{background:var(--accent-light);color:var(--text)}
 
   .paslepts{display:none !important}
 
@@ -590,8 +591,8 @@
   </section>
 
   <!-- Pagaidu testēšanas poga — atiestata pieteikumu, lai var pieteikties vēlreiz -->
-  <button class="cta cta-auto" id="pogaRindaAtiestatit" type="button"
-    style="position:fixed;left:24px;bottom:24px;z-index:50;box-shadow:0 8px 26px rgba(0,0,0,.25)">↺ No jauna</button>
+  <button class="cta" id="pogaRindaAtiestatit" type="button" aria-label="Pieteikties no jauna" title="Pieteikties no jauna"
+    style="position:fixed;left:24px;bottom:24px;z-index:50;box-shadow:0 8px 26px rgba(0,0,0,.25);width:48px;height:48px;padding:0;border-radius:50%;font-size:20px;line-height:1">↺</button>
 </div>
 
 <!-- Galvenais saturs -->
@@ -813,6 +814,7 @@
             <div class="pakete-krediti">2. nodarbība</div>
             <div class="pakete-cena">30 € <span class="par-nodarbibu">· 30 min</span></div>
             <button class="pirkt-poga" id="pogaPirktIepaz2" type="button" disabled>Pirkt</button>
+            <span class="pakete-kekss paslepts" id="iepazKekss2" aria-hidden="true">✓</span>
           </div>
           <div class="pakete bala">
             <div class="pakete-nosaukums">Iepazīsti Skaņu Darbnīcu</div>
@@ -1194,33 +1196,37 @@ function zimetMockKalendaru() {
     poga.onclick = () => {
       el('mockKalendars').querySelectorAll('.laiks').forEach((p) => p.classList.toggle('aktivs', p === poga));
       const kad = new Date(Number(poga.dataset.start));
-      // 1. nodarbība apmaksāta, rezervēta un pagājusi — to vairs nevar nopirkt:
-      // "Pirkt" pogas vietā zaļš ķeksis, un vienīgā pērkamā ir 2. nodarbība.
-      el('iepazKartite1').classList.add('izpildita');
-      el('pogaPirktIepaz1').classList.add('paslepts');
-      el('iepazKekss1').classList.remove('paslepts');
-      el('iepazKartite2').classList.remove('bala');
-      el('pogaPirktIepaz2').disabled = false;
-      el('mockMaksaKarte').classList.remove('atverts');
-      tosts(`1. nodarbība: ${arLieloBurtu(fmtDiena.format(kad))} plkst. ${fmtLaiks.format(kad)}`, 'labi');
+      // Laiks izvēlēts — dzeltens paziņojums; zaļš būs tikai pēc apmaksas.
+      tosts(`1. nodarbība: ${arLieloBurtu(fmtDiena.format(kad))} plkst. ${fmtLaiks.format(kad)}`, 'dzeltens');
     };
   });
 }
 zimetMockKalendaru();
 
 // "Pirkt" — zem "Iegādājies nodarbību" atveras karšu apmaksas makets.
-function atvertMockMaksu(apraksts, cena) {
+// Pēc apmaksas nopirktajai kartītei "Pirkt" vietā zaļš ķeksis; pēc 1. apmaksas
+// atveras 2. nodarbības pirkšana.
+let mockPirkums = 1; // kura nodarbība šobrīd atvērta apmaksai
+function atvertMockMaksu(nr, apraksts, cena) {
+  mockPirkums = nr;
   el('mockMaksaApraksts').textContent = `${apraksts} · ${cena}`;
   el('pogaMockMaksat').textContent = `Apmaksāt ${cena}`;
   el('mockMaksaKarte').classList.add('atverts');
   el('mockMaksaKarte').scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
-el('pogaPirktIepaz1').onclick = () => atvertMockMaksu('Iepazīsti Skaņu Darbnīcu · 1. nodarbība', '20 €');
-el('pogaPirktIepaz2').onclick = () => atvertMockMaksu('Iepazīsti Skaņu Darbnīcu · 2. nodarbība', '30 €');
+el('pogaPirktIepaz1').onclick = () => atvertMockMaksu(1, 'Iepazīsti Skaņu Darbnīcu · 1. nodarbība', '20 €');
+el('pogaPirktIepaz2').onclick = () => atvertMockMaksu(2, 'Iepazīsti Skaņu Darbnīcu · 2. nodarbība', '30 €');
 el('pogaMockMaksat').onclick = () => {
   el('mockMaksaKarte').classList.remove('atverts');
-  tosts('Apmaksāts ✓ — izvēlies laiku kalendārā.', 'labi');
-  el('iepazGaitaKarte').scrollIntoView({ behavior: 'smooth' });
+  el('iepazKartite' + mockPirkums).classList.add('izpildita');
+  el('pogaPirktIepaz' + mockPirkums).classList.add('paslepts');
+  el('iepazKekss' + mockPirkums).classList.remove('paslepts');
+  if (mockPirkums === 1) {
+    el('iepazKartite2').classList.remove('bala');
+    el('pogaPirktIepaz2').disabled = false;
+  }
+  tosts('Apmaksāts ✓', 'labi');
+  el('iepazKarte').scrollIntoView({ behavior: 'smooth' });
 };
 
 /* ---------- Radio pogu palīgfunkcijas ---------- */
