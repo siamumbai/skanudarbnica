@@ -123,12 +123,13 @@
   .pirkt-poga:hover:not(:disabled){background:var(--accent)}
   .pirkt-poga:disabled{cursor:not-allowed}
 
-  /* Izpildīta iepazīšanās nodarbība — zaļš ķeksis pirkumu kartītē */
+  /* Izpildīta iepazīšanās nodarbība — "Pirkt" pogas vietā zaļš ķeksis */
   .pakete.izpildita{border-color:var(--zala)}
   .pakete-kekss{
     display:inline-flex;align-items:center;justify-content:center;
-    width:20px;height:20px;border-radius:50%;margin-left:6px;
-    background:var(--zala);color:#fff;font-size:12px;vertical-align:middle;
+    width:38px;height:38px;border-radius:50%;margin-top:10px;
+    align-self:flex-start;flex-shrink:0;
+    background:var(--zala);color:#fff;font-size:17px;
   }
   /* Karšu apmaksas makets — atveras tikai 2. skatā pēc "Pirkt" */
   #mockMaksaKarte{display:none}
@@ -577,8 +578,7 @@
     <div class="rindas-apstiprinajums paslepts" id="rindasApstiprinajums">
       <div class="rindas-kekss" aria-hidden="true">✓</div>
       <h3>Tu esi rindā!</h3>
-      <p>Tiklīdz atbrīvosies vieta, nosūtīsim apstiprinājumu uz
-        <strong id="rindasApstEpasts"></strong> — tad varēsi rezervēt laiku pirmajai nodarbībai.</p>
+      <p>Tiklīdz atbrīvosies vieta, nosūtīsim apstiprinājumu</p>
     </div>
 
     <!-- Soļi zem pogas: pēc veiksmīgas pieteikšanās 1. cipars pārtop zaļā ķeksī -->
@@ -797,11 +797,12 @@
         <h2>Iegādājies nodarbību</h2>
         <div class="paketes">
           <div class="pakete" id="iepazKartite1">
-            <div class="pakete-nosaukums">Iepazīsti Skaņu Darbnīcu
-              <span class="pakete-kekss paslepts" id="iepazKekss1" aria-hidden="true">✓</span></div>
+            <div class="pakete-nosaukums">Iepazīsti Skaņu Darbnīcu</div>
             <div class="pakete-krediti">1. nodarbība</div>
             <div class="pakete-cena">20 € <span class="par-nodarbibu">· 20 min</span></div>
             <button class="pirkt-poga" id="pogaPirktIepaz1" type="button">Pirkt</button>
+            <!-- Kad nodarbība apmaksāta, rezervēta un pagājusi — pogas vietā ķeksis -->
+            <span class="pakete-kekss paslepts" id="iepazKekss1" aria-hidden="true">✓</span>
           </div>
           <div class="pakete bala" id="iepazKartite2">
             <div class="pakete-nosaukums">Iepazīsti Skaņu Darbnīcu</div>
@@ -1116,7 +1117,6 @@ el('pogaRindaPieteikties').onclick = async () => {
       rindasTel: tel, rindasVecums: Number(vecums),
     });
     rindaPieteikta = true;
-    el('rindasApstEpasts').textContent = epasts;
     atjaunotRindasSkatu();
   } catch (err) {
     console.error('Rindas pieteikuma kļūda:', err);
@@ -1172,11 +1172,14 @@ function zimetMockKalendaru() {
     poga.onclick = () => {
       el('mockKalendars').querySelectorAll('.laiks').forEach((p) => p.classList.toggle('aktivs', p === poga));
       const kad = new Date(Number(poga.dataset.start));
-      // 1. nodarbība rezervēta — pirkumu kartītē zaļš ķeksis un atveras 2. pirkšana.
+      // 1. nodarbība apmaksāta, rezervēta un pagājusi — to vairs nevar nopirkt:
+      // "Pirkt" pogas vietā zaļš ķeksis, un vienīgā pērkamā ir 2. nodarbība.
       el('iepazKartite1').classList.add('izpildita');
+      el('pogaPirktIepaz1').classList.add('paslepts');
       el('iepazKekss1').classList.remove('paslepts');
       el('iepazKartite2').classList.remove('bala');
       el('pogaPirktIepaz2').disabled = false;
+      el('mockMaksaKarte').classList.remove('atverts');
       tosts(`1. nodarbība: ${arLieloBurtu(fmtDiena.format(kad))} plkst. ${fmtLaiks.format(kad)}`, 'labi');
     };
   });
@@ -2241,7 +2244,6 @@ prasitPieteiksanos(async (user) => {
   el('rindasEpasts').value = user.email || p?.rindasEpasts || '';
   el('rindasTel').value = p?.rindasTel || p?.telefons || '';
   if (p?.rindasVecums) el('rindasVecums').value = String(p.rindasVecums);
-  el('rindasApstEpasts').textContent = p?.rindasEpasts || user.email || '';
   atjaunotRindasSkatu();
 
   zimetBernuKartes();
