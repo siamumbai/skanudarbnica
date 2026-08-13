@@ -104,6 +104,7 @@
   body.skats2 #sadalaDavinat,
   body.skats2 #navPirkumi,
   body.skats2 #sadalaPirkumi,
+  body.skats2 #navPieteikties,
   body.skats2 #bilanceKarte,
   body.skats2 #slotuKarte,
   body.skats2 #nevarKarte,
@@ -134,6 +135,12 @@
   /* Karšu apmaksas makets — atveras tikai 2. skatā pēc "Pirkt" */
   #mockMaksaKarte{display:none}
   body.skats2 #mockMaksaKarte.atverts{display:block}
+  /* "+ Pievienot bērnu" pogas iemirdzināšana, ja laiks izvēlēts bez bērna anketas */
+  @keyframes mirgot{
+    0%,100%{box-shadow:none;transform:none}
+    50%{box-shadow:0 0 0 6px rgba(184,134,11,.35);transform:scale(1.05)}
+  }
+  .mirgo{animation:mirgot .5s ease 3}
   .rindas-soli{
     list-style:none;text-align:left;margin:0 auto 32px;max-width:340px;
     display:flex;flex-direction:column;gap:14px;
@@ -832,13 +839,13 @@
           </div>
           <div class="pakete bala">
             <div class="pakete-nosaukums">4 nodarbības</div>
-            <div class="pakete-krediti">4 nodarbības</div>
+            <div class="pakete-krediti">Kopā 280 €</div>
             <div class="pakete-cena">70 € <span class="par-nodarbibu">/ nodarbība</span></div>
             <button class="pirkt-poga" type="button" disabled>Pirkt</button>
           </div>
           <div class="pakete bala">
             <div class="pakete-nosaukums">8 nodarbības</div>
-            <div class="pakete-krediti">8 nodarbības</div>
+            <div class="pakete-krediti">Kopā 480 €</div>
             <div class="pakete-cena">60 € <span class="par-nodarbibu">/ nodarbība</span></div>
             <button class="pirkt-poga" type="button" disabled>Pirkt</button>
           </div>
@@ -1151,6 +1158,7 @@ el('pogaRindaAtiestatit').onclick = async () => {
 // Klikšķis uz brīva laika "iededz" 1. iepazīšanās nodarbību gaitā.
 let mockNobide = 0; // rādāmā maketa nedēļa: 0 = tekošā
 let mockSlide = 0;  // nedēļas maiņas animācija: 1 = uz priekšu, -1 = atpakaļ
+let mockGaidaSlots = null; // pirms bērna pievienošanas izvēlētais laiks (millis)
 function zimetMockKalendaru() {
   const pirmdiena = nedelasPirmdiena(mockNobide);
   const sodien = sodienISO();
@@ -1194,6 +1202,17 @@ function zimetMockKalendaru() {
   el('mockPaLabi').onclick = () => { if (mockNobide < 3) { mockNobide++; mockSlide = 1; zimetMockKalendaru(); } };
   el('mockKalendars').querySelectorAll('.laiks:not(.aiznemts)').forEach((poga) => {
     poga.onclick = () => {
+      // Bez bērna anketas laiku izvēlēties nevar — iemirdzinām "+ Pievienot
+      // bērnu" pogu un atceramies laiku, lai pēc pievienošanas to iekrāsotu.
+      if (berni.length === 0) {
+        mockGaidaSlots = poga.dataset.start;
+        const pp = el('pogaJaunsAudzeknis');
+        pp.classList.remove('mirgo');
+        void pp.offsetWidth; // restartē animāciju, ja spiež atkārtoti
+        pp.classList.add('mirgo');
+        pp.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
       el('mockKalendars').querySelectorAll('.laiks').forEach((p) => p.classList.toggle('aktivs', p === poga));
       const kad = new Date(Number(poga.dataset.start));
       // Laiks izvēlēts — dzeltens paziņojums; zaļš būs tikai pēc apmaksas.
@@ -2191,6 +2210,20 @@ el('pogaSaglabatBernu').onclick = async () => {
   } else if (atpakalUzRezervet) {
     atpakalUzRezervet = false;
     paradietSadalu('sadalaRezervet');
+  }
+
+  // 2. skata makets: ja laiks kalendārā tika izvēlēts pirms bērna
+  // pievienošanas — iekrāsojam to tagad, lai nav jāspiež vēlreiz.
+  if (mockGaidaSlots) {
+    const laikaPoga = document.querySelector(`#mockKalendars .laiks[data-start="${mockGaidaSlots}"]`);
+    if (laikaPoga) {
+      document.querySelectorAll('#mockKalendars .laiks').forEach((p) => p.classList.remove('aktivs'));
+      laikaPoga.classList.add('aktivs');
+      const kad = new Date(Number(mockGaidaSlots));
+      tosts(`1. nodarbība: ${arLieloBurtu(fmtDiena.format(kad))} plkst. ${fmtLaiks.format(kad)}`, 'dzeltens');
+      el('iepazGaitaKarte').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    mockGaidaSlots = null;
   }
 };
 
