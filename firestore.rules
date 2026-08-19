@@ -96,6 +96,10 @@ service cloud.firestore {
     match /adminNotes/{uid} {
       allow read, write: if irAdmins();
     }
+    // Admina darbību žurnāls (pārcelšanas starp lapām u.c.) — tikai adminiem.
+    match /adminLog/{id} {
+      allow read, write: if irAdmins();
+    }
 
     /* ---------- Viss pārējais aizliegts ---------- */
     match /{document=**} {

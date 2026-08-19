@@ -55,19 +55,7 @@
   .profils-ikona:hover{border-color:var(--accent-dark);background:var(--bg2)}
   .profils-ikona.aktiva{background:var(--accent-dark);border-color:var(--accent-dark)}
 
-  /* Galvenes skatu pārslēgs 1·2·3 — hronoloģiskie skati, kā jaunais klients
-     redz lapu (1 = rinda, 2 = pagaidām brīvs, 3 = pilnais profils). Paliek pastāvīgi. */
   .josla-kreisa{display:flex;align-items:center;gap:16px}
-  .skatu-parslegs{display:flex;gap:6px}
-  .skata-poga{
-    width:27px;height:27px;border-radius:50%;
-    display:flex;align-items:center;justify-content:center;
-    background:transparent;border:0.5px solid var(--border);
-    font-family:inherit;font-size:12.5px;font-weight:600;color:var(--muted);
-    cursor:pointer;transition:background .15s,border-color .15s,color .15s;
-  }
-  .skata-poga:hover{border-color:var(--accent-dark);color:var(--accent-dark)}
-  .skata-poga.aktiva{background:var(--accent-dark);border-color:var(--accent-dark);color:var(--bg)}
 
   /* --- 1. skats: rinda (gaidīšanas saraksts jaunajiem) --- */
   .skats{max-width:620px;margin:0 auto;padding:56px 32px 90px}
@@ -587,13 +575,10 @@
 <body>
 
 <header class="josla">
+  <!-- Skatu 1·2·3 pārslēgs izņemts — klienta lapu nosaka TIKAI statuss,
+       ko maina admins savā panelī. -->
   <div class="josla-kreisa">
     <a class="logo" href="index.html">skanudarbnica.lv</a>
-    <nav class="skatu-parslegs" aria-label="Klienta skati">
-      <button class="skata-poga" id="skataPoga1" type="button" title="1 · Rinda">1</button>
-      <button class="skata-poga" id="skataPoga2" type="button" title="2 · Iepazīšanās nodarbības">2</button>
-      <button class="skata-poga" id="skataPoga3" type="button" title="3 · Pilnais profils">3</button>
-    </nav>
   </div>
   <div class="josla-labi">
     <span class="josla-epasts" id="joslaEpasts"></span>
@@ -1038,10 +1023,6 @@
 
 </div>
 
-<!-- "Tālāk" — pagaidu poga uzņemšanas plūsmas izlaišanai (redzama tikai neapstiprinātiem) -->
-<button class="cta cta-auto paslepts" id="pogaTalak" type="button"
-  style="position:fixed;right:24px;bottom:24px;z-index:50;box-shadow:0 8px 26px rgba(0,0,0,.25)">Tālāk →</button>
-
 <!-- Tosts (neuzbāzīgs paziņojums) -->
 <div class="tosts" id="tosts" role="status" aria-live="polite"></div>
 
@@ -1152,7 +1133,6 @@ function paraditSkatu(nr) {
   el('izkartojums').classList.toggle('paslepts', nr === 1);
   document.body.classList.toggle('skats2', nr === 2);
   document.body.classList.toggle('skats3', nr === 3);
-  [1, 2, 3].forEach((n) => el('skataPoga' + n).classList.toggle('aktiva', n === nr));
   // 2. un 3. skatā nav "Dāvināt", "Maksājumi", "Pievienot bērnu" un vecās
   // "Pirmā nodarbība" — ja kāda no tām atvērta, pārejam uz Rezervēt.
   if (nr !== 1 && (el('sadalaDavinat').classList.contains('aktiva')
@@ -1168,9 +1148,8 @@ function paraditSkatu(nr) {
   }
   window.scrollTo({ top: 0 });
 }
-[1, 2, 3].forEach((n) => { el('skataPoga' + n).onclick = () => paraditSkatu(n); });
-// Galvenes profila ikona ved uz sadaļu pilnajā profilā — pārslēdzam 3. skatu.
-el('navProfils').addEventListener('click', () => paraditSkatu(3));
+// Skatu maina TIKAI statuss (admins panelī) — manuālu pogu vairs nav.
+// Profila ikona atver "Mans profils" sadaļu pašreizējā skatā (navPogas vadā).
 
 /* ---------- Rindas skats (1. skats) ---------- */
 let rindaPieteikta = false; // users.rindaPieteikta — vai jau nospiests "Pieteikties"
@@ -2254,7 +2233,6 @@ function piemerotUznemsanu() {
   ['navPieteikties', 'navRezervet', 'navNodarbibas', 'navPirkumi', 'navDavinat'].forEach((id) =>
     el(id).classList.toggle('paslepts', !pilns));
   el('navIepazisanas').classList.toggle('paslepts', pilns);
-  el('pogaTalak').classList.toggle('paslepts', pilns);
 }
 
 // Iepazīšanās sadaļas skats: rindā gaidošie redz tikai paziņojumu un bērna
@@ -2307,19 +2285,6 @@ el('pogaIepazApmaksat').onclick = async () => {
     tosts(funkcijasKluda(err), 'kluda');
     poga.disabled = false;
     poga.textContent = sak;
-  }
-};
-
-// Pagaidu "Tālāk" — izlaiž uzņemšanas soļus bez admin paneļa:
-// rindā → atļauts rezervēt → pilnais profils.
-el('pogaTalak').onclick = async () => {
-  try {
-    const nakamais = uznemsanas === 'jauns' ? 'atlauts' : 'apstiprinats';
-    await saglabatProfilu(uid, { uznemsanasStatuss: nakamais });
-    location.reload();
-  } catch (err) {
-    console.error('Statusa maiņas kļūda:', err);
-    tosts(kludasTeksts(err), 'kluda');
   }
 };
 

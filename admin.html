@@ -275,14 +275,17 @@
 
 <header class="josla">
   <a class="logo" href="index.html">Skaņu Darbnīca · <b>Administrēšana</b></a>
-  <button class="izeja" id="pogaIziet">Iziet</button>
+  <div style="display:flex;gap:8px">
+    <button class="izeja" id="pogaVesture">Vēsture</button>
+    <button class="izeja" id="pogaIziet">Iziet</button>
+  </div>
 </header>
 
 <p class="ielade" id="ielade">Pārbauda piekļuvi…</p>
 
 <div class="konteiners" id="konteiners" hidden>
 
-  <!-- Kreisā navigācija: klienta dzīves posmi 1 · 2 · 3 (kā profila skati) -->
+  <!-- Kreisā navigācija: klienta dzīves posmi 1 · 2 · 3 + kopējais kalendārs -->
   <nav class="rezimu-nav" aria-label="Klienta posmi">
     <button class="rezima-poga" id="lapaPoga1" type="button">
       <span class="lapas-nr" aria-hidden="true">1</span> Rinda
@@ -292,6 +295,9 @@
     </button>
     <button class="rezima-poga aktiva" id="lapaPoga3" type="button">
       <span class="lapas-nr" aria-hidden="true">3</span> Nodarbības
+    </button>
+    <button class="rezima-poga" id="lapaPogaKal" type="button">
+      <span aria-hidden="true" style="font-size:15px">🗓️</span> Kalendārs
     </button>
   </nav>
 
@@ -599,6 +605,18 @@
 </div>
 
 <!-- Modālis: rezervācijas detaļas -->
+<!-- Globālā vēsture (galvenes poga "Vēsture") — teksta žurnāls par visu:
+     pārcelšanas starp lapām, maksājumi, rezervācijas. -->
+<div class="modalis-fons" id="vesturesModalis">
+  <div class="modalis" style="max-width:680px;width:92%;max-height:82vh;overflow:auto">
+    <h3>Vēsture</h3>
+    <div class="gi-vesture" id="vesturesSaturs" style="font-size:12.5px">Ielādē…</div>
+    <div class="modalis-pogas">
+      <button class="maza-poga" id="pogaVestureAizvert" type="button">Aizvērt</button>
+    </div>
+  </div>
+</div>
+
 <div class="modalis-fons" id="detaluModalis">
   <div class="modalis">
     <h3>Nodarbības detaļas</h3>
@@ -717,17 +735,24 @@ let lapa = 3;
 function uzstaditLapu(nr) {
   lapa = nr;
   [1, 2, 3].forEach((n) => el("lapaPoga" + n).classList.toggle("aktiva", n === nr));
-  // 1. lapā sekciju navigācijas nav — tikai rindas saraksts.
-  document.querySelector(".sekciju-nav").hidden = nr === 1;
+  el("lapaPogaKal").classList.toggle("aktiva", nr === 4);
+  // 1. lapā un Kalendāra lapā sekciju navigācijas nav.
+  document.querySelector(".sekciju-nav").hidden = nr === 1 || nr === 4;
   if (nr === 1) {
     document.querySelectorAll(".sadala").forEach((s) =>
       s.classList.toggle("aktiva", s.id === "sadalaRinda"));
     ieladetRindu();
+  } else if (nr === 4) {
+    // Kopējais kalendārs — gan iepazīšanās (zaļās), gan parastās (brūnās) nodarbības.
+    document.querySelectorAll(".sadala").forEach((s) =>
+      s.classList.toggle("aktiva", s.id === "sadalaKalendars"));
+    if (kalendars) { kalendars.updateSize(); kalendars.refetchEvents(); }
   } else {
     uzstaditRezimu(nr === 2 ? "pirma" : "parastas");
   }
 }
 [1, 2, 3].forEach((n) => el("lapaPoga" + n).addEventListener("click", () => uzstaditLapu(n)));
+el("lapaPogaKal").addEventListener("click", () => uzstaditLapu(4));
 
 /* ---------- Vēsture un komentāri (Info paneļi 1. un 2. lapā) ----------
    Komentāri glabājas adminNotes/{uid} kā ierakstu saraksts ar datumiem —
@@ -862,6 +887,7 @@ async function ieladetRindu() {
       try {
         await setDoc(doc(db, "users", p.dataset.apstiprinat),
           { uznemsanasStatuss: "atlauts", atlautsDatums: Timestamp.now() }, { merge: true });
+        pierakstitNotikumu(p.dataset.apstiprinat, "Apstiprināts no rindas — pārcelts uz 2. lapu");
         tosts("Apstiprināts — lietotājs pārcelts uz 2. lapu.");
         ieladetRindu();
       } catch (e) {
@@ -1160,6 +1186,64 @@ function datumaTeksts(v) {
   const d = typeof v === "string" ? new Date(v) : (v.toDate ? v.toDate() : v);
   return Number.isNaN(d.getTime?.() ?? NaN) ? "—" : fmtDatumsLaiks.format(d);
 }
+/* ---------- Globālā vēsture (galvenes poga) ---------- */
+// Katru pārcelšanu starp lapām pierakstām adminLog kolekcijā (tikai adminiem).
+async function pierakstitNotikumu(uid, teksts) {
+  try {
+    const u = await lietotajaDati(uid);
+    await addDoc(collection(db, "adminLog"), {
+      datums: Timestamp.now(),
+      epasts: u?.epasts || uid,
+      teksts,
+    });
+  } catch (e) { console.error("Žurnāla ieraksta kļūda:", e); }
+}
+async function paraditGlobaloVesturi() {
+  el("vesturesModalis").classList.add("redzams");
+  const vieta = el("vesturesSaturs");
+  vieta.textContent = "Ielādē…";
+  try {
+    const [logSnap, maksSnap, rezSnap] = await Promise.all([
+      getDocs(query(collection(db, "adminLog"), orderBy("datums", "desc"), limit(200))),
+      getDocs(query(collection(db, "payments"), orderBy("createdAt", "desc"), limit(100))),
+      getDocs(query(collection(db, "bookings"), orderBy("startAt", "desc"), limit(100))),
+    ]);
+    const notikumi = [];
+    logSnap.docs.forEach((d) => {
+      const x = d.data();
+      if (x.datums) notikumi.push({ d: x.datums.toDate(), t: `${x.epasts} — ${x.teksts}` });
+    });
+    for (const d of maksSnap.docs) {
+      const p = d.data();
+      if (p.status !== "succeeded" || !p.createdAt) continue;
+      const u = await lietotajaDati(p.userId);
+      notikumi.push({
+        d: p.createdAt.toDate(),
+        t: `${u?.epasts || p.userId} — Samaksāja ${eiro(p.amountCents)}${p.packageName ? " — " + p.packageName : ""}`,
+      });
+    }
+    for (const d of rezSnap.docs) {
+      const b = d.data();
+      const u = await lietotajaDati(b.userId);
+      const kad = b.startAt?.toDate?.();
+      const iepaz = irIepazRezervacija(b);
+      notikumi.push({
+        d: b.createdAt?.toDate?.() ?? kad,
+        t: `${u?.epasts || b.userId} — ${b.status === "cancelled" ? "Atcelta" : "Rezervēta"} ${iepaz ? "iepazīšanās nodarbība" : "nodarbība"}${kad ? " — " + fmtDatumsLaiks.format(kad) : ""}`,
+      });
+    }
+    notikumi.sort((a, b) => a.d - b.d);
+    vieta.textContent = notikumi.length
+      ? notikumi.map((n) => `${fmtDatumsLaiks.format(n.d)} — ${n.t}`).join("\n")
+      : "Vēl nav notikumu.";
+  } catch (e) {
+    console.error("Vēstures ielādes kļūda:", e);
+    vieta.textContent = "Neizdevās ielādēt vēsturi.";
+  }
+}
+el("pogaVesture").addEventListener("click", paraditGlobaloVesturi);
+el("pogaVestureAizvert").addEventListener("click", () => el("vesturesModalis").classList.remove("redzams"));
+
 async function mainitUznemsanu(uid, statuss) {
   try {
     // Mainās TIKAI statuss (un datumi vēsturei) — nekas cits netiek dzēsts:
@@ -1171,6 +1255,9 @@ async function mainitUznemsanu(uid, statuss) {
     // Atgriežot uz 1. lapu — lai cilvēks noteikti parādās rindas sarakstā.
     if (statuss === "jauns") dati.rindaPieteikta = true;
     await setDoc(doc(db, "users", uid), dati, { merge: true });
+    pierakstitNotikumu(uid, statuss === "apstiprinats" ? "Pārcelts uz 3. lapu (pilnā piekļuve)"
+      : statuss === "jauns" ? "Pārcelts uz 1. lapu (rindā)"
+      : "Pārcelts uz 2. lapu");
     tosts(statuss === "apstiprinats" ? "Piešķirta pilnā piekļuve — pārcelts uz 3. lapu."
       : statuss === "jauns" ? "Atgriezts rindā — 1. lapa."
       : "Pārcelts uz 2. lapu.");
@@ -1566,6 +1653,7 @@ el("pogaAtnemtPiekluvi").addEventListener("click", async () => {
   try {
     await setDoc(doc(db, "users", atvertaisAudzeknis.id),
       { uznemsanasStatuss: "atlauts", atlautsDatums: Timestamp.now() }, { merge: true });
+    pierakstitNotikumu(atvertaisAudzeknis.id, "Atņemta pilnā piekļuve — pārcelts uz 2. lapu");
     tosts("Pilnā piekļuve atņemta — lietotājs pārcelts uz 2. lapu.");
     lietotajuKese.delete(atvertaisAudzeknis.id);
     // Lietotājs vairs nepieder 3. lapai — aizveram kartīti un atjaunojam sarakstu.
