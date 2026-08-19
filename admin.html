@@ -309,12 +309,12 @@
     <div class="karte">
       <h2>Gaida pirmo nodarbību</h2>
       <p class="h2-piezime">
-        Jaunie reģistrētie, kas vēl nav apstiprināti. "Atļaut rezervēt" — lietotājs var apmaksāt
-        un izvēlēties pirmās nodarbības laiku. "Pilnā piekļuve" — atveras viss profils ar pakešu pirkšanu.
+        Cilvēki, kas ir 2. lapā — apstiprināti no rindas un iet cauri iepazīšanās
+        nodarbībām. "Pilnā piekļuve" pārceļ uz 3. lapu ar pakešu pirkšanu.
       </p>
       <div class="tabula-riti">
         <table>
-          <thead><tr><th>Vecāks</th><th>E-pasts</th><th>Bērns</th><th>Statuss</th><th>Izietas iepazīšanās</th><th></th></tr></thead>
+          <thead><tr><th>Vecāks</th><th>E-pasts</th><th>Telefons</th><th>Bērns</th><th>Statuss</th><th>Izietas iepazīšanās</th><th></th></tr></thead>
           <tbody id="gaidaTabula"></tbody>
         </table>
       </div>
@@ -671,6 +671,7 @@ async function ieladetRindu() {
       <div class="rindas-persona" data-i="${i}">
         <button class="rindas-epasts" type="button" data-atvert="${i}">
           <span>${escapeHTML(u.rindasEpasts || u.epasts || "—")}</span>
+          <span style="margin-left:auto;color:var(--muted);font-weight:500">${escapeHTML(u.rindasTel || u.telefons || "")}</span>
           <span class="bulta" aria-hidden="true">▾</span>
         </button>
         <div class="rindas-info" id="rindasInfo${i}" hidden>
@@ -740,15 +741,17 @@ document.querySelectorAll(".sekciju-nav .nav-poga").forEach((poga) => {
 const GAIDA_STATUSI = { jauns: "Rindā", atlauts: "Atļauts rezervēt", pieteikts: "Apmaksājis" };
 async function ieladetGaidosos() {
   const tb = el("gaidaTabula");
-  tb.innerHTML = '<tr><td colspan="6" style="color:var(--muted)">Ielādē…</td></tr>';
+  tb.innerHTML = '<tr><td colspan="7" style="color:var(--muted)">Ielādē…</td></tr>';
   try {
+    // Tikai 2. lapas cilvēki — "jauns" vēl ir rindā (1. lapa), "apstiprinats"
+    // jau ir 3. lapā. Katrs e-pasts redzams tikai vienā lapā.
     const snap = await getDocs(query(
       collection(db, "users"),
-      where("uznemsanasStatuss", "in", ["jauns", "atlauts", "pieteikts"]),
+      where("uznemsanasStatuss", "in", ["atlauts", "pieteikts"]),
     ));
     const rindas = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
     if (!rindas.length) {
-      tb.innerHTML = '<tr><td colspan="6" style="color:var(--muted)">Šobrīd neviens negaida.</td></tr>';
+      tb.innerHTML = '<tr><td colspan="7" style="color:var(--muted)">Šobrīd neviens negaida.</td></tr>';
       return;
     }
     rindas.sort((a, b) => (a.epasts || "").localeCompare(b.epasts || ""));
@@ -767,25 +770,21 @@ async function ieladetGaidosos() {
     tb.innerHTML = rindas.map((u, i) => {
       const berns = (u.berni || []).map((b) => b.berna_vards).filter(Boolean).join(", ") || "—";
       const statuss = GAIDA_STATUSI[u.uznemsanasStatuss] || u.uznemsanasStatuss;
-      const atlaut = u.uznemsanasStatuss === "jauns"
-        ? `<button class="maza-poga" data-atlaut="${u.id}">Atļaut rezervēt</button> `
-        : "";
       return `<tr>
         <td>${escapeHTML(u.vards || "—")}</td>
         <td>${escapeHTML(u.epasts || "")}</td>
+        <td>${escapeHTML(u.telefons || u.rindasTel || "—")}</td>
         <td>${escapeHTML(berns)}</td>
         <td>${escapeHTML(statuss)}</td>
         <td>${izietas[i] === null ? "—" : `${izietas[i]} no 3`}</td>
-        <td style="white-space:nowrap">${atlaut}<button class="maza-poga" data-pilna="${u.id}">Pilnā piekļuve</button></td>
+        <td style="white-space:nowrap"><button class="maza-poga" data-pilna="${u.id}">Pilnā piekļuve</button></td>
       </tr>`;
     }).join("");
-    tb.querySelectorAll("[data-atlaut]").forEach((p) =>
-      p.addEventListener("click", () => mainitUznemsanu(p.dataset.atlaut, "atlauts")));
     tb.querySelectorAll("[data-pilna]").forEach((p) =>
       p.addEventListener("click", () => mainitUznemsanu(p.dataset.pilna, "apstiprinats")));
   } catch (e) {
     console.error("Gaidošo ielādes kļūda:", e);
-    tb.innerHTML = '<tr><td colspan="6" style="color:var(--sarkana)">Neizdevās ielādēt sarakstu.</td></tr>';
+    tb.innerHTML = '<tr><td colspan="7" style="color:var(--sarkana)">Neizdevās ielādēt sarakstu.</td></tr>';
   }
 }
 async function mainitUznemsanu(uid, statuss) {
@@ -1096,13 +1095,17 @@ async function ieladetAudzeknus(nosakuma = true) {
     dalas.push(limit(20));
     if (audzeknuKursors) dalas.push(startAfter(audzeknuKursors));
     const snap = await getDocs(query(...dalas));
-    const rindas = snap.docs.map((d) => {
+    // 3. lapā tikai pilnās piekļuves lietotāji — 1. un 2. lapas cilvēkus
+    // rāda Rindas un Gaida sarakstos (katrs e-pasts tikai vienā lapā).
+    const rindas = snap.docs
+      .filter((d) => (d.data().uznemsanasStatuss || "apstiprinats") === "apstiprinats")
+      .map((d) => {
       const u = d.data();
       return `
         <tr>
           <td>${escapeHTML(u.vards || "—")}</td>
           <td>${escapeHTML(u.epasts ?? "")}</td>
-          <td>${escapeHTML(u.telefons || "—")}</td>
+          <td>${escapeHTML(u.telefons || u.rindasTel || "—")}</td>
           <td><strong>${typeof u.creditBalance === "number" ? u.creditBalance : 0}</strong></td>
           <td><button class="maza-poga" data-atvert="${d.id}">Atvērt</button></td>
         </tr>`;
@@ -1152,7 +1155,7 @@ async function atvertAudzekni(uid) {
   el("audzeknaVirsraksts").textContent = u.vards || u.epasts || uid;
   const berni = (u.berni ?? []).map((b) => b.berna_vards).filter(Boolean).join(", ");
   el("audzeknaInfo").innerHTML =
-    `${u.vards ? escapeHTML(u.vards) + " · " : ""}${escapeHTML(u.epasts ?? "")}${u.telefons ? " · " + escapeHTML(u.telefons) : ""}` +
+    `${u.vards ? escapeHTML(u.vards) + " · " : ""}${escapeHTML(u.epasts ?? "")}${(u.telefons || u.rindasTel) ? " · " + escapeHTML(u.telefons || u.rindasTel) : ""}` +
     `${berni ? "<br>Audzēkņi: " + escapeHTML(berni) : ""}` +
     `<br>Bilance: <strong>${typeof u.creditBalance === "number" ? u.creditBalance : 0}</strong> nodarbības`;
   // Piekļuves posms (1/2/3 lapa) un pilnās piekļuves atņemšana.
@@ -1177,9 +1180,12 @@ el("pogaAtnemtPiekluvi").addEventListener("click", async () => {
   poga.disabled = true;
   try {
     await setDoc(doc(db, "users", atvertaisAudzeknis.id), { uznemsanasStatuss: "atlauts" }, { merge: true });
-    tosts("Pilnā piekļuve atņemta — lietotājs atgriezts 2. lapā.");
+    tosts("Pilnā piekļuve atņemta — lietotājs pārcelts uz 2. lapu.");
     lietotajuKese.delete(atvertaisAudzeknis.id);
-    await atvertAudzekni(atvertaisAudzeknis.id);
+    // Lietotājs vairs nepieder 3. lapai — aizveram kartīti un atjaunojam sarakstu.
+    atvertaisAudzeknis = null;
+    el("audzeknaKarte").hidden = true;
+    ieladetAudzeknus(true);
   } catch (e) {
     console.error("Piekļuves maiņas kļūda:", e);
     tosts("Neizdevās mainīt piekļuvi.");
