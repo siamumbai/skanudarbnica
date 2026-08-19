@@ -256,10 +256,10 @@
   <!-- Sekciju navigācija: katram režīmam sava — "Gaida" tikai Pirmajā nodarbībā,
        "Audzēkņi" tikai Nodarbībās; aktīvā sadaļa katram režīmam atceras atsevišķi. -->
   <nav class="sekciju-nav" role="tablist">
+    <button class="nav-poga" data-sadala="sadalaGaida" data-rezims="pirma" hidden>⏳ Gaida</button>
     <button class="nav-poga aktiva" data-sadala="sadalaKalendars">🗓️ Kalendārs</button>
     <button class="nav-poga" data-sadala="sadalaLaiki">⏰ Darba laiki</button>
     <button class="nav-poga" data-sadala="sadalaBrivdienas">🌴 Brīvdienas</button>
-    <button class="nav-poga" data-sadala="sadalaGaida" data-rezims="pirma" hidden>⏳ Gaida</button>
     <button class="nav-poga" data-sadala="sadalaAudzekni" data-rezims="parastas">👥 Audzēkņi</button>
     <button class="nav-poga" data-sadala="sadalaMaksajumi">💳 Maksājumi</button>
     <button class="nav-poga" data-sadala="sadalaVeidi">🎵 Veidi un paketes</button>
@@ -314,7 +314,7 @@
       </p>
       <div class="tabula-riti">
         <table>
-          <thead><tr><th>Vecāks</th><th>E-pasts</th><th>Bērns</th><th>Statuss</th><th></th></tr></thead>
+          <thead><tr><th>Vecāks</th><th>E-pasts</th><th>Bērns</th><th>Statuss</th><th>Izietas iepazīšanās</th><th></th></tr></thead>
           <tbody id="gaidaTabula"></tbody>
         </table>
       </div>
@@ -362,6 +362,10 @@
 
       <h2 style="margin-top:20px">Rezervācijas</h2>
       <div id="audzeknaRezervacijas" class="tabula-riti"></div>
+
+      <h2 style="margin-top:20px">Piekļuve</h2>
+      <p class="h2-piezime" id="piekluvesInfo"></p>
+      <button class="maza-poga" id="pogaAtnemtPiekluvi" style="padding:12px 16px" hidden>Atņemt pilno piekļuvi</button>
 
       <h2 style="margin-top:20px">Konta dzēšana</h2>
       <p class="h2-piezime">
@@ -714,7 +718,7 @@ function atjaunotJaunaVeidus() {
 }
 
 /* ---------- Navigācija: katram režīmam sava aktīvā sadaļa ---------- */
-const aktivasSadalas = { pirma: "sadalaKalendars", parastas: "sadalaKalendars" };
+const aktivasSadalas = { pirma: "sadalaGaida", parastas: "sadalaKalendars" };
 function atjaunotSekcijas() {
   const aktiva = aktivasSadalas[rezims];
   document.querySelectorAll(".sekciju-nav .nav-poga").forEach((p) => {
@@ -736,7 +740,7 @@ document.querySelectorAll(".sekciju-nav .nav-poga").forEach((poga) => {
 const GAIDA_STATUSI = { jauns: "Rindā", atlauts: "Atļauts rezervēt", pieteikts: "Apmaksājis" };
 async function ieladetGaidosos() {
   const tb = el("gaidaTabula");
-  tb.innerHTML = '<tr><td colspan="5" style="color:var(--muted)">Ielādē…</td></tr>';
+  tb.innerHTML = '<tr><td colspan="6" style="color:var(--muted)">Ielādē…</td></tr>';
   try {
     const snap = await getDocs(query(
       collection(db, "users"),
@@ -744,11 +748,23 @@ async function ieladetGaidosos() {
     ));
     const rindas = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
     if (!rindas.length) {
-      tb.innerHTML = '<tr><td colspan="5" style="color:var(--muted)">Šobrīd neviens negaida.</td></tr>';
+      tb.innerHTML = '<tr><td colspan="6" style="color:var(--muted)">Šobrīd neviens negaida.</td></tr>';
       return;
     }
     rindas.sort((a, b) => (a.epasts || "").localeCompare(b.epasts || ""));
-    tb.innerHTML = rindas.map((u) => {
+    // Cik iepazīšanās nodarbības katrs jau ir izgājis (notikušas, neatceltas) —
+    // palīdz izlemt, kad dot pilno piekļuvi.
+    const izietas = await Promise.all(rindas.map(async (u) => {
+      try {
+        const bs = await getDocs(query(collection(db, "bookings"), where("userId", "==", u.id)));
+        const tagad = new Date();
+        return bs.docs.filter((d) => {
+          const b = d.data();
+          return b.status !== "cancelled" && irIepazRezervacija(b) && b.startAt.toDate() < tagad;
+        }).length;
+      } catch { return null; }
+    }));
+    tb.innerHTML = rindas.map((u, i) => {
       const berns = (u.berni || []).map((b) => b.berna_vards).filter(Boolean).join(", ") || "—";
       const statuss = GAIDA_STATUSI[u.uznemsanasStatuss] || u.uznemsanasStatuss;
       const atlaut = u.uznemsanasStatuss === "jauns"
@@ -759,6 +775,7 @@ async function ieladetGaidosos() {
         <td>${escapeHTML(u.epasts || "")}</td>
         <td>${escapeHTML(berns)}</td>
         <td>${escapeHTML(statuss)}</td>
+        <td>${izietas[i] === null ? "—" : `${izietas[i]} no 3`}</td>
         <td style="white-space:nowrap">${atlaut}<button class="maza-poga" data-pilna="${u.id}">Pilnā piekļuve</button></td>
       </tr>`;
     }).join("");
@@ -768,7 +785,7 @@ async function ieladetGaidosos() {
       p.addEventListener("click", () => mainitUznemsanu(p.dataset.pilna, "apstiprinats")));
   } catch (e) {
     console.error("Gaidošo ielādes kļūda:", e);
-    tb.innerHTML = '<tr><td colspan="5" style="color:var(--sarkana)">Neizdevās ielādēt sarakstu.</td></tr>';
+    tb.innerHTML = '<tr><td colspan="6" style="color:var(--sarkana)">Neizdevās ielādēt sarakstu.</td></tr>';
   }
 }
 async function mainitUznemsanu(uid, statuss) {
@@ -1138,9 +1155,37 @@ async function atvertAudzekni(uid) {
     `${u.vards ? escapeHTML(u.vards) + " · " : ""}${escapeHTML(u.epasts ?? "")}${u.telefons ? " · " + escapeHTML(u.telefons) : ""}` +
     `${berni ? "<br>Audzēkņi: " + escapeHTML(berni) : ""}` +
     `<br>Bilance: <strong>${typeof u.creditBalance === "number" ? u.creditBalance : 0}</strong> nodarbības`;
+  // Piekļuves posms (1/2/3 lapa) un pilnās piekļuves atņemšana.
+  const STATUSU_LAPAS = {
+    jauns: "1. lapa — rindā",
+    atlauts: "2. lapa — iepazīšanās nodarbības",
+    pieteikts: "2. lapa — iepazīšanās nodarbības (apmaksājis)",
+    apstiprinats: "3. lapa — pilnā piekļuve",
+  };
+  const statuss = u.uznemsanasStatuss || "apstiprinats";
+  el("piekluvesInfo").textContent = statuss === "apstiprinats"
+    ? "Šobrīd: 3. lapa — pilnā piekļuve. Atņemot to, lietotājs atgriežas 2. lapā un var piekļūt tikai iepazīšanās nodarbībām."
+    : `Šobrīd: ${STATUSU_LAPAS[statuss] || statuss}.`;
+  el("pogaAtnemtPiekluvi").hidden = statuss !== "apstiprinats";
   el("audzeknaKarte").scrollIntoView({ behavior: "smooth", block: "start" });
   await Promise.all([ieladetAudzeknaKreditus(uid), ieladetAudzeknaRezervacijas(uid)]);
 }
+
+el("pogaAtnemtPiekluvi").addEventListener("click", async () => {
+  if (!atvertaisAudzeknis) return;
+  const poga = el("pogaAtnemtPiekluvi");
+  poga.disabled = true;
+  try {
+    await setDoc(doc(db, "users", atvertaisAudzeknis.id), { uznemsanasStatuss: "atlauts" }, { merge: true });
+    tosts("Pilnā piekļuve atņemta — lietotājs atgriezts 2. lapā.");
+    lietotajuKese.delete(atvertaisAudzeknis.id);
+    await atvertAudzekni(atvertaisAudzeknis.id);
+  } catch (e) {
+    console.error("Piekļuves maiņas kļūda:", e);
+    tosts("Neizdevās mainīt piekļuvi.");
+  }
+  poga.disabled = false;
+});
 
 const TIPU_NOSAUKUMI = {
   PURCHASE: "Pirkums", BOOKING: "Rezervācija", CANCELLATION: "Atcelšana",
