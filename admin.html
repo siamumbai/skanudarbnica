@@ -88,6 +88,49 @@
   /* Darbību pogas — labajā stūrī, lai netīšām neuzspiež */
   .gi-darbibas{margin-top:16px;display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}
 
+  /* Maketa kalendārs Info panelī — tas pats, ko klients redz profila 2. skatā
+     (tie paši laiki 10–17, svētdiena brīva, "aizņemtie" pēc tās pašas formulas). */
+  .admin-kalendars{margin-top:12px}
+  .ritjoslas-galva{display:flex;justify-content:flex-end;gap:8px;margin-bottom:12px}
+  .riti-poga{
+    width:32px;height:32px;border-radius:50%;
+    background:var(--bg);border:0.5px solid var(--border);
+    font-size:16px;line-height:1;color:var(--muted);cursor:pointer;
+  }
+  .riti-poga:hover:not(:disabled){border-color:var(--accent-dark);color:var(--accent-dark)}
+  .riti-poga:disabled{opacity:.35;cursor:default}
+  .dienu-skats{overflow:hidden}
+  @keyframes slidNoLabas{from{opacity:.15;transform:translateX(130px)}to{opacity:1;transform:none}}
+  @keyframes slidNoKreisas{from{opacity:.15;transform:translateX(-130px)}to{opacity:1;transform:none}}
+  .dienu-riti.no-labas{animation:slidNoLabas 1s cubic-bezier(.22,.8,.3,1)}
+  .dienu-riti.no-kreisas{animation:slidNoKreisas 1s cubic-bezier(.22,.8,.3,1)}
+  .dienu-riti{display:flex;gap:10px;overflow-x:auto;flex:1;min-width:0;padding-bottom:6px}
+  .diena-kolonna{flex:1 1 0;min-width:68px;display:flex;flex-direction:column;gap:7px}
+  .kolonna-virsraksts{text-align:center;margin-bottom:2px;min-height:32px}
+  .kolonna-diena{font-size:12px;font-weight:800;text-transform:capitalize}
+  .kolonna-datums{font-size:11px;color:var(--muted)}
+  .laiks{
+    display:block;width:100%;text-align:center;
+    background:var(--bg);border:1.5px solid var(--border);border-radius:100px;
+    padding:7px 0;font-family:inherit;font-size:12.5px;font-weight:700;
+    color:var(--text);cursor:pointer;transition:border-color .15s,background .15s;
+  }
+  .laiks:hover:not(:disabled){border-color:var(--accent-light)}
+  .laiks.aktivs{background:var(--accent-dark);border-color:var(--accent-dark);color:var(--bg)}
+  .laiks.aiznemts{
+    background:var(--bg2);border-color:var(--border);color:#B3A57F;
+    cursor:not-allowed;text-decoration:line-through;font-weight:600;
+  }
+  .brivs-bloks{
+    flex:1;min-height:100px;
+    background:rgba(70,62,42,.12);border:1.5px dashed var(--border);border-radius:13px;
+    display:flex;align-items:center;justify-content:center;text-align:center;
+    font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+    color:#A2946E;
+  }
+  .diena-kolonna.briva .kolonna-diena,
+  .diena-kolonna.briva .kolonna-datums{color:#B3A57F}
+
   /* Sekciju navigācija */
   .sekciju-nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:22px}
   .sekciju-nav[hidden]{display:none}
@@ -617,6 +660,18 @@ const eiro = (centi) => ((centi ?? 0) / 100).toLocaleString("lv-LV", { maximumFr
 const fmtDatumsLaiks = new Intl.DateTimeFormat("lv-LV", {
   day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit",
 });
+// Maketa kalendāram — tās pašas datuma palīgfunkcijas kā klienta profilā.
+const LAIKA_ZONA = "Europe/Riga";
+const fmtNedelasDiena = new Intl.DateTimeFormat("lv-LV", { timeZone: LAIKA_ZONA, weekday: "long" });
+const fmtDatumsIss = new Intl.DateTimeFormat("lv-LV", { timeZone: LAIKA_ZONA, day: "2-digit", month: "2-digit" });
+const isoFormatetajs = new Intl.DateTimeFormat("en-CA", { timeZone: LAIKA_ZONA, year: "numeric", month: "2-digit", day: "2-digit" });
+const datumsISO = (d) => isoFormatetajs.format(d);
+const sodienISO = () => datumsISO(new Date());
+function nedelasPirmdiena(nobide = 0) {
+  const sodien = new Date(sodienISO() + "T12:00:00");
+  const diena = (sodien.getDay() + 6) % 7; // 0 = pirmdiena
+  return new Date(sodien.getTime() + (nobide * 7 - diena) * 86_400_000);
+}
 function escapeHTML(s) {
   return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
@@ -856,6 +911,67 @@ document.querySelectorAll(".sekciju-nav .nav-poga").forEach((poga) => {
    Viena koplietota funkcija — atšķiras statusu filtrs un darbību pogas.
    Katrs e-pasts redzams tikai savas lapas tabulā. ---------- */
 const GAIDA_STATUSI = { jauns: "Rindā", atlauts: "Atļauts rezervēt", pieteikts: "Apmaksājis", apstiprinats: "Pilnā piekļuve" };
+
+/* Maketa kalendārs Info panelī — VIENMĒR tas pats, ko klients redz sava
+   profila 2. skatā (tie paši laiki 10–17, svētdiena brīva, "aizņemtie" pēc
+   tās pašas formulas (d*3+st)%5===0, tā pati nedēļu pāršķiršana). Ja maini
+   vienu, maini abus. Izvēlētais laiks jāapstiprina ar atsevišķu pogu. */
+const mockKalStavokli = {};
+function zimetInfoKalendaru(prefiks, i) {
+  const st = mockKalStavokli[prefiks + i] ??= { nobide: 0, slide: 0, izvele: null };
+  const konteiners = el(prefiks + "Kalendars" + i);
+  const pirmdiena = nedelasPirmdiena(st.nobide);
+  const sodien = sodienISO();
+  const kolonnas = [];
+  for (let d = 0; d < 7; d++) {
+    const datums = datumsISO(new Date(pirmdiena.getTime() + d * 86_400_000));
+    const pusdienlaiks = new Date(datums + "T12:00:00");
+    const virsraksts = `
+      <div class="kolonna-virsraksts">
+        <div class="kolonna-diena">${fmtNedelasDiena.format(pusdienlaiks)}</div>
+        <div class="kolonna-datums">${fmtDatumsIss.format(pusdienlaiks)}</div>
+      </div>`;
+    if (datums < sodien) {
+      kolonnas.push(`<div class="diena-kolonna briva">${virsraksts}<div class="brivs-bloks">Pagājusi</div></div>`);
+      continue;
+    }
+    if (d === 6) { // svētdiena — brīvdiena
+      kolonnas.push(`<div class="diena-kolonna briva">${virsraksts}<div class="brivs-bloks">Brīvdiena</div></div>`);
+      continue;
+    }
+    const sloti = [];
+    for (let stunda = 10; stunda <= 17; stunda++) {
+      const startMillis = new Date(`${datums}T${String(stunda).padStart(2, "0")}:00:00`).getTime();
+      const aiznemts = (d * 3 + stunda) % 5 === 0;
+      sloti.push(aiznemts
+        ? `<button class="laiks aiznemts" type="button" disabled title="Aizņemts">${String(stunda).padStart(2, "0")}:00</button>`
+        : `<button class="laiks${st.izvele === startMillis ? " aktivs" : ""}" data-start="${startMillis}" type="button">${String(stunda).padStart(2, "0")}:00</button>`);
+    }
+    kolonnas.push(`<div class="diena-kolonna">${virsraksts}${sloti.join("")}</div>`);
+  }
+  const animKlase = st.slide > 0 ? " no-labas" : st.slide < 0 ? " no-kreisas" : "";
+  st.slide = 0;
+  konteiners.innerHTML = `
+    <div class="ritjoslas-galva">
+      <button class="riti-poga" data-kal-atpakal type="button" ${st.nobide > 0 ? "" : "disabled"} aria-label="Iepriekšējā nedēļa">‹</button>
+      <button class="riti-poga" data-kal-talak type="button" ${st.nobide < 3 ? "" : "disabled"} aria-label="Nākamā nedēļa">›</button>
+    </div>
+    <div class="dienu-skats"><div class="dienu-riti${animKlase}">${kolonnas.join("")}</div></div>`;
+  konteiners.querySelector("[data-kal-atpakal]").onclick = () => {
+    if (st.nobide > 0) { st.nobide--; st.slide = -1; zimetInfoKalendaru(prefiks, i); }
+  };
+  konteiners.querySelector("[data-kal-talak]").onclick = () => {
+    if (st.nobide < 3) { st.nobide++; st.slide = 1; zimetInfoKalendaru(prefiks, i); }
+  };
+  konteiners.querySelectorAll(".laiks:not(.aiznemts)").forEach((poga) => {
+    poga.onclick = () => {
+      st.izvele = Number(poga.dataset.start);
+      konteiners.querySelectorAll(".laiks").forEach((p) => p.classList.toggle("aktivs", p === poga));
+      el(prefiks + "RezApstiprinat" + i).hidden = false;
+      el(prefiks + "RezTeksts" + i).textContent = fmtDatumsLaiks.format(new Date(st.izvele));
+    };
+  });
+}
 function ieladetGaidosos() {
   return ieladetPosmaTabulu("gaidaTabula", ["atlauts", "pieteikts"], "gaida", false,
     "Šobrīd neviens negaida.");
@@ -895,18 +1011,24 @@ async function ieladetPosmaTabulu(tbId, statusi, prefiks, tresa, tuksums) {
       const berns = (u.berni || []).map((b) => b.berna_vards).filter(Boolean).join(", ") || "—";
       const statuss = GAIDA_STATUSI[u.uznemsanasStatuss] || u.uznemsanasStatuss;
       const r = rezerv[i];
+      // Katram bērnam vārds + "info" poga, kas atver aizpildīto anketu.
       const berniInfo = (u.berni || []).length
-        ? (u.berni || []).map((b) => `
+        ? (u.berni || []).map((b, j) => {
+          const anketa = [
+            b.berna_vecums ? "Vecums: " + b.berna_vecums : "",
+            b.vecaka_tel ? "Vecāka tel.: " + b.vecaka_tel : "",
+            b.berna_tel ? "Bērna tel.: " + b.berna_tel : "",
+            b.muzikas_pieredze ? "Mūzikas pieredze: " + b.muzikas_pieredze + (b.muzikas_piezime ? " (" + b.muzikas_piezime + ")" : "") : "",
+            b.instruments_majas ? "Instruments mājās: " + b.instruments_majas + (b.instrumenta_piezime ? " (" + b.instrumenta_piezime + ")" : "") : "",
+            b.velamie_laiki ? "Vēlamie laiki: " + b.velamie_laiki : "",
+          ].filter(Boolean).map(escapeHTML).join("<br>");
+          return `
           <div class="gi-berns">
-            <b>${escapeHTML(b.berna_vards || "Audzēknis")}</b>${b.berna_vecums ? " · " + escapeHTML(String(b.berna_vecums)) + " g." : ""}<br>
-            ${[
-              b.vecaka_tel ? "Vecāka tel.: " + b.vecaka_tel : "",
-              b.berna_tel ? "Bērna tel.: " + b.berna_tel : "",
-              b.muzikas_pieredze ? "Mūzikas pieredze: " + b.muzikas_pieredze + (b.muzikas_piezime ? " (" + b.muzikas_piezime + ")" : "") : "",
-              b.instruments_majas ? "Instruments mājās: " + b.instruments_majas + (b.instrumenta_piezime ? " (" + b.instrumenta_piezime + ")" : "") : "",
-              b.velamie_laiki ? "Vēlamie laiki: " + b.velamie_laiki : "",
-            ].filter(Boolean).map(escapeHTML).join("<br>")}
-          </div>`).join("")
+            <b>${escapeHTML(b.berna_vards || "Audzēknis")}</b>
+            <button class="maza-poga" data-berns="${i}_${j}" style="padding:3px 10px;font-size:11px;margin-left:6px">info</button>
+            <div id="${prefiks}Berns${i}_${j}" hidden style="margin-top:6px">${anketa || "Anketa tukša."}</div>
+          </div>`;
+        }).join("")
         : '<div style="color:var(--muted)">Bērna anketa vēl nav aizpildīta.</div>';
       const darbibas = tresa
         ? `<button class="maza-poga" data-atpakal2="${u.id}">Atgriezt uz 2. lapu</button>`
@@ -936,10 +1058,10 @@ async function ieladetPosmaTabulu(tbId, statusi, prefiks, tresa, tuksums) {
             <div class="gi-virsraksts">Jauns komentārs (redzams tikai adminiem)</div>
             <textarea id="${prefiks}Koment${i}" rows="3" placeholder="Piezīmes par šo cilvēku, bērnu vai nodarbībām…"></textarea>
             <button class="maza-poga" data-koment="${i}" style="margin-top:8px">Pievienot komentāru</button>
-            <div class="gi-virsraksts">Rezervēt nodarbību</div>
-            <div class="rinda-forma" style="max-width:420px">
-              <div><input id="${prefiks}RezLaiks${i}" type="datetime-local"></div>
-              <button class="maza-poga" data-rezervet="${i}" style="padding:10px 18px">Rezervēt</button>
+            <button class="maza-poga" data-kalendars="${i}" style="margin-top:14px">Rezervēt nodarbību</button>
+            <div class="admin-kalendars" id="${prefiks}Kalendars${i}" hidden></div>
+            <div id="${prefiks}RezApstiprinat${i}" hidden style="margin-top:10px">
+              <button class="cta" data-rezervet="${i}">Rezervēt — <span id="${prefiks}RezTeksts${i}"></span></button>
             </div>
             <div class="gi-darbibas">${darbibas}</div>
           </div>
@@ -979,12 +1101,24 @@ async function ieladetPosmaTabulu(tbId, statusi, prefiks, tresa, tuksums) {
       }
       p.disabled = false;
     }));
-    // Rezervēšana no Info paneļa — 2. lapā iepazīšanās veids, 3. lapā parastais.
+    // Bērna "info" — atver aizpildīto anketu.
+    tb.querySelectorAll("[data-berns]").forEach((p) => p.addEventListener("click", () => {
+      const b = el(prefiks + "Berns" + p.dataset.berns);
+      b.hidden = !b.hidden;
+    }));
+    // "Rezervēt nodarbību" — atver to pašu maketa kalendāru kā klienta profilā.
+    tb.querySelectorAll("[data-kalendars]").forEach((p) => p.addEventListener("click", () => {
+      const i = p.dataset.kalendars;
+      const k = el(prefiks + "Kalendars" + i);
+      k.hidden = !k.hidden;
+      if (!k.hidden) zimetInfoKalendaru(prefiks, i);
+    }));
+    // Kalendārā izvēlētā laika apstiprināšana — 2. lapā iepazīšanās veids, 3. lapā parastais.
     tb.querySelectorAll("[data-rezervet]").forEach((p) => p.addEventListener("click", async () => {
       const i = p.dataset.rezervet;
       const u = rindas[i];
-      const laiks = el(prefiks + "RezLaiks" + i).value;
-      if (!laiks) { tosts("Norādi datumu un laiku."); return; }
+      const st = mockKalStavokli[prefiks + i];
+      if (!st?.izvele) { tosts("Izvēlies laiku kalendārā."); return; }
       const aktivi = veidi.filter((v) => v.active);
       const veids = aktivi.find((v) => tresa !== /iepaz/i.test(v.name || "")) || aktivi[0];
       if (!veids) { tosts("Nav neviena aktīva nodarbības veida."); return; }
@@ -994,11 +1128,12 @@ async function ieladetPosmaTabulu(tbId, statusi, prefiks, tresa, tuksums) {
           userId: u.id,
           lessonTypeId: veids.id,
           teacherId: (skolotaji.find((s) => s.active) || skolotaji[0])?.id || null,
-          startMillis: new Date(laiks).getTime(),
+          startMillis: st.izvele,
           childName: (u.berni || [])[0]?.berna_vards || null,
           chargeCredits: false,
         });
         tosts("Nodarbība rezervēta.");
+        delete mockKalStavokli[prefiks + i];
         if (kalendars) kalendars.refetchEvents();
         ieladetPosmaTabulu(tbId, statusi, prefiks, tresa, tuksums); // ķeksis atjaunojas
       } catch (e) {
