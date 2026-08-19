@@ -139,6 +139,12 @@
   .diena-kolonna.briva .kolonna-diena,
   .diena-kolonna.briva .kolonna-datums{color:#B3A57F}
 
+  /* Iepazīšanās kalendārs (2. lapa) — maigi zaļš fons */
+  .kalendars-iepaz{
+    background:#EFF5E6;border:0.5px solid rgba(59,109,17,.2);
+    border-radius:14px;padding:14px;
+  }
+
   /* Sekciju navigācija */
   .sekciju-nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:22px}
   .sekciju-nav[hidden]{display:none}
@@ -316,7 +322,8 @@
   <nav class="sekciju-nav" role="tablist">
     <button class="nav-poga" data-sadala="sadalaGaida" data-rezims="pirma" hidden>⏳ Gaida</button>
     <button class="nav-poga" data-sadala="sadalaGaida3" data-rezims="parastas" hidden>⏳ Gaida</button>
-    <button class="nav-poga aktiva" data-sadala="sadalaKalendars">🗓️ Kalendārs</button>
+    <button class="nav-poga" data-sadala="sadalaKalendars2" data-rezims="pirma" hidden>🗓️ Kalendārs</button>
+    <button class="nav-poga" data-sadala="sadalaKalendars3" data-rezims="parastas">🗓️ Kalendārs</button>
     <button class="nav-poga" data-sadala="sadalaLaiki">⏰ Darba laiki</button>
     <button class="nav-poga" data-sadala="sadalaBrivdienas">🌴 Brīvdienas</button>
     <button class="nav-poga" data-sadala="sadalaAudzekni" data-rezims="parastas">👥 Audzēkņi</button>
@@ -324,7 +331,8 @@
     <button class="nav-poga" data-sadala="sadalaIestatijumi">⚙️ Iestatījumi</button>
   </nav>
 
-  <!-- ============ KALENDĀRS ============ -->
+  <!-- ============ KOPĒJAIS KALENDĀRS (kreisās nav "Kalendārs" lapa) ============
+       Rāda abu veidu nodarbības kopā: iepazīšanās zaļas, parastās brūnas. -->
   <section class="sadala aktiva" id="sadalaKalendars">
     <div class="filtri">
       <div>
@@ -346,6 +354,16 @@
       Klikšķis uz brīvas vietas izveido jaunu nodarbību, klikšķis uz nodarbības — atver detaļas.
       Pelēkais fons ir brīvdienas, bloķētie periodi un laiks ārpus darba laika.
     </p>
+  </section>
+
+  <!-- ============ 2. LAPAS KALENDĀRS — tikai iepazīšanās nodarbības ============ -->
+  <section class="sadala" id="sadalaKalendars2">
+    <div id="kalendars2" class="kalendars-iepaz"></div>
+  </section>
+
+  <!-- ============ 3. LAPAS KALENDĀRS — tikai parastās nodarbības ============ -->
+  <section class="sadala" id="sadalaKalendars3">
+    <div id="kalendars3"></div>
   </section>
 
   <!-- ============ RINDA (1. lapa — waiting list pieteikumi) ============ -->
@@ -698,7 +716,9 @@ function datetimeLocalVertiba(datums) {
 }
 
 /* ---------- Stāvoklis ---------- */
-let kalendars = null;
+let kalendars = null;   // kopējais ("Kalendārs" lapa — abi veidi)
+let kalendars2 = null;  // 2. lapa — tikai iepazīšanās
+let kalendars3 = null;  // 3. lapa — tikai parastās
 let skolotaji = [];
 let veidi = [];
 // Režīms: "pirma" = iepazīšanās nodarbības (zaļās), "parastas" = pārējās (brūnās).
@@ -724,7 +744,7 @@ function uzstaditRezimu(jauns) {
   rezims = jauns;
   atjaunotJaunaVeidus();
   atjaunotSekcijas();
-  if (kalendars) kalendars.refetchEvents();
+  atjaunotKalendarus();
 }
 
 /* ---------- Lapas 1 · 2 · 3 (kā klienta profila skati) ----------
@@ -745,7 +765,8 @@ function uzstaditLapu(nr) {
     // Kopējais kalendārs — gan iepazīšanās (zaļās), gan parastās (brūnās) nodarbības.
     document.querySelectorAll(".sadala").forEach((s) =>
       s.classList.toggle("aktiva", s.id === "sadalaKalendars"));
-    if (kalendars) { kalendars.updateSize(); kalendars.refetchEvents(); }
+    if (kalendars) kalendars.updateSize();
+    atjaunotKalendarus();
   } else {
     uzstaditRezimu(nr === 2 ? "pirma" : "parastas");
   }
@@ -935,6 +956,8 @@ function atjaunotSekcijas() {
   });
   document.querySelectorAll(".sadala").forEach((s) => s.classList.toggle("aktiva", s.id === aktiva));
   if (aktiva === "sadalaKalendars" && kalendars) kalendars.updateSize();
+  if (aktiva === "sadalaKalendars2" && kalendars2) kalendars2.updateSize();
+  if (aktiva === "sadalaKalendars3" && kalendars3) kalendars3.updateSize();
   if (aktiva === "sadalaGaida") ieladetGaidosos();
   if (aktiva === "sadalaGaida3") ieladetGaida3();
 }
@@ -1188,7 +1211,7 @@ async function ieladetPosmaTabulu(tbId, statusi, prefiks, tresa, tuksums) {
         });
         tosts("Nodarbība rezervēta.");
         delete mockKalStavokli[prefiks + i];
-        if (kalendars) kalendars.refetchEvents();
+        atjaunotKalendarus();
         ieladetPosmaTabulu(tbId, statusi, prefiks, tresa, tuksums); // ķeksis atjaunojas
       } catch (e) {
         console.error("adminCreateBooking kļūda:", e);
@@ -1387,8 +1410,10 @@ async function ieladetBiznesaStundas() {
   }
 }
 
-function initKalendaru() {
-  kalendars = new FullCalendar.Calendar(el("kalendars"), {
+// Trīs neatkarīgi kalendāri, katrs ar savu navigāciju un skata stāvokli:
+// 2. lapai tikai iepazīšanās, 3. lapai tikai parastās, "Kalendārs" lapai abas kopā.
+function izveidotKalendaru(elementaId, filtrs) {
+  const k = new FullCalendar.Calendar(el(elementaId), {
     initialView: "timeGridWeek",
     locale: "lv",
     firstDay: 1,
@@ -1401,7 +1426,7 @@ function initKalendaru() {
     eventOverlap: false,
     businessHours: biznesaStundas.length ? biznesaStundas : false,
     headerToolbar: { left: "prev,next today", center: "title", right: "timeGridDay,timeGridWeek,dayGridMonth" },
-    events: ieladetNotikumus,
+    events: (info, success, failure) => ieladetNotikumus(filtrs, info, success, failure),
     eventDrop: parvietotNotikumu,
     eventResize: parvietotNotikumu,
     eventClick: (info) => {
@@ -1410,17 +1435,26 @@ function initKalendaru() {
     },
     dateClick: (info) => atvertJauno(info.date),
   });
-  kalendars.render();
+  k.render();
+  return k;
+}
+function atjaunotKalendarus() {
+  [kalendars, kalendars2, kalendars3].forEach((k) => k && k.refetchEvents());
+}
+function initKalendaru() {
+  kalendars = izveidotKalendaru("kalendars", "visi");
+  kalendars2 = izveidotKalendaru("kalendars2", "iepaz");
+  kalendars3 = izveidotKalendaru("kalendars3", "parastas");
 
   ["filtrsVeids", "filtrsAtceltas"].forEach((id) =>
-    el(id).addEventListener("change", () => kalendars.refetchEvents()));
+    el(id).addEventListener("change", atjaunotKalendarus));
   el("filtrsMeklet").addEventListener("input", () => {
     clearTimeout(initKalendaru._t);
-    initKalendaru._t = setTimeout(() => kalendars.refetchEvents(), 350);
+    initKalendaru._t = setTimeout(atjaunotKalendarus, 350);
   });
 }
 
-async function ieladetNotikumus(info, success, failure) {
+async function ieladetNotikumus(filtrs, info, success, failure) {
   try {
     const [rezSnap, blokuSnap] = await Promise.all([
       getDocs(query(
@@ -1435,9 +1469,10 @@ async function ieladetNotikumus(info, success, failure) {
       )),
     ]);
 
-    const fVeids = el("filtrsVeids").value;
-    const fAtceltas = el("filtrsAtceltas").checked;
-    const fMeklet = el("filtrsMeklet").value.trim().toLowerCase();
+    // Filtru lauki ir tikai kopējā kalendāra sadaļā — atsevišķos tos nepiemērojam.
+    const fVeids = filtrs === "visi" ? el("filtrsVeids").value : "";
+    const fAtceltas = filtrs === "visi" ? el("filtrsAtceltas").checked : false;
+    const fMeklet = filtrs === "visi" ? el("filtrsMeklet").value.trim().toLowerCase() : "";
 
     const notikumi = [];
     for (const d of rezSnap.docs) {
@@ -1449,9 +1484,11 @@ async function ieladetNotikumus(info, success, failure) {
         if (!teksts.includes(fMeklet)) continue;
       }
       const atcelta = b.status === "cancelled";
-      // Iepazīšanās nodarbības zaļas, parastās brūnas — redzamas abos režīmos,
-      // bet vilkt/mainīt var tikai sava režīma nodarbības.
+      // Iepazīšanās nodarbības zaļas, parastās brūnas. Katrs lapas kalendārs
+      // rāda tikai savējās; kopējais — abas, bet rediģēt var sava režīma.
       const iepaz = irIepazRezervacija(b);
+      if (filtrs === "iepaz" && !iepaz) continue;
+      if (filtrs === "parastas" && iepaz) continue;
       const krasa = iepaz ? "#3B6D11" : "#7A5800";
       const savaRezima = (rezims === "pirma") === iepaz;
       notikumi.push({
@@ -1539,7 +1576,7 @@ async function atceltRezervaciju(atmaksat) {
     });
     tosts(atmaksat ? "Atcelta; kredīti atgriezti." : "Atcelta bez atmaksas.");
     el("detaluModalis").classList.remove("redzams");
-    kalendars.refetchEvents();
+    atjaunotKalendarus();
   } catch (e) {
     console.error("adminCancelBooking kļūda:", e);
     tosts(funkcijasKluda(e));
@@ -1602,7 +1639,7 @@ el("pogaIzveidotRezervaciju").addEventListener("click", async () => {
     });
     tosts("Nodarbība izveidota.");
     el("jaunaModalis").classList.remove("redzams");
-    kalendars.refetchEvents();
+    atjaunotKalendarus();
   } catch (e) {
     console.error("adminCreateBooking kļūda:", e);
     tosts(funkcijasKluda(e));
@@ -2017,7 +2054,7 @@ function renderSkolotajuTabulu() {
         await ieladetSkolotajus();
         renderDarbaLaikus();
         ieladetBiznesaStundas();
-        if (kalendars) kalendars.refetchEvents();
+        atjaunotKalendarus();
       } catch (e) {
         console.error(e);
         tosts("Neizdevās dzēst.");
@@ -2136,7 +2173,7 @@ async function ieladetBlokus() {
       try {
         await deleteDoc(doc(db, "blockedPeriods", poga.dataset.dzest));
         ieladetBlokus();
-        if (kalendars) kalendars.refetchEvents();
+        atjaunotKalendarus();
       } catch (e) {
         console.error(e);
         tosts("Neizdevās dzēst.");
@@ -2161,7 +2198,7 @@ el("pogaJaunsBloks").addEventListener("click", async () => {
     el("blokaIemesls").value = "";
     tosts("Periods pievienots.");
     ieladetBlokus();
-    if (kalendars) kalendars.refetchEvents();
+    atjaunotKalendarus();
   } catch (e) {
     console.error(e);
     tosts("Neizdevās pievienot.");
@@ -2241,7 +2278,7 @@ el("pogaSakumaDati").addEventListener("click", async () => {
     tosts(r.izveidots.length ? `Izveidots: ${r.izveidots.join(", ")}` : "Viss jau ir izveidots.");
     await Promise.all([ieladetSkolotajus(), ieladetVeidus(), ieladetPaketes(), ieladetIestatijumus()]);
     renderDarbaLaikus();
-    if (kalendars) kalendars.refetchEvents();
+    atjaunotKalendarus();
   } catch (e) {
     console.error("seedDefaults kļūda:", e);
     tosts(funkcijasKluda(e));
@@ -2268,6 +2305,7 @@ onAuthStateChanged(auth, async (user) => {
 
   await Promise.all([ieladetSkolotajus(), ieladetVeidus(), ieladetBiznesaStundas()]);
   initKalendaru();
+  uzstaditLapu(3); // saskaņots sākuma stāvoklis — 3. lapa ar Gaida sadaļu
   renderDarbaLaikus();
   ieladetPaketes();
   ieladetAudzeknus(true);
