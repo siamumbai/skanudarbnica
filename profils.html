@@ -530,6 +530,16 @@
   .par-nodarbibu{font-family:'Raleway',sans-serif;font-size:12px;font-weight:600;color:var(--muted)}
   .pakete.izveleta{border-color:var(--accent-dark);background:#F1E6C8}
 
+  /* Telefonā 2. skata pirkumu kartītes ir kompaktas — tikai nosaukums, cena un
+     "Pirkt". Pilnā izmērā paliek vienīgi pirmā iepazīšanās kartīte. */
+  @media(max-width:640px){
+    body.skats2 #iepazKarte .pakete:not(#iepazKartite1){padding:12px 16px;gap:3px}
+    body.skats2 #iepazKarte .pakete:not(#iepazKartite1) .pakete-cena{font-size:19px;margin:0 0 4px}
+    body.skats2 #iepazKarte #paketesRinda .pakete-krediti{display:none}
+    body.skats2 #iepazKarte .pakete:not(#iepazKartite1) .pirkt-poga{margin-top:2px;padding:8px 18px;font-size:12px}
+    body.skats2 #iepazKarte .pakete:not(#iepazKartite1) .pakete-kekss{margin-top:2px;width:32px;height:32px}
+  }
+
   .slegts-note{
     font-size:13px;color:var(--muted);line-height:1.6;
     background:var(--bg2);border:0.5px dashed var(--border);
@@ -629,9 +639,6 @@
     </ol>
   </section>
 
-  <!-- Pagaidu testēšanas poga — atiestata pieteikumu, lai var pieteikties vēlreiz -->
-  <button class="cta" id="pogaRindaAtiestatit" type="button" aria-label="Pieteikties no jauna" title="Pieteikties no jauna"
-    style="position:fixed;left:24px;bottom:24px;z-index:50;box-shadow:0 8px 26px rgba(0,0,0,.25);width:48px;height:48px;padding:0;border-radius:50%;font-size:20px;line-height:1">↺</button>
 </div>
 
 <!-- Galvenais saturs -->
@@ -1113,6 +1120,10 @@ function paradietSadalu(sadalasId) {
     && ['sadalaDavinat', 'sadalaPirkumi', 'sadalaPieteikties', 'sadalaIepazisanas'].includes(sadalasId)) {
     sadalasId = 'sadalaRezervet';
   }
+  // Pārslēdzot sadaļu, Rezervēt kartē atvērtā bērna anketa aizveras —
+  // "Rezervēt" (un jebkura cita sadaļa) vienmēr atveras sākuma stāvoklī.
+  if (el('anketaKarte').parentElement === el('rezAnketaIekspuse')
+    && el('rezAnketaVieta').classList.contains('atverts')) aizvertAnketuVisur();
   navPogas.forEach(({ poga, sadala }) => {
     const aktivs = sadala === sadalasId;
     el(poga).classList.toggle('aktiva', aktivs);
@@ -1131,6 +1142,8 @@ navPogas.forEach(({ poga, sadala }) => { el(poga).onclick = () => paradietSadalu
 function paraditSkatu(nr) {
   el('skatsRinda').classList.toggle('paslepts', nr !== 1);
   el('izkartojums').classList.toggle('paslepts', nr === 1);
+  // Profila ikona parādās tikai no 2. lapas — rindā gaidošajiem tās vēl nav.
+  el('navProfils').classList.toggle('paslepts', nr === 1);
   document.body.classList.toggle('skats2', nr === 2);
   document.body.classList.toggle('skats3', nr === 3);
   // 2. un 3. skatā nav "Dāvināt", "Maksājumi", "Pievienot bērnu" un vecās
@@ -1191,20 +1204,6 @@ el('pogaRindaPieteikties').onclick = async () => {
   }
   poga.disabled = false;
   poga.textContent = 'Pieteikties';
-};
-
-// Pagaidu testēšanas poga — atiestata rindas pieteikumu, lai formu var
-// aizpildīt un nosūtīt vēlreiz.
-el('pogaRindaAtiestatit').onclick = async () => {
-  try {
-    await saglabatProfilu(uid, { rindaPieteikta: false });
-    rindaPieteikta = false;
-    atjaunotRindasSkatu();
-    tosts('Pieteikums atiestatīts — vari pieteikties vēlreiz.', 'labi');
-  } catch (err) {
-    console.error('Rindas atiestatīšanas kļūda:', err);
-    tosts(kludasTeksts(err), 'kluda');
-  }
 };
 
 /* ---------- 2. skats: iepazīšanās makets ---------- */
@@ -1411,10 +1410,11 @@ function atvertAnketu(indekss) {
   el('anketaKarte').classList.remove('paslepts');
   el('pogaPieteiktBernu').classList.add('paslepts');
   zimetBernuKartes(indekss); // paslēpjam rediģējamā kartīti, kamēr anketa atvērta
-  // Rezervēt bērnu kartē anketa izplešas savā vietā — ritināšana un fokusa
-  // lēciens tur izjauktu izplešanās animāciju.
+  // Rezervēt bērnu kartē anketa izplešas savā vietā — bez ritināšanas un BEZ
+  // autofokusa: telefonā fokuss atver tastatūru, kas saspiež lapu un sabojā
+  // lēno izplešanās animāciju. Lietotājs pats pieskaras laukam.
   if (el('anketaKarte').parentElement === el('rezAnketaIekspuse')) {
-    el('bernaVards').focus({ preventScroll: true });
+    /* nekas — tikai izplešanās animācija */
   } else {
     el('anketaKarte').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     el('bernaVards').focus();
