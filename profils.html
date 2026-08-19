@@ -139,6 +139,9 @@
   #rezBerniKarte{display:none}
   body.skats2 #rezBerniKarte{display:block}
   body.skats2 #pogaJaunsAudzeknis{display:none !important}
+  /* 2. skatā veidu virsraksts paslēpts — noņemam lauka augšējo atstarpi,
+     lai kartes padding ap "Izvēlies audzēkni" ir vienāds no visām pusēm */
+  body.skats2 #audzeknaBloks .lauks{margin-top:0 !important}
   /* Katrs bērns — spiežama poga ar kontūru; atver anketu labošanai */
   .berna-poga{
     display:block;width:100%;text-align:left;
@@ -150,7 +153,7 @@
   .berna-poga:hover{border-color:var(--accent-dark)}
   #rezBernuRindas:not(:empty){margin-bottom:4px}
   /* Anketas vieta — izplešas/sakļaujas 1 sekundes laikā */
-  #rezAnketaVieta{display:grid;grid-template-rows:0fr;transition:grid-template-rows 1s ease}
+  #rezAnketaVieta{display:grid;grid-template-rows:0fr;transition:grid-template-rows 1s cubic-bezier(.22,.8,.3,1)}
   #rezAnketaVieta.atverts{grid-template-rows:1fr}
   #rezAnketaIekspuse{overflow:hidden;min-height:0}
   #rezAnketaIekspuse .karte{margin-top:4px;margin-bottom:16px;background:var(--bg)}
@@ -1218,6 +1221,9 @@ function atvertRezAnketu(indekss) {
 // anketa atgriežas savā vecajā vietā; citur aizveras uzreiz.
 function aizvertAnketuVisur() {
   if (el('anketaKarte').parentElement === el('rezAnketaIekspuse')) {
+    // Bērna vārds sarakstā parādās uzreiz — anketa sakļaujas zem tā, un beigās
+    // paliek tikai vārda rinda (nevis "aizveras un tad parādās vārds").
+    zimetRezBernuRindas();
     el('rezAnketaVieta').classList.remove('atverts');
     setTimeout(() => {
       el('pogaPieteiktBernu').after(el('anketaKarte'));
@@ -1369,8 +1375,14 @@ function atvertAnketu(indekss) {
   el('anketaKarte').classList.remove('paslepts');
   el('pogaPieteiktBernu').classList.add('paslepts');
   zimetBernuKartes(indekss); // paslēpjam rediģējamā kartīti, kamēr anketa atvērta
-  el('anketaKarte').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  el('bernaVards').focus();
+  // Rezervēt bērnu kartē anketa izplešas savā vietā — ritināšana un fokusa
+  // lēciens tur izjauktu izplešanās animāciju.
+  if (el('anketaKarte').parentElement === el('rezAnketaIekspuse')) {
+    el('bernaVards').focus({ preventScroll: true });
+  } else {
+    el('anketaKarte').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    el('bernaVards').focus();
+  }
 }
 function aizvertAnketu() {
   el('anketaKarte').classList.add('paslepts');
@@ -1964,15 +1976,19 @@ async function ieladetPaketes() {
       k.innerHTML = '<p class="tukss">Šobrīd nav pieejamu pakešu.</p>';
       return;
     }
-    // Abonementiem rādām cenu par vienu nodarbību ("/ nodarbība" maziem burtiem).
+    // Abonementiem rādām cenu par vienu nodarbību ("/ nodarbība" maziem burtiem)
+    // un virs tās kopsummu — cik maksā viss maksājums kopā.
     k.innerHTML = pirkumaPaketes.map((p) => {
       const cena = p.credits > 1
         ? `${eiro(Math.round(p.priceCents / p.credits))} <span class="par-nodarbibu">/ nodarbība</span>`
         : eiro(p.priceCents);
+      const krediti = p.credits > 1
+        ? `Kopā ${eiro(p.priceCents)}`
+        : `${p.credits} nodarbība`;
       return `
         <div class="pakete" data-id="${p.id}">
           <div class="pakete-nosaukums">${escapeHTML(p.name)}</div>
-          <div class="pakete-krediti">${p.credits} nodarbība${p.credits === 1 ? '' : 's'}</div>
+          <div class="pakete-krediti">${krediti}</div>
           <div class="pakete-cena">${cena}</div>
           <button class="cta" data-pakete="${p.id}">Apmaksāt</button>
         </div>`;
@@ -2034,7 +2050,7 @@ function renderDavanuPaketes() {
     return `
       <div class="pakete${izveletaDavana?.id === p.id ? ' izveleta' : ''}" data-id="${p.id}">
         <div class="pakete-nosaukums">${escapeHTML(p.name)}</div>
-        <div class="pakete-krediti">${p.credits} nodarbība${p.credits === 1 ? '' : 's'} dāvanā</div>
+        <div class="pakete-krediti">${p.credits} nodarbība${p.credits === 1 ? '' : 's'} dāvanā${p.credits > 1 ? ` · Kopā ${eiro(p.priceCents)}` : ''}</div>
         <div class="pakete-cena">${cena}</div>
         <button class="cta" data-davana="${p.id}">Dāvināt</button>
       </div>`;
