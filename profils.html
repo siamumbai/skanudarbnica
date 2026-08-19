@@ -1322,7 +1322,10 @@ function zimetMockKalendaru() {
 }
 // Izvēlēto laiku pierakstām profilā — admin panelī tas ieslēdz "Rezervēts"
 // ķeksi un parādās Info panelī un vēsturē (īsta rezervācija maketā nenotiek).
+let mockRez = null; // maketa rezervācijas laiks (millis) — rādām arī "Rezervētajās nodarbībās"
 function pierakstitMockRezervaciju(startMillis) {
+  mockRez = startMillis;
+  ieladetGaidamas(); // parādās sadaļā "Rezervētās nodarbības"
   saglabatProfilu(uid, {
     mockRezervacija: { start: startMillis, izveidots: new Date().toISOString() },
   }).catch((err) => console.error('Mock rezervācijas pieraksta kļūda:', err));
@@ -1851,17 +1854,33 @@ async function ieladetGaidamas() {
       orderBy('startAt', 'asc'),
       limit(20),
     ));
-    k.innerHTML = snap.empty
-      ? '<p class="tukss">Nav gaidāmu nodarbību. Rezervē nākamo sadaļā "Rezervēt"!</p>'
-      : snap.docs.map((d) => nodarbibasRinda(d.data(), d.id, { arLabotPogu: true })).join('');
+    const rindas = snap.docs.map((d) => ({
+      millis: d.data().startAt.toMillis(),
+      html: nodarbibasRinda(d.data(), d.id, { arLabotPogu: true }),
+    }));
+    // 2. skata maketa rezervācija arī skaitās — rādām kā gaidāmu nodarbību
+    // (bez "Labot"; laiku maina, izvēloties citu maketa kalendārā).
+    if (mockRez && mockRez >= Date.now()) {
+      rindas.push({
+        millis: mockRez,
+        html: nodarbibasRinda({
+          startAt: { toMillis: () => mockRez },
+          childName: berni[0]?.berna_vards || '',
+        }, 'mock', {}),
+      });
+    }
+    rindas.sort((a, b) => a.millis - b.millis);
+    k.innerHTML = rindas.length
+      ? rindas.map((r) => r.html).join('')
+      : '<p class="tukss">Nav gaidāmu nodarbību. Rezervē nākamo sadaļā "Rezervēt"!</p>';
     gaidamoDati = new Map(snap.docs.map((d) => [d.id, d.data()]));
     k.querySelectorAll('[data-labot]').forEach((poga) => {
       poga.addEventListener('click', () => atvertLabotu(poga.dataset.labot, poga.closest('.saraksta-rinda')));
     });
     // Zaļais skaitītājs navigācijā — cik nodarbību gaidāms.
     const skaititajs = el('navNodarbibasSkaits');
-    skaititajs.textContent = String(snap.size);
-    skaititajs.classList.toggle('paslepts', snap.size === 0);
+    skaititajs.textContent = String(rindas.length);
+    skaititajs.classList.toggle('paslepts', rindas.length === 0);
   } catch (err) {
     console.error('Gaidāmo ielādes kļūda:', err);
     k.innerHTML = '<p class="tukss">Neizdevās ielādēt. Mēģini vēlreiz.</p>';
@@ -2452,6 +2471,9 @@ prasitPieteiksanos(async (user) => {
   if (!p?.kontsIzveidots && user.metadata?.creationTime) {
     saglabatProfilu(uid, { kontsIzveidots: new Date(user.metadata.creationTime).toISOString() }).catch(() => {});
   }
+
+  // Maketa rezervācija (2. skata kalendāra izvēle) — rādīsies gaidāmajās.
+  mockRez = p?.mockRezervacija?.start ?? null;
 
   // Rindas skata (1. skata) stāvoklis.
   rindaPieteikta = !!p?.rindaPieteikta;
