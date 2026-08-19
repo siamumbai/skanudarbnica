@@ -195,7 +195,10 @@
   .filtri > div{min-width:170px}
   .filtri .atzimes-lauks{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);padding-bottom:10px}
 
-  #kalendars{
+  /* Visi trīs kalendāri izskatās vienādi: smilšu fons, pelēki posmi ārpus
+     darba laika (tur rezervēt nevar), gaišā vieta = pieejamie laiki. Vienīgā
+     krāsa 4. lapā ir zaļā zona no 2. lapas darba laikiem. */
+  #kalendars, #kalendars2, #kalendars3{
     background:var(--bg);border:0.5px solid var(--border);border-radius:14px;padding:14px;
     /* Bloķētie periodi pilnā krāsā (noklusēti FullCalendar tos rāda 30% caurspīdīgus)
        un pelēkāks fons laikam ārpus darba stundām */
