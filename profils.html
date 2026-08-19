@@ -129,6 +129,12 @@
 
   /* Pirkšanas pogas un "vēl nepieejamās" (bālās) kartītes 2. skatā */
   .pakete.bala{opacity:.45}
+  /* 2. skatā pakešu rinda vēl nav pērkama (hronoloģija sākas ar iepazīšanos) */
+  body.skats2 #paketesRinda .pirkt-poga{pointer-events:none}
+  /* 3. skatā iepazīšanās kartīšu vairs nav — tikai 3 paketes, visas pērkamas */
+  body.skats3 #iepazPirmaRinda{display:none}
+  body.skats3 #paketesRinda{margin-top:0 !important}
+  body.skats3 #paketesRinda .pakete.bala{opacity:1}
   .pirkt-poga{
     margin-top:10px;align-self:flex-start;
     background:var(--accent-dark);color:var(--bg);
@@ -857,7 +863,7 @@
            nopirkt tikai pirmo (20 min); pārējās atveras vēlāk, tāpēc bālas. -->
       <section class="karte" id="iepazKarte">
         <h2>Iegādājies nodarbību</h2>
-        <div class="paketes">
+        <div class="paketes" id="iepazPirmaRinda">
           <div class="pakete" id="iepazKartite1">
             <div class="pakete-nosaukums">Iepazīsti Skaņu Darbnīcu</div>
             <div class="pakete-krediti">1. nodarbība</div>
@@ -880,24 +886,24 @@
             <button class="pirkt-poga" type="button" disabled>Pirkt</button>
           </div>
         </div>
-        <div class="paketes" style="margin-top:14px">
+        <div class="paketes" id="paketesRinda" style="margin-top:14px">
           <div class="pakete bala">
             <div class="pakete-nosaukums">Viena nodarbība</div>
             <div class="pakete-krediti">1 nodarbība</div>
             <div class="pakete-cena">80 €</div>
-            <button class="pirkt-poga" type="button" disabled>Pirkt</button>
+            <button class="pirkt-poga" id="pogaPirktPak1" type="button">Pirkt</button>
           </div>
           <div class="pakete bala">
             <div class="pakete-nosaukums">4 nodarbības</div>
             <div class="pakete-krediti">Kopā 280 €</div>
             <div class="pakete-cena">70 € <span class="par-nodarbibu">/ nodarbība</span></div>
-            <button class="pirkt-poga" type="button" disabled>Pirkt</button>
+            <button class="pirkt-poga" id="pogaPirktPak4" type="button">Pirkt</button>
           </div>
           <div class="pakete bala">
             <div class="pakete-nosaukums">8 nodarbības</div>
             <div class="pakete-krediti">Kopā 480 €</div>
             <div class="pakete-cena">60 € <span class="par-nodarbibu">/ nodarbība</span></div>
-            <button class="pirkt-poga" type="button" disabled>Pirkt</button>
+            <button class="pirkt-poga" id="pogaPirktPak8" type="button">Pirkt</button>
           </div>
         </div>
       </section>
@@ -1119,10 +1125,11 @@ const navPogas = [
 // Bilances kartīti rādām tikai rezervāciju sadaļās.
 const bilancesSadalas = ['sadalaRezervet', 'sadalaNodarbibas', 'sadalaPirkumi', 'sadalaDavinat'];
 function paradietSadalu(sadalasId) {
-  // 2. un 3. skatā Dāvināt, Maksājumi un Pievienot bērnu sadaļu nav —
-  // viss notiek Rezervēt sadaļā, tāpēc jebkurš ceļš uz tām ved turp.
+  // 2. un 3. skatā Dāvināt, Maksājumi, Pievienot bērnu un vecās Pirmās
+  // nodarbības sadaļu nav — viss notiek Rezervēt sadaļā, tāpēc jebkurš ceļš
+  // uz tām ved turp.
   if ((document.body.classList.contains('skats2') || document.body.classList.contains('skats3'))
-    && ['sadalaDavinat', 'sadalaPirkumi', 'sadalaPieteikties'].includes(sadalasId)) {
+    && ['sadalaDavinat', 'sadalaPirkumi', 'sadalaPieteikties', 'sadalaIepazisanas'].includes(sadalasId)) {
     sadalasId = 'sadalaRezervet';
   }
   navPogas.forEach(({ poga, sadala }) => {
@@ -1146,11 +1153,12 @@ function paraditSkatu(nr) {
   document.body.classList.toggle('skats2', nr === 2);
   document.body.classList.toggle('skats3', nr === 3);
   [1, 2, 3].forEach((n) => el('skataPoga' + n).classList.toggle('aktiva', n === nr));
-  // 2. un 3. skatā nav "Dāvināt", "Maksājumi" un "Pievienot bērnu" — ja kāda
-  // no tām atvērta, pārejam uz Rezervēt.
+  // 2. un 3. skatā nav "Dāvināt", "Maksājumi", "Pievienot bērnu" un vecās
+  // "Pirmā nodarbība" — ja kāda no tām atvērta, pārejam uz Rezervēt.
   if (nr !== 1 && (el('sadalaDavinat').classList.contains('aktiva')
     || el('sadalaPirkumi').classList.contains('aktiva')
-    || el('sadalaPieteikties').classList.contains('aktiva'))) paradietSadalu('sadalaRezervet');
+    || el('sadalaPieteikties').classList.contains('aktiva')
+    || el('sadalaIepazisanas').classList.contains('aktiva'))) paradietSadalu('sadalaRezervet');
   // Ja anketa palika atvērta Rezervēt bērnu kartē — 2. un 3. skats to koplieto;
   // atgriežam vecajā vietā tikai izejot uz 1. skatu.
   if (nr === 1 && el('anketaKarte').parentElement === el('rezAnketaIekspuse')) {
@@ -1339,8 +1347,26 @@ function atvertMockMaksu(nr, apraksts, cena) {
 }
 el('pogaPirktIepaz1').onclick = () => atvertMockMaksu(1, 'Iepazīsti Skaņu Darbnīcu · 1. nodarbība', '20 €');
 el('pogaPirktIepaz2').onclick = () => atvertMockMaksu(2, 'Iepazīsti Skaņu Darbnīcu · 2. nodarbība', '30 €');
+// 3. skata paketes — pērkamas atkārtoti; pēc apmaksas mock bilance palielinās.
+const mockPaketes = {
+  pak1: { krediti: 1, apraksts: 'Viena nodarbība', cena: '80 €' },
+  pak4: { krediti: 4, apraksts: '4 nodarbības', cena: '280 €' },
+  pak8: { krediti: 8, apraksts: '8 nodarbības', cena: '480 €' },
+};
+Object.keys(mockPaketes).forEach((id) => {
+  el('pogaPirkt' + id[0].toUpperCase() + id.slice(1)).onclick = () =>
+    atvertMockMaksu(id, mockPaketes[id].apraksts, mockPaketes[id].cena);
+});
 el('pogaMockMaksat').onclick = () => {
   el('mockMaksaKarte').classList.remove('atverts');
+  if (typeof mockPirkums === 'string' && mockPaketes[mockPirkums]) {
+    // Paketes pirkums (3. skats): bilance aug, kartīte paliek pērkama atkārtoti.
+    mockKrediti += mockPaketes[mockPirkums].krediti;
+    atjaunotBilanci();
+    tosts(`Apmaksāts ✓ Pievienotas ${mockPaketes[mockPirkums].krediti} nodarbība${mockPaketes[mockPirkums].krediti === 1 ? '' : 's'}.`, 'labi');
+    el('bilanceKarte').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
   el('iepazKartite' + mockPirkums).classList.add('izpildita');
   el('pogaPirktIepaz' + mockPirkums).classList.add('paslepts');
   el('iepazKekss' + mockPirkums).classList.remove('paslepts');
@@ -1503,11 +1529,13 @@ async function saglabatBernus(jaunieBerni, veiksmesTeksts, poga) {
 
 /* ---------- Bilance (realtime) ---------- */
 let bijaNepietiekami = false;
+let mockKrediti = 0; // 3. skata maketa pirkumi — tikai attēlojumam, ne Firestore
 function atjaunotBilanci() {
-  el('bilanceSkaitlis').textContent = String(bilance);
+  const kopa = bilance + mockKrediti;
+  el('bilanceSkaitlis').textContent = String(kopa);
   // Zaļā kartīte, kad ir atlikušas nodarbības; brūnā — kad bilance 0.
-  el('bilanceKarte').classList.toggle('pozitiva', bilance > 0);
-  el('bilanceApaksteksts').textContent = bilance > 0
+  el('bilanceKarte').classList.toggle('pozitiva', kopa > 0);
+  el('bilanceApaksteksts').textContent = kopa > 0
     ? '✔ Apmaksātas un gatavas izmantošanai'
     : 'Papildini un tad rezervē nodarbību';
   atjaunotSlotuPieejamibu();
@@ -2216,7 +2244,10 @@ async function ieladetPirkumus() {
 /* ---------- Uzņemšana: iepazīšanās plūsma jauniem lietotājiem ---------- */
 // Līdz apstiprināšanai lietotājs redz tikai "Pirmā nodarbība" sadaļu.
 function piemerotUznemsanu() {
-  const pilns = uznemsanas === 'apstiprinats';
+  // "jauns" redz tikai rindu (1. skats); visi pārējie — parasto navigāciju
+  // (2./3. skata CSS lieko tāpat noslēpj). Vecā "Pirmā nodarbība" sadaļa
+  // prototipā vairs netiek rādīta — to aizstāj 2. skats.
+  const pilns = uznemsanas !== 'jauns';
   ['navPieteikties', 'navRezervet', 'navNodarbibas', 'navPirkumi', 'navDavinat'].forEach((id) =>
     el(id).classList.toggle('paslepts', !pilns));
   el('navIepazisanas').classList.toggle('paslepts', pilns);
@@ -2449,9 +2480,8 @@ prasitPieteiksanos(async (user) => {
       }
       uznemsanas = jaunais;
       piemerotUznemsanu();
-      // No rindas skata pārejam uz pilno profilu ar iepazīšanās soļiem.
-      paraditSkatu(3);
-      paradietSadalu('sadalaIepazisanas');
+      // No rindas skata pārejam uz 2. skatu — iepazīšanās plūsmu Rezervēt sadaļā.
+      paraditSkatu(2);
       tosts('Vieta apstiprināta — vari rezervēt pirmo nodarbību!', 'labi');
     }
     atjaunotIepazSkatu();
@@ -2479,8 +2509,9 @@ prasitPieteiksanos(async (user) => {
   if (izveletaisVeids) ieladetSlotus();
 
   el('ielade').classList.add('paslepts');
-  // Jaunie (rindā gaidošie) sāk ar 1. skatu — rindu; pārējie ar pilno profilu.
-  paraditSkatu(uznemsanas === 'jauns' ? 1 : 3);
+  // Skats pēc statusa: rindā gaidošie — 1. (rinda), admin apstiprinātie —
+  // 2. (iepazīšanās plūsma), pilnā piekļuve — 3. (paketes un rezervēšana).
+  paraditSkatu(uznemsanas === 'jauns' ? 1 : uznemsanas === 'apstiprinats' ? 3 : 2);
 
   ieladetGaidamas();
   ieladetPaketes();

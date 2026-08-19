@@ -61,10 +61,35 @@
   .rezima-poga:hover{background:var(--bg2);color:var(--text)}
   .rezima-poga.aktiva{background:var(--accent-dark);border-color:var(--accent-dark);color:var(--bg)}
   .rezima-poga .punkts{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+  .rezima-poga .lapas-nr{
+    width:22px;height:22px;border-radius:50%;flex-shrink:0;
+    display:inline-flex;align-items:center;justify-content:center;
+    border:1.5px solid currentColor;font-size:11.5px;font-weight:700;
+  }
   .rezima-saturs{min-width:0}
+
+  /* 1. lapa — rindas pieteikumi: e-pastu rindas, klikšķis atver informāciju */
+  .rindas-persona{margin-bottom:10px}
+  .rindas-epasts{
+    display:flex;justify-content:space-between;align-items:center;gap:12px;
+    width:100%;text-align:left;background:var(--bg);
+    border:1.5px solid var(--border);border-radius:12px;padding:12px 16px;
+    font-family:inherit;font-size:13.5px;font-weight:600;color:var(--text);
+    cursor:pointer;transition:border-color .15s;
+  }
+  .rindas-epasts:hover{border-color:var(--accent-dark)}
+  .rindas-epasts .bulta{color:var(--muted);font-size:11px;transition:transform .2s}
+  .rindas-persona.atverta .rindas-epasts{border-radius:12px 12px 0 0}
+  .rindas-persona.atverta .bulta{transform:rotate(180deg)}
+  .rindas-info{
+    background:var(--bg);border:1.5px solid var(--border);border-top:none;
+    border-radius:0 0 12px 12px;padding:14px 16px;font-size:13px;line-height:1.7;
+  }
+  .rindas-info b{font-weight:700}
 
   /* Sekciju navigācija */
   .sekciju-nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:22px}
+  .sekciju-nav[hidden]{display:none}
   .nav-poga{
     background:transparent;border:0.5px solid var(--border);border-radius:100px;
     padding:10px 17px;font-family:inherit;font-size:13.5px;font-weight:600;
@@ -213,13 +238,16 @@
 
 <div class="konteiners" id="konteiners" hidden>
 
-  <!-- Kreisā navigācija: kurā režīmā rediģē kalendāru -->
-  <nav class="rezimu-nav" aria-label="Nodarbību režīmi">
-    <button class="rezima-poga" id="rezimsPirma" type="button">
-      <span class="punkts" style="background:var(--zala)" aria-hidden="true"></span> Pirmā nodarbība
+  <!-- Kreisā navigācija: klienta dzīves posmi 1 · 2 · 3 (kā profila skati) -->
+  <nav class="rezimu-nav" aria-label="Klienta posmi">
+    <button class="rezima-poga" id="lapaPoga1" type="button">
+      <span class="lapas-nr" aria-hidden="true">1</span> Rinda
     </button>
-    <button class="rezima-poga aktiva" id="rezimsParastas" type="button">
-      <span class="punkts" style="background:var(--accent-dark)" aria-hidden="true"></span> Nodarbības
+    <button class="rezima-poga" id="lapaPoga2" type="button">
+      <span class="lapas-nr" aria-hidden="true">2</span> Pirmā nodarbība
+    </button>
+    <button class="rezima-poga aktiva" id="lapaPoga3" type="button">
+      <span class="lapas-nr" aria-hidden="true">3</span> Nodarbības
     </button>
   </nav>
 
@@ -260,6 +288,20 @@
       Klikšķis uz brīvas vietas izveido jaunu nodarbību, klikšķis uz nodarbības — atver detaļas.
       Pelēkais fons ir brīvdienas, bloķētie periodi un laiks ārpus darba laika.
     </p>
+  </section>
+
+  <!-- ============ RINDA (1. lapa — waiting list pieteikumi) ============ -->
+  <section class="sadala" id="sadalaRinda">
+    <div class="karte">
+      <h2>Rinda</h2>
+      <p class="h2-piezime">
+        Pieteikumi rindā uz pirmo nodarbību. Klikšķis uz e-pasta atver pieteikuma
+        informāciju. "Apstiprināt" pārceļ lietotāju uz 2. lapu — viņš var pievienot
+        bērnu, apmaksāt un rezervēt pirmo nodarbību.
+      </p>
+      <div id="rindasSaraksts"></div>
+      <button class="maza-poga" id="pogaRinduAtjaunot" style="margin-top:10px">Atjaunot sarakstu</button>
+    </div>
   </section>
 
   <!-- ============ GAIDA (Pirmās nodarbības rinda) ============ -->
@@ -580,14 +622,86 @@ function irIepazRezervacija(b) {
 }
 function uzstaditRezimu(jauns) {
   rezims = jauns;
-  el("rezimsPirma").classList.toggle("aktiva", rezims === "pirma");
-  el("rezimsParastas").classList.toggle("aktiva", rezims === "parastas");
   atjaunotJaunaVeidus();
   atjaunotSekcijas();
   if (kalendars) kalendars.refetchEvents();
 }
-el("rezimsPirma").addEventListener("click", () => uzstaditRezimu("pirma"));
-el("rezimsParastas").addEventListener("click", () => uzstaditRezimu("parastas"));
+
+/* ---------- Lapas 1 · 2 · 3 (kā klienta profila skati) ----------
+   1 = rindas pieteikumi, 2 = Pirmā nodarbība (iepazīšanās režīms),
+   3 = Nodarbības (parastais režīms). */
+let lapa = 3;
+function uzstaditLapu(nr) {
+  lapa = nr;
+  [1, 2, 3].forEach((n) => el("lapaPoga" + n).classList.toggle("aktiva", n === nr));
+  // 1. lapā sekciju navigācijas nav — tikai rindas saraksts.
+  document.querySelector(".sekciju-nav").hidden = nr === 1;
+  if (nr === 1) {
+    document.querySelectorAll(".sadala").forEach((s) =>
+      s.classList.toggle("aktiva", s.id === "sadalaRinda"));
+    ieladetRindu();
+  } else {
+    uzstaditRezimu(nr === 2 ? "pirma" : "parastas");
+  }
+}
+[1, 2, 3].forEach((n) => el("lapaPoga" + n).addEventListener("click", () => uzstaditLapu(n)));
+
+/* ---------- 1. lapa: rindas pieteikumi ---------- */
+let rindasCilveki = [];
+async function ieladetRindu() {
+  const k = el("rindasSaraksts");
+  k.innerHTML = '<p style="color:var(--muted);font-size:13px">Ielādē…</p>';
+  try {
+    const snap = await getDocs(query(collection(db, "users"), where("rindaPieteikta", "==", true)));
+    // Rādām tikai vēl neapstiprinātos — pēc "Apstiprināt" cilvēks ir 2. lapā.
+    rindasCilveki = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+      .filter((u) => (u.uznemsanasStatuss || "jauns") === "jauns")
+      .sort((a, b) => (a.rindasEpasts || a.epasts || "").localeCompare(b.rindasEpasts || b.epasts || ""));
+    if (!rindasCilveki.length) {
+      k.innerHTML = '<p style="color:var(--muted);font-size:13px">Šobrīd rindā neviena pieteikuma nav.</p>';
+      return;
+    }
+    k.innerHTML = rindasCilveki.map((u, i) => {
+      const berni = (u.berni || []).map((b) => b.berna_vards).filter(Boolean).join(", ");
+      return `
+      <div class="rindas-persona" data-i="${i}">
+        <button class="rindas-epasts" type="button" data-atvert="${i}">
+          <span>${escapeHTML(u.rindasEpasts || u.epasts || "—")}</span>
+          <span class="bulta" aria-hidden="true">▾</span>
+        </button>
+        <div class="rindas-info" id="rindasInfo${i}" hidden>
+          <div><b>Vārds:</b> ${escapeHTML(u.vards || "—")}</div>
+          <div><b>Tālrunis:</b> ${escapeHTML(u.rindasTel || u.telefons || "—")}</div>
+          <div><b>Audzēkņa vecums:</b> ${u.rindasVecums ? escapeHTML(String(u.rindasVecums)) + " g." : "—"}</div>
+          ${berni ? `<div><b>Bērni:</b> ${escapeHTML(berni)}</div>` : ""}
+          <button class="cta" data-apstiprinat="${u.id}" style="margin-top:12px">Apstiprināt</button>
+        </div>
+      </div>`;
+    }).join("");
+    k.querySelectorAll("[data-atvert]").forEach((p) => p.addEventListener("click", () => {
+      const persona = p.closest(".rindas-persona");
+      const info = el("rindasInfo" + p.dataset.atvert);
+      info.hidden = !info.hidden;
+      persona.classList.toggle("atverta", !info.hidden);
+    }));
+    k.querySelectorAll("[data-apstiprinat]").forEach((p) => p.addEventListener("click", async () => {
+      p.disabled = true;
+      try {
+        await setDoc(doc(db, "users", p.dataset.apstiprinat), { uznemsanasStatuss: "atlauts" }, { merge: true });
+        tosts("Apstiprināts — lietotājs pārcelts uz 2. lapu.");
+        ieladetRindu();
+      } catch (e) {
+        console.error("Apstiprināšanas kļūda:", e);
+        tosts("Neizdevās apstiprināt.");
+        p.disabled = false;
+      }
+    }));
+  } catch (e) {
+    console.error("Rindas ielādes kļūda:", e);
+    k.innerHTML = '<p style="color:var(--sarkana);font-size:13px">Neizdevās ielādēt rindu.</p>';
+  }
+}
+el("pogaRinduAtjaunot").addEventListener("click", ieladetRindu);
 
 // Jaunas rezervācijas modālī rādām tikai aktīvā režīma nodarbību veidus.
 function atjaunotJaunaVeidus() {
