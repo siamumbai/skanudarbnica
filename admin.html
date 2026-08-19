@@ -992,13 +992,17 @@ document.querySelectorAll(".sekciju-nav .nav-poga").forEach((poga) => {
 const GAIDA_STATUSI = { jauns: "Rindā", atlauts: "Atļauts rezervēt", pieteikts: "Apmaksājis", apstiprinats: "Pilnā piekļuve" };
 
 /* Maketa kalendārs Info panelī — VIENMĒR tas pats, ko klients redz sava
-   profila 2. skatā (tie paši laiki 10–17, svētdiena brīva, "aizņemtie" pēc
-   tās pašas formulas (d*3+st)%5===0, tā pati nedēļu pāršķiršana). Ja maini
-   vienu, maini abus. Izvēlētais laiks jāapstiprina ar atsevišķu pogu. */
+   profila 2. skatā (profils.html, zimetMockKalendaru): laikus zīmē no
+   attiecīgās lapas darba laikiem un brīvdienām. Ja maini vienu, maini abus.
+   Izvēlētais laiks jāapstiprina ar atsevišķu pogu. */
 const mockKalStavokli = {};
 function zimetInfoKalendaru(prefiks, i) {
   const st = mockKalStavokli[prefiks + i] ??= { nobide: 0, slide: 0, izvele: null };
   const konteiners = el(prefiks + "Kalendars" + i);
+  // 2. lapā iepazīšanās darba laiki un brīvdienas, 3. lapā — parastie.
+  const joslas = prefiks === "gaida3" ? biznesaStundas3 : biznesaStundas2;
+  const bloki = visiBloki.filter((b) =>
+    (b.rezims || null) !== (prefiks === "gaida3" ? "pirma" : "parastas"));
   const pirmdiena = nedelasPirmdiena(st.nobide);
   const sodien = sodienISO();
   const kolonnas = [];
@@ -1014,18 +1018,27 @@ function zimetInfoKalendaru(prefiks, i) {
       kolonnas.push(`<div class="diena-kolonna briva">${virsraksts}<div class="brivs-bloks">Pagājusi</div></div>`);
       continue;
     }
-    if (d === 6) { // svētdiena — brīvdiena
-      kolonnas.push(`<div class="diena-kolonna briva">${virsraksts}<div class="brivs-bloks">Brīvdiena</div></div>`);
+    const dienasJoslas = joslas.filter((j) => j.daysOfWeek.includes((d + 1) % 7));
+    if (dienasJoslas.length === 0) {
+      kolonnas.push(`<div class="diena-kolonna briva">${virsraksts}<div class="brivs-bloks">Brīvs</div></div>`);
       continue;
     }
-    const sloti = [];
-    for (let stunda = 10; stunda <= 17; stunda++) {
+    const stundas = new Set();
+    dienasJoslas.forEach((j) => {
+      const [sh, sm] = j.startTime.split(":").map(Number);
+      const [eh, em] = j.endTime.split(":").map(Number);
+      for (let h = 0; h < 24; h++) {
+        if (h * 60 >= sh * 60 + sm && h * 60 < eh * 60 + em) stundas.add(h);
+      }
+    });
+    const sloti = [...stundas].sort((a, b) => a - b).map((stunda) => {
       const startMillis = new Date(`${datums}T${String(stunda).padStart(2, "0")}:00:00`).getTime();
-      const aiznemts = (d * 3 + stunda) % 5 === 0;
-      sloti.push(aiznemts
-        ? `<button class="laiks aiznemts" type="button" disabled title="Aizņemts">${String(stunda).padStart(2, "0")}:00</button>`
-        : `<button class="laiks${st.izvele === startMillis ? " aktivs" : ""}" data-start="${startMillis}" type="button">${String(stunda).padStart(2, "0")}:00</button>`);
-    }
+      const aiznemts = startMillis < Date.now()
+        || bloki.some((b) => startMillis >= b.startAt.toMillis() && startMillis < b.endAt.toMillis());
+      return aiznemts
+        ? `<button class="laiks aiznemts" type="button" disabled title="Nav pieejams">${String(stunda).padStart(2, "0")}:00</button>`
+        : `<button class="laiks${st.izvele === startMillis ? " aktivs" : ""}" data-start="${startMillis}" type="button">${String(stunda).padStart(2, "0")}:00</button>`;
+    });
     kolonnas.push(`<div class="diena-kolonna">${virsraksts}${sloti.join("")}</div>`);
   }
   const animKlase = st.slide > 0 ? " no-labas" : st.slide < 0 ? " no-kreisas" : "";
@@ -1477,6 +1490,7 @@ async function lietotajaDati(uid) {
 // pieder 2. lapai (iepazīšanās), "parastas" (vai bez lauka — vecie) 3. lapai.
 let biznesaStundas2 = []; // iepazīšanās
 let biznesaStundas3 = []; // parastās
+let visiBloki = [];       // brīvdienas/bloķētie periodi Info paneļa kalendāriem
 let zalaZonuAvots = null; // 4. lapas zaļās zonas — iepazīšanās darba laiki
 async function ieladetBiznesaStundas() {
   try {
@@ -2265,6 +2279,7 @@ async function ieladetBlokus() {
     where("endAt", ">", Timestamp.now()),
     orderBy("endAt"), limit(100),
   ));
+  visiBloki = snap.docs.map((d) => d.data()); // Info paneļu kalendāriem
   // Sarakstā tikai pašreizējās lapas brīvdienas (vecie ieraksti bez "rezims"
   // ir globāli un redzami abās).
   const aktRezims = rezims === "pirma" ? "pirma" : "parastas";

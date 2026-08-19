@@ -1257,8 +1257,25 @@ function aizvertAnketuVisur() {
 }
 
 el('pogaRezPievienotBernu').onclick = () => atvertRezAnketu(null);
-// SAISTĪTS: šis pats maketa kalendārs ir admin panelī (admin.html,
-// zimetInfoKalendaru) — laiki, brīvdienas un "aizņemto" formula jātur vienādi.
+// SAISTĪTS: tāds pats kalendārs ir admin paneļa Info panelī (admin.html,
+// zimetInfoKalendaru). Abi zīmē laikus no admin 2. lapas darba laikiem
+// (availabilityRules ar rezims "pirma") un brīvdienām — rezervēt var TIKAI
+// admina atļautos laikus.
+let iepazJoslas = []; // admin 2. lapas darba laiki (weekday, startTime, endTime)
+let iepazBloki = [];  // brīvdienas/bloķētie periodi (iepazīšanās vai globālie)
+async function ieladetIepazLaikus() {
+  try {
+    const [rSnap, bSnap] = await Promise.all([
+      getDocs(query(collection(db, 'availabilityRules'), where('active', '==', true))),
+      getDocs(query(collection(db, 'blockedPeriods'), where('endAt', '>', new Date()))),
+    ]);
+    iepazJoslas = rSnap.docs.map((d) => d.data()).filter((r) => (r.rezims || 'parastas') === 'pirma');
+    iepazBloki = bSnap.docs.map((d) => d.data()).filter((b) => (b.rezims || null) !== 'parastas');
+    zimetMockKalendaru();
+  } catch (err) {
+    console.error('Iepazīšanās laiku ielādes kļūda:', err);
+  }
+}
 function zimetMockKalendaru() {
   const pirmdiena = nedelasPirmdiena(mockNobide);
   const sodien = sodienISO();
@@ -1275,18 +1292,29 @@ function zimetMockKalendaru() {
       kolonnas.push(`<div class="diena-kolonna briva">${virsraksts}<div class="brivs-bloks">Pagājusi</div></div>`);
       continue;
     }
-    if (d === 6) { // svētdiena — brīvdiena
-      kolonnas.push(`<div class="diena-kolonna briva">${virsraksts}<div class="brivs-bloks">Brīvdiena</div></div>`);
+    // Dienas stundas no admin 2. lapas darba laikiem (weekday: 1=Pi … 7=Sv).
+    const dienasJoslas = iepazJoslas.filter((r) => r.weekday === d + 1);
+    if (dienasJoslas.length === 0) {
+      kolonnas.push(`<div class="diena-kolonna briva">${virsraksts}<div class="brivs-bloks">Brīvs</div></div>`);
       continue;
     }
-    const sloti = [];
-    for (let st = 10; st <= 17; st++) {
+    const stundas = new Set();
+    dienasJoslas.forEach((r) => {
+      const [sh, sm] = r.startTime.split(':').map(Number);
+      const [eh, em] = r.endTime.split(':').map(Number);
+      for (let h = 0; h < 24; h++) {
+        if (h * 60 >= sh * 60 + sm && h * 60 < eh * 60 + em) stundas.add(h);
+      }
+    });
+    const sloti = [...stundas].sort((a, b) => a - b).map((st) => {
       const startMillis = new Date(`${datums}T${String(st).padStart(2, '0')}:00:00`).getTime();
-      const aiznemts = (d * 3 + st) % 5 === 0; // maketa "aizņemtie" laiki
-      sloti.push(aiznemts
-        ? `<button class="laiks aiznemts" type="button" disabled title="Aizņemts">${String(st).padStart(2, '0')}:00</button>`
-        : `<button class="laiks" data-start="${startMillis}" type="button">${String(st).padStart(2, '0')}:00</button>`);
-    }
+      // Aizņemts = brīvdiena/bloķēts periods vai jau pagājusi šodienas stunda.
+      const aiznemts = startMillis < Date.now()
+        || iepazBloki.some((b) => startMillis >= b.startAt.toMillis() && startMillis < b.endAt.toMillis());
+      return aiznemts
+        ? `<button class="laiks aiznemts" type="button" disabled title="Nav pieejams">${String(st).padStart(2, '0')}:00</button>`
+        : `<button class="laiks" data-start="${startMillis}" type="button">${String(st).padStart(2, '0')}:00</button>`;
+    });
     kolonnas.push(`<div class="diena-kolonna">${virsraksts}${sloti.join('')}</div>`);
   }
   // Tā pati slīdēšanas animācija kā īstajam kalendāram 3. skatā.
@@ -2509,6 +2537,7 @@ prasitPieteiksanos(async (user) => {
   mockPirkumi = p?.mockPirkumi ?? [];
   iepazAtlautas = p?.iepazAtlautas ?? {};
   atjaunotIepazKartites();
+  ieladetIepazLaikus(); // 2. skata kalendārs no admin atļautajiem laikiem
 
   // Rindas skata (1. skata) stāvoklis.
   rindaPieteikta = !!p?.rindaPieteikta;

@@ -58,12 +58,16 @@ service cloud.firestore {
     }
 
     /* ---------- Administratora konfigurācija ---------- */
-    // Studenti brīvos laikus saņem tikai caur getAvailableSlots funkciju.
+    // Darba laikus un brīvdienas pieteikušies drīkst lasīt — profila
+    // iepazīšanās kalendārs rāda tikai admina atļautos laikus.
+    // Raksta tikai admins.
     match /availabilityRules/{id} {
-      allow read, write: if irAdmins();
+      allow read: if autorizets();
+      allow write: if irAdmins();
     }
     match /blockedPeriods/{id} {
-      allow read, write: if irAdmins();
+      allow read: if autorizets();
+      allow write: if irAdmins();
     }
 
     /* ---------- Tikai Cloud Functions raksta ---------- */
