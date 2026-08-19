@@ -876,11 +876,12 @@
             <button class="pirkt-poga" id="pogaPirktIepaz2" type="button" disabled>Pirkt</button>
             <span class="pakete-kekss paslepts" id="iepazKekss2" aria-hidden="true">✓</span>
           </div>
-          <div class="pakete bala">
+          <div class="pakete bala" id="iepazKartite3">
             <div class="pakete-nosaukums">Iepazīsti Skaņu Darbnīcu</div>
             <div class="pakete-krediti">3. nodarbība</div>
             <div class="pakete-cena">30 € <span class="par-nodarbibu">· 30 min</span></div>
-            <button class="pirkt-poga" type="button" disabled>Pirkt</button>
+            <button class="pirkt-poga" id="pogaPirktIepaz3" type="button" disabled>Pirkt</button>
+            <span class="pakete-kekss paslepts" id="iepazKekss3" aria-hidden="true">✓</span>
           </div>
         </div>
         <div class="paketes" id="paketesRinda" style="margin-top:14px">
@@ -1359,6 +1360,26 @@ function atvertMockMaksu(nr, apraksts, cena) {
 }
 el('pogaPirktIepaz1').onclick = () => atvertMockMaksu(1, 'Iepazīsti Skaņu Darbnīcu · 1. nodarbība', '20 €');
 el('pogaPirktIepaz2').onclick = () => atvertMockMaksu(2, 'Iepazīsti Skaņu Darbnīcu · 2. nodarbība', '30 €');
+el('pogaPirktIepaz3').onclick = () => atvertMockMaksu(3, 'Iepazīsti Skaņu Darbnīcu · 3. nodarbība', '30 €');
+
+/* Iepazīšanās kartīšu pieejamību nosaka admin ķekši (users.iepazAtlautas):
+   1. nodarbība atļauta pēc noklusējuma, 2. un 3. — tikai ar admina ķeksi
+   (vai automātiski, kad iepriekšējās laiks pagājis). Atjaunojas reāllaikā. */
+let iepazAtlautas = {};
+function iepazNopirkta(n) {
+  return mockPirkumi.some((m) => (m.apraksts || '').includes(`${n}. nodarbība`));
+}
+function atjaunotIepazKartites() {
+  [1, 2, 3].forEach((n) => {
+    const atlauta = n === 1 ? iepazAtlautas.n1 !== false : iepazAtlautas['n' + n] === true;
+    const nopirkta = iepazNopirkta(n);
+    el('iepazKartite' + n).classList.toggle('izpildita', nopirkta);
+    el('iepazKartite' + n).classList.toggle('bala', !nopirkta && !atlauta);
+    el('iepazKekss' + n).classList.toggle('paslepts', !nopirkta);
+    el('pogaPirktIepaz' + n).classList.toggle('paslepts', nopirkta);
+    el('pogaPirktIepaz' + n).disabled = nopirkta || !atlauta;
+  });
+}
 // 3. skata paketes — pērkamas atkārtoti; pēc apmaksas mock bilance palielinās.
 const mockPaketes = {
   pak1: { krediti: 1, apraksts: 'Viena nodarbība', cena: '80 €' },
@@ -1380,13 +1401,9 @@ el('pogaMockMaksat').onclick = () => {
     el('bilanceKarte').scrollIntoView({ behavior: 'smooth', block: 'center' });
     return;
   }
-  el('iepazKartite' + mockPirkums).classList.add('izpildita');
-  el('pogaPirktIepaz' + mockPirkums).classList.add('paslepts');
-  el('iepazKekss' + mockPirkums).classList.remove('paslepts');
-  if (mockPirkums === 1) {
-    el('iepazKartite2').classList.remove('bala');
-    el('pogaPirktIepaz2').disabled = false;
-  }
+  // Nopirktā kartīte iegūst ķeksi; nākamās pirkšanu atver admina ķeksis
+  // (vai automātika, kad šīs nodarbības laiks pagājis) — ne pirkums pats.
+  atjaunotIepazKartites();
   tosts('Apmaksāts ✓', 'labi');
   el('iepazKarte').scrollIntoView({ behavior: 'smooth' });
 };
@@ -2490,6 +2507,8 @@ prasitPieteiksanos(async (user) => {
   // Maketa rezervācija (2. skata kalendāra izvēle) — rādīsies gaidāmajās.
   mockRez = p?.mockRezervacija?.start ?? null;
   mockPirkumi = p?.mockPirkumi ?? [];
+  iepazAtlautas = p?.iepazAtlautas ?? {};
+  atjaunotIepazKartites();
 
   // Rindas skata (1. skata) stāvoklis.
   rindaPieteikta = !!p?.rindaPieteikta;
@@ -2507,6 +2526,10 @@ prasitPieteiksanos(async (user) => {
   onSnapshot(doc(db, 'users', uid), (snap) => {
     bilance = typeof snap.data()?.creditBalance === 'number' ? snap.data().creditBalance : 0;
     atjaunotBilanci();
+    // Admina iepazīšanās ķekši — pirkšanas iespējas atveras/aizveras reāllaikā.
+    iepazAtlautas = snap.data()?.iepazAtlautas ?? iepazAtlautas;
+    if (snap.data()?.mockPirkumi) mockPirkumi = snap.data().mockPirkumi;
+    atjaunotIepazKartites();
     const jaunais = snap.data()?.uznemsanasStatuss;
     if (jaunais && jaunais !== uznemsanas) {
       if (jaunais === 'apstiprinats' || uznemsanas === 'apstiprinats') {

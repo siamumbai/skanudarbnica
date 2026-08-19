@@ -71,6 +71,10 @@
   /* "Info" izvērstā rinda (1. lapas Rindas un 2. lapas Gaida tabulās) */
   .gaida-info-rinda > td{background:var(--bg);padding:16px 14px !important}
   .gaida-info{font-size:13px;line-height:1.7;position:relative}
+  /* Iepazīšanās nodarbību atļauju ķekši — paneļa kreisajā augšējā pusē */
+  .gi-keksi{display:flex;gap:16px;margin-bottom:10px}
+  .gi-keksis{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;cursor:pointer;margin:0}
+  .gi-keksis input{width:16px;height:16px;accent-color:var(--zala);cursor:pointer}
   /* 6 krāsu kvadrāti paneļa labajā augšējā stūrī — iekrāso visu cilni */
   .gi-krasas{position:absolute;top:0;right:0;display:flex;gap:6px}
   .gi-krasa{
@@ -1080,21 +1084,39 @@ async function ieladetPosmaTabulu(tbId, statusi, prefiks, tresa, tuksums) {
         if (piez.exists()) krasa = piez.data().krasa || null;
       } catch { /* krāsa nav kritiska */ }
       // Klienta profila 2. skatā izvēlētais laiks (makets — īstas rezervācijas
-      // tur vēl nav) arī skaitās kā rezervēts.
+      // tur vēl nav) arī skaitās kā rezervēts; pagājis — kā izieta nodarbība.
       const mockStart = u.mockRezervacija?.start && u.mockRezervacija.start >= Date.now()
         ? new Date(u.mockRezervacija.start) : null;
+      const mockPagajusi = u.mockRezervacija?.start && u.mockRezervacija.start < Date.now() ? 1 : 0;
+      let izietas = null;
+      let nakama = mockStart;
       try {
         const bs = await getDocs(query(collection(db, "bookings"), where("userId", "==", u.id)));
         const tagad = new Date();
         const aktivas = bs.docs.map((d) => d.data())
           .filter((b) => b.status !== "cancelled" && b.startAt?.toDate);
-        const izietas = aktivas.filter((b) => irIepazRezervacija(b) && b.startAt.toDate() < tagad).length;
+        izietas = aktivas.filter((b) => irIepazRezervacija(b) && b.startAt.toDate() < tagad).length
+          + mockPagajusi;
         const gaidamas = aktivas.filter((b) => b.startAt.toDate() >= tagad)
           .sort((a, b) => a.startAt.toMillis() - b.startAt.toMillis());
-        let nakama = gaidamas[0]?.startAt.toDate() ?? null;
+        nakama = gaidamas[0]?.startAt.toDate() ?? null;
         if (mockStart && (!nakama || mockStart < nakama)) nakama = mockStart;
-        return { izietas, nakama, krasa };
-      } catch { return { izietas: null, nakama: mockStart, krasa }; }
+      } catch { /* izietas paliek null */ }
+      // Automātika (tikai 2. lapā): kad nodarbības laiks pagājis, nākamās
+      // pirkšanas ķeksis ieliekas pats — bet tikai, ja admins to nav
+      // manuāli mainījis (lauks vēl nav rakstīts).
+      if (!tresa && izietas !== null) {
+        const atl = { ...(u.iepazAtlautas || {}) };
+        let mainits = false;
+        if (izietas >= 1 && atl.n2 === undefined) { atl.n2 = true; mainits = true; }
+        if (izietas >= 2 && atl.n3 === undefined) { atl.n3 = true; mainits = true; }
+        if (mainits) {
+          u.iepazAtlautas = atl;
+          setDoc(doc(db, "users", u.id), { iepazAtlautas: atl }, { merge: true })
+            .catch((e) => console.error("Auto ķekša kļūda:", e));
+        }
+      }
+      return { izietas, nakama, krasa };
     }));
     tb.innerHTML = rindas.map((u, i) => {
       const berns = (u.berni || []).map((b) => b.berna_vards).filter(Boolean).join(", ") || "—";
@@ -1138,6 +1160,15 @@ async function ieladetPosmaTabulu(tbId, statusi, prefiks, tresa, tuksums) {
         <td colspan="8"${r.krasa ? ` style="background:${r.krasa}"` : ""}>
           <div class="gaida-info">
             ${krasuPogasHTML(i, r.krasa)}
+            ${!tresa ? (() => {
+              const atl = u.iepazAtlautas || {};
+              const eff = { 1: atl.n1 !== false, 2: atl.n2 === true, 3: atl.n3 === true };
+              return `<div class="gi-keksi" title="Kuras iepazīšanās nodarbības klients drīkst nopirkt un rezervēt">
+                ${[1, 2, 3].map((n) => `<label class="gi-keksis">
+                  <input type="checkbox" data-iepaz-kekss="${i}" data-n="${n}"${eff[n] ? " checked" : ""}> ${n}
+                </label>`).join("")}
+              </div>`;
+            })() : ""}
             <div><b>Rezervēta nodarbība:</b> ${r.nakama
               ? `ir — ${fmtDatumsLaiks.format(r.nakama)} <span style="color:var(--zala);font-weight:800">✓</span>`
               : "nav"}</div>
@@ -1191,6 +1222,23 @@ async function ieladetPosmaTabulu(tbId, statusi, prefiks, tresa, tuksums) {
         tosts("Neizdevās saglabāt komentāru.");
       }
       p.disabled = false;
+    }));
+    // Iepazīšanās nodarbību atļauju ķekši (tikai 2. lapā) — kuru nodarbību
+    // klients drīkst nopirkt; izmaiņa uzreiz atspoguļojas klienta profilā.
+    tb.querySelectorAll("[data-iepaz-kekss]").forEach((ch) => ch.addEventListener("change", async () => {
+      const u = rindas[ch.dataset.iepazKekss];
+      const n = ch.dataset.n;
+      const atl = { ...(u.iepazAtlautas || {}) };
+      atl["n" + n] = ch.checked;
+      try {
+        await setDoc(doc(db, "users", u.id), { iepazAtlautas: atl }, { merge: true });
+        u.iepazAtlautas = atl;
+        tosts(`${n}. iepazīšanās nodarbība ${ch.checked ? "atļauta" : "vairs nav pērkama"}.`);
+      } catch (e) {
+        console.error("Ķekša saglabāšanas kļūda:", e);
+        tosts("Neizdevās saglabāt.");
+        ch.checked = !ch.checked;
+      }
     }));
     // Bērna "info" — atver aizpildīto anketu.
     tb.querySelectorAll("[data-berns]").forEach((p) => p.addEventListener("click", () => {
