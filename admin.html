@@ -791,6 +791,10 @@ async function lietotajaVesture(u) {
   };
   pielikt(u.rindaPieteiktaDatums ? new Date(u.rindaPieteiktaDatums) : null, "Pieteicās rindā");
   pielikt(u.apstiprinatsDatums?.toDate?.(), "Piešķirta pilnā piekļuve (3. lapa)");
+  if (u.mockRezervacija?.start) {
+    pielikt(u.mockRezervacija.izveidots ? new Date(u.mockRezervacija.izveidots) : new Date(u.mockRezervacija.start),
+      `Izvēlēts nodarbības laiks profilā — ${fmtDatumsLaiks.format(new Date(u.mockRezervacija.start))}`);
+  }
   try {
     const [ieraksti, maksSnap, rezSnap] = await Promise.all([
       nolasitPiezimes(u.id),
@@ -1045,15 +1049,22 @@ async function ieladetPosmaTabulu(tbId, statusi, prefiks, tresa, tuksums) {
         const piez = await getDoc(doc(db, "adminNotes", u.id));
         if (piez.exists()) krasa = piez.data().krasa || null;
       } catch { /* krāsa nav kritiska */ }
+      // Klienta profila 2. skatā izvēlētais laiks (makets — īstas rezervācijas
+      // tur vēl nav) arī skaitās kā rezervēts.
+      const mockStart = u.mockRezervacija?.start && u.mockRezervacija.start >= Date.now()
+        ? new Date(u.mockRezervacija.start) : null;
       try {
         const bs = await getDocs(query(collection(db, "bookings"), where("userId", "==", u.id)));
         const tagad = new Date();
-        const aktivas = bs.docs.map((d) => d.data()).filter((b) => b.status !== "cancelled");
+        const aktivas = bs.docs.map((d) => d.data())
+          .filter((b) => b.status !== "cancelled" && b.startAt?.toDate);
         const izietas = aktivas.filter((b) => irIepazRezervacija(b) && b.startAt.toDate() < tagad).length;
         const gaidamas = aktivas.filter((b) => b.startAt.toDate() >= tagad)
           .sort((a, b) => a.startAt.toMillis() - b.startAt.toMillis());
-        return { izietas, nakama: gaidamas[0]?.startAt.toDate() ?? null, krasa };
-      } catch { return { izietas: null, nakama: null, krasa }; }
+        let nakama = gaidamas[0]?.startAt.toDate() ?? null;
+        if (mockStart && (!nakama || mockStart < nakama)) nakama = mockStart;
+        return { izietas, nakama, krasa };
+      } catch { return { izietas: null, nakama: mockStart, krasa }; }
     }));
     tb.innerHTML = rindas.map((u, i) => {
       const berns = (u.berni || []).map((b) => b.berna_vards).filter(Boolean).join(", ") || "—";

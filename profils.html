@@ -1315,8 +1315,16 @@ function zimetMockKalendaru() {
       const kad = new Date(Number(poga.dataset.start));
       // Laiks izvēlēts — dzeltens paziņojums; zaļš būs tikai pēc apmaksas.
       tosts(`1. nodarbība: ${arLieloBurtu(fmtDiena.format(kad))} plkst. ${fmtLaiks.format(kad)}`, 'dzeltens');
+      pierakstitMockRezervaciju(Number(poga.dataset.start));
     };
   });
+}
+// Izvēlēto laiku pierakstām profilā — admin panelī tas ieslēdz "Rezervēts"
+// ķeksi un parādās Info panelī un vēsturē (īsta rezervācija maketā nenotiek).
+function pierakstitMockRezervaciju(startMillis) {
+  saglabatProfilu(uid, {
+    mockRezervacija: { start: startMillis, izveidots: new Date().toISOString() },
+  }).catch((err) => console.error('Mock rezervācijas pieraksta kļūda:', err));
 }
 zimetMockKalendaru();
 
@@ -2350,6 +2358,7 @@ el('pogaSaglabatBernu').onclick = async () => {
       const kad = new Date(Number(mockGaidaSlots));
       tosts(`1. nodarbība: ${arLieloBurtu(fmtDiena.format(kad))} plkst. ${fmtLaiks.format(kad)}`, 'dzeltens');
       el('iepazGaitaKarte').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      pierakstitMockRezervaciju(Number(mockGaidaSlots));
     }
     mockGaidaSlots = null;
   }
