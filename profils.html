@@ -1047,6 +1047,7 @@ import {
   doc, getDoc, onSnapshot, collection, query, where, orderBy,
   limit, getDocs,
 } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js';
+import { getIdTokenResult } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js';
 
 const el = (id) => document.getElementById(id);
 const LAIKA_ZONA = 'Europe/Riga';
@@ -2393,6 +2394,16 @@ el('pogaIzrakstities').onclick = async () => {
 /* ---------- Ielāde ---------- */
 prasitPieteiksanos(async (user) => {
   uid = user.uid;
+
+  // Admins klienta profilu nelieto — ar admin tiesībām uzreiz uz admin paneli.
+  try {
+    const tokens = await getIdTokenResult(user);
+    if (tokens.claims.admin === true) {
+      window.location.replace('admin.html');
+      return;
+    }
+  } catch { /* ja pārbaude neizdodas, turpinām kā parastam klientam */ }
+
   let p = null;
   try {
     p = await iegutProfilu(user.uid);

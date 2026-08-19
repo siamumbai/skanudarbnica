@@ -825,7 +825,7 @@ async function ieladetRindu() {
     const snap = await getDocs(query(collection(db, "users"), where("rindaPieteikta", "==", true)));
     // Rādām tikai vēl neapstiprinātos — pēc "Apstiprināt" cilvēks ir 2. lapā.
     rindasCilveki = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
-      .filter((u) => (u.uznemsanasStatuss || "jauns") === "jauns")
+      .filter((u) => (u.uznemsanasStatuss || "jauns") === "jauns" && u.id !== auth.currentUser?.uid)
       .sort((a, b) => (a.rindasEpasts || a.epasts || "").localeCompare(b.rindasEpasts || b.epasts || ""));
     if (!rindasCilveki.length) {
       tb.innerHTML = '<tr><td colspan="5" style="color:var(--muted)">Šobrīd rindā neviena pieteikuma nav.</td></tr>';
@@ -1026,7 +1026,9 @@ async function ieladetPosmaTabulu(tbId, statusi, prefiks, tresa, tuksums) {
       collection(db, "users"),
       where("uznemsanasStatuss", "in", statusi),
     ));
-    const rindas = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    // Pats admins sarakstos neparādās.
+    const rindas = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+      .filter((u) => u.id !== auth.currentUser?.uid);
     if (!rindas.length) {
       tb.innerHTML = `<tr><td colspan="8" style="color:var(--muted)">${tuksums}</td></tr>`;
       return;
@@ -1288,7 +1290,8 @@ async function paraditGlobaloVesturi() {
         t: `${u?.epasts || b.userId} — ${b.status === "cancelled" ? "Atcelta" : "Rezervēta"} ${iepaz ? "iepazīšanās nodarbība" : "nodarbība"}${kad ? " — " + fmtDatumsLaiks.format(kad) : ""}`,
       });
     }
-    notikumi.sort((a, b) => a.d - b.d);
+    // Jaunākā darbība augšā, vecākās uz leju.
+    notikumi.sort((a, b) => b.d - a.d);
     vieta.textContent = notikumi.length
       ? notikumi.map((n) => `${fmtDatumsLaiks.format(n.d)} — ${n.t}`).join("\n")
       : "Vēl nav notikumu.";
@@ -1626,7 +1629,8 @@ async function ieladetAudzeknus(nosakuma = true) {
     // 3. lapā tikai pilnās piekļuves lietotāji — 1. un 2. lapas cilvēkus
     // rāda Rindas un Gaida sarakstos (katrs e-pasts tikai vienā lapā).
     const rindas = snap.docs
-      .filter((d) => (d.data().uznemsanasStatuss || "apstiprinats") === "apstiprinats")
+      .filter((d) => (d.data().uznemsanasStatuss || "apstiprinats") === "apstiprinats"
+        && d.id !== auth.currentUser?.uid)
       .map((d) => {
       const u = d.data();
       return `
