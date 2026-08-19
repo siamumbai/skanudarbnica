@@ -95,11 +95,16 @@
   /* Izpildīts solis — cipars pārtop zaļā ķeksī */
   .sola-nr.izpildits{background:var(--zala);border-color:var(--zala);color:#fff}
 
-  /* 2. skats: pilnais profils bez "Dāvināt" un "Maksājumi"; Rezervēt sadaļā
-     iepazīšanās pirkumu kartītes un atvērts kalendāra makets. */
+  /* 2. un 3. skats: pilnais profils bez "Dāvināt", "Maksājumi" un "Pievienot
+     bērnu" navigācijā — viss notiek Rezervēt sadaļā (bērnu karte, pirkumu
+     kartītes un atvērts kalendāra makets). Atšķirība: 3. skatā papildus redzama
+     "Atlikušās nodarbības" kartīte augšā — etaps, kad vispirms pērk un tad
+     rezervē. */
   #iepazKarte,#iepazGaitaKarte{display:none}
   body.skats2 #iepazKarte,
-  body.skats2 #iepazGaitaKarte{display:block}
+  body.skats2 #iepazGaitaKarte,
+  body.skats3 #iepazKarte,
+  body.skats3 #iepazGaitaKarte{display:block}
   body.skats2 #navDavinat,
   body.skats2 #sadalaDavinat,
   body.skats2 #navPirkumi,
@@ -110,7 +115,17 @@
   body.skats2 #nevarKarte,
   body.skats2 #veiduVirsraksts,
   body.skats2 #veiduSaraksts,
-  body.skats2 #apstiprinatJosla{display:none !important}
+  body.skats2 #apstiprinatJosla,
+  body.skats3 #navDavinat,
+  body.skats3 #sadalaDavinat,
+  body.skats3 #navPirkumi,
+  body.skats3 #sadalaPirkumi,
+  body.skats3 #navPieteikties,
+  body.skats3 #slotuKarte,
+  body.skats3 #nevarKarte,
+  body.skats3 #veiduVirsraksts,
+  body.skats3 #veiduSaraksts,
+  body.skats3 #apstiprinatJosla{display:none !important}
 
   /* Pirkšanas pogas un "vēl nepieejamās" (bālās) kartītes 2. skatā */
   .pakete.bala{opacity:.45}
@@ -132,16 +147,20 @@
     align-self:flex-start;flex-shrink:0;
     background:var(--zala);color:#fff;font-size:17px;
   }
-  /* Karšu apmaksas makets — atveras tikai 2. skatā pēc "Pirkt" */
+  /* Karšu apmaksas makets — atveras 2. un 3. skatā pēc "Pirkt" */
   #mockMaksaKarte{display:none}
-  body.skats2 #mockMaksaKarte.atverts{display:block}
-  /* 2. skata bērnu karte Rezervēt sadaļā */
+  body.skats2 #mockMaksaKarte.atverts,
+  body.skats3 #mockMaksaKarte.atverts{display:block}
+  /* Bērnu karte Rezervēt sadaļā (2. un 3. skats) */
   #rezBerniKarte{display:none}
-  body.skats2 #rezBerniKarte{display:block}
-  body.skats2 #pogaJaunsAudzeknis{display:none !important}
-  /* 2. skatā veidu virsraksts paslēpts — noņemam lauka augšējo atstarpi,
+  body.skats2 #rezBerniKarte,
+  body.skats3 #rezBerniKarte{display:block}
+  body.skats2 #pogaJaunsAudzeknis,
+  body.skats3 #pogaJaunsAudzeknis{display:none !important}
+  /* Veidu virsraksts paslēpts — noņemam lauka augšējo atstarpi,
      lai kartes padding ap "Izvēlies audzēkni" ir vienāds no visām pusēm */
-  body.skats2 #audzeknaBloks .lauks{margin-top:0 !important}
+  body.skats2 #audzeknaBloks .lauks,
+  body.skats3 #audzeknaBloks .lauks{margin-top:0 !important}
   /* Katrs bērns — spiežama poga ar kontūru; atver anketu labošanai */
   .berna-poga{
     display:block;width:100%;text-align:left;
@@ -1100,6 +1119,12 @@ const navPogas = [
 // Bilances kartīti rādām tikai rezervāciju sadaļās.
 const bilancesSadalas = ['sadalaRezervet', 'sadalaNodarbibas', 'sadalaPirkumi', 'sadalaDavinat'];
 function paradietSadalu(sadalasId) {
+  // 2. un 3. skatā Dāvināt, Maksājumi un Pievienot bērnu sadaļu nav —
+  // viss notiek Rezervēt sadaļā, tāpēc jebkurš ceļš uz tām ved turp.
+  if ((document.body.classList.contains('skats2') || document.body.classList.contains('skats3'))
+    && ['sadalaDavinat', 'sadalaPirkumi', 'sadalaPieteikties'].includes(sadalasId)) {
+    sadalasId = 'sadalaRezervet';
+  }
   navPogas.forEach(({ poga, sadala }) => {
     const aktivs = sadala === sadalasId;
     el(poga).classList.toggle('aktiva', aktivs);
@@ -1119,13 +1144,16 @@ function paraditSkatu(nr) {
   el('skatsRinda').classList.toggle('paslepts', nr !== 1);
   el('izkartojums').classList.toggle('paslepts', nr === 1);
   document.body.classList.toggle('skats2', nr === 2);
+  document.body.classList.toggle('skats3', nr === 3);
   [1, 2, 3].forEach((n) => el('skataPoga' + n).classList.toggle('aktiva', n === nr));
-  // 2. skatā nav "Dāvināt" un "Maksājumi" — ja kāda no tām atvērta, pārejam uz Rezervēt.
-  if (nr === 2 && (el('sadalaDavinat').classList.contains('aktiva')
-    || el('sadalaPirkumi').classList.contains('aktiva'))) paradietSadalu('sadalaRezervet');
-  // Ja anketa palika atvērta Rezervēt bērnu kartē — atgriežam to vecajā vietā,
-  // lai 3. skata "Pievienot bērnu" sadaļa strādā kā ierasts.
-  if (nr !== 2 && el('anketaKarte').parentElement === el('rezAnketaIekspuse')) {
+  // 2. un 3. skatā nav "Dāvināt", "Maksājumi" un "Pievienot bērnu" — ja kāda
+  // no tām atvērta, pārejam uz Rezervēt.
+  if (nr !== 1 && (el('sadalaDavinat').classList.contains('aktiva')
+    || el('sadalaPirkumi').classList.contains('aktiva')
+    || el('sadalaPieteikties').classList.contains('aktiva'))) paradietSadalu('sadalaRezervet');
+  // Ja anketa palika atvērta Rezervēt bērnu kartē — 2. un 3. skats to koplieto;
+  // atgriežam vecajā vietā tikai izejot uz 1. skatu.
+  if (nr === 1 && el('anketaKarte').parentElement === el('rezAnketaIekspuse')) {
     el('rezAnketaVieta').classList.remove('atverts');
     el('pogaPieteiktBernu').after(el('anketaKarte'));
     aizvertAnketu();
@@ -1494,7 +1522,14 @@ function atjaunotBilanci() {
 }
 // Neapstiprinātiem pirkšana notiek iepazīšanās sadaļā, nevis Maksājumos.
 const pirkumuSadala = () => uznemsanas === 'apstiprinats' ? 'sadalaPirkumi' : 'sadalaIepazisanas';
-el('bilancePoga').onclick = () => paradietSadalu(pirkumuSadala());
+el('bilancePoga').onclick = () => {
+  // 3. skatā pirkšana notiek turpat Rezervēt sadaļā — ritinām uz kartītēm.
+  if (document.body.classList.contains('skats3')) {
+    el('iepazKarte').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  } else {
+    paradietSadalu(pirkumuSadala());
+  }
+};
 el('pogaUzPaketem').onclick = () => paradietSadalu(pirkumuSadala());
 
 /* ---------- Audzēkņa izvēle rezervācijai ---------- */
