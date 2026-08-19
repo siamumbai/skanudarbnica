@@ -623,11 +623,11 @@
      pārcelšanas starp lapām, maksājumi, rezervācijas. -->
 <div class="modalis-fons" id="vesturesModalis">
   <div class="modalis" style="max-width:680px;width:92%;max-height:82vh;overflow:auto">
-    <h3>Vēsture</h3>
-    <div class="gi-vesture" id="vesturesSaturs" style="font-size:12.5px">Ielādē…</div>
-    <div class="modalis-pogas">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <h3 style="margin-bottom:0">Vēsture</h3>
       <button class="maza-poga" id="pogaVestureAizvert" type="button">Aizvērt</button>
     </div>
+    <div class="gi-vesture" id="vesturesSaturs" style="font-size:12.5px">Ielādē…</div>
   </div>
 </div>
 
@@ -798,8 +798,8 @@ async function lietotajaVesture(u) {
     `Piekļuve 2. lapai dota: ${datumaTeksts(u.atlautsDatums)}`,
   ];
   const notikumi = [];
-  const pielikt = (d, teksts) => {
-    if (d instanceof Date && !Number.isNaN(d.getTime())) notikumi.push({ d, teksts });
+  const pielikt = (d, teksts, izcelts = false) => {
+    if (d instanceof Date && !Number.isNaN(d.getTime())) notikumi.push({ d, teksts, izcelts });
   };
   pielikt(u.rindaPieteiktaDatums ? new Date(u.rindaPieteiktaDatums) : null, "Pieteicās rindā");
   pielikt(u.apstiprinatsDatums?.toDate?.(), "Piešķirta pilnā piekļuve (3. lapa)");
@@ -807,6 +807,11 @@ async function lietotajaVesture(u) {
     pielikt(u.mockRezervacija.izveidots ? new Date(u.mockRezervacija.izveidots) : new Date(u.mockRezervacija.start),
       `Izvēlēts nodarbības laiks profilā — ${fmtDatumsLaiks.format(new Date(u.mockRezervacija.start))}`);
   }
+  // Profila maketa pirkumi — izcelti ar zaļu ķeksi.
+  (u.mockPirkumi || []).forEach((m) => {
+    pielikt(m.datums ? new Date(m.datums) : null,
+      `Nopirka nodarbību — ${m.apraksts || ""}${m.cena ? " · " + m.cena : ""}`, true);
+  });
   try {
     const [ieraksti, maksSnap, rezSnap] = await Promise.all([
       nolasitPiezimes(u.id),
@@ -816,7 +821,7 @@ async function lietotajaVesture(u) {
     ieraksti.forEach((k) => pielikt(k.datums ? new Date(k.datums) : null, "Komentārs: " + k.teksts));
     maksSnap.docs.map((d) => d.data()).forEach((p) => {
       if (p.status === "succeeded") {
-        pielikt(p.createdAt?.toDate?.(), `Samaksāja ${eiro(p.amountCents)}${p.packageName ? " — " + p.packageName : ""}`);
+        pielikt(p.createdAt?.toDate?.(), `Samaksāja ${eiro(p.amountCents)}${p.packageName ? " — " + p.packageName : ""}`, true);
       }
     });
     rezSnap.docs.map((d) => d.data()).forEach((b) => {
@@ -826,7 +831,16 @@ async function lietotajaVesture(u) {
     });
   } catch (e) { console.error("Vēstures ielādes kļūda:", e); }
   notikumi.sort((a, b) => a.d - b.d);
-  return { galvene, rindas: notikumi.map((n) => `${fmtDatumsLaiks.format(n.d)} — ${n.teksts}`) };
+  return {
+    galvene,
+    rindas: notikumi.map((n) => ({ teksts: `${fmtDatumsLaiks.format(n.d)} — ${n.teksts}`, izcelts: n.izcelts })),
+  };
+}
+// Izceltās rindas (pirkumi) — treknrakstā ar zaļu ķeksi priekšā.
+function vesturesRindaHTML(r) {
+  return r.izcelts
+    ? `<span style="color:var(--zala);font-weight:800">✓</span> <b>${escapeHTML(r.teksts)}</b>`
+    : escapeHTML(r.teksts);
 }
 async function paraditVesturi(u, vietasId) {
   const vieta = el(vietasId);
@@ -834,7 +848,7 @@ async function paraditVesturi(u, vietasId) {
   vieta.textContent = "Ielādē…";
   const v = await lietotajaVesture(u);
   vieta.innerHTML = v.galvene.map((r) => `<b>${escapeHTML(r)}</b>`).join("\n")
-    + "\n" + (v.rindas.length ? v.rindas.map(escapeHTML).join("\n") : "Vēl nav citu notikumu.");
+    + "\n" + (v.rindas.length ? v.rindas.map(vesturesRindaHTML).join("\n") : "Vēl nav citu notikumu.");
 }
 
 /* ---------- 1. lapa: rindas pieteikumi ---------- */
@@ -1284,10 +1298,12 @@ async function paraditGlobaloVesturi() {
   const vieta = el("vesturesSaturs");
   vieta.textContent = "Ielādē…";
   try {
-    const [logSnap, maksSnap, rezSnap] = await Promise.all([
+    const [logSnap, maksSnap, rezSnap, lietSnap] = await Promise.all([
       getDocs(query(collection(db, "adminLog"), orderBy("datums", "desc"), limit(200))),
       getDocs(query(collection(db, "payments"), orderBy("createdAt", "desc"), limit(100))),
       getDocs(query(collection(db, "bookings"), orderBy("startAt", "desc"), limit(100))),
+      getDocs(query(collection(db, "users"),
+        where("uznemsanasStatuss", "in", ["jauns", "atlauts", "pieteikts", "apstiprinats"]))),
     ]);
     const notikumi = [];
     logSnap.docs.forEach((d) => {
@@ -1301,8 +1317,21 @@ async function paraditGlobaloVesturi() {
       notikumi.push({
         d: p.createdAt.toDate(),
         t: `${u?.epasts || p.userId} — Samaksāja ${eiro(p.amountCents)}${p.packageName ? " — " + p.packageName : ""}`,
+        izcelts: true,
       });
     }
+    // Profila maketa pirkumi (2./3. skata "Apmaksāt") — arī izcelti ar ķeksi.
+    lietSnap.docs.forEach((d) => {
+      const u = d.data();
+      (u.mockPirkumi || []).forEach((m) => {
+        if (!m.datums) return;
+        notikumi.push({
+          d: new Date(m.datums),
+          t: `${u.epasts || d.id} — Nopirka nodarbību — ${m.apraksts || ""}${m.cena ? " · " + m.cena : ""}`,
+          izcelts: true,
+        });
+      });
+    });
     for (const d of rezSnap.docs) {
       const b = d.data();
       const u = await lietotajaDati(b.userId);
@@ -1315,8 +1344,8 @@ async function paraditGlobaloVesturi() {
     }
     // Jaunākā darbība augšā, vecākās uz leju.
     notikumi.sort((a, b) => b.d - a.d);
-    vieta.textContent = notikumi.length
-      ? notikumi.map((n) => `${fmtDatumsLaiks.format(n.d)} — ${n.t}`).join("\n")
+    vieta.innerHTML = notikumi.length
+      ? notikumi.map((n) => vesturesRindaHTML({ teksts: `${fmtDatumsLaiks.format(n.d)} — ${n.t}`, izcelts: n.izcelts })).join("\n")
       : "Vēl nav notikumu.";
   } catch (e) {
     console.error("Vēstures ielādes kļūda:", e);

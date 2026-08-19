@@ -1336,8 +1336,22 @@ zimetMockKalendaru();
 // Pēc apmaksas nopirktajai kartītei "Pirkt" vietā zaļš ķeksis; pēc 1. apmaksas
 // atveras 2. nodarbības pirkšana.
 let mockPirkums = 1; // kura nodarbība šobrīd atvērta apmaksai
+let mockPirkumaInfo = null;  // atvērtā pirkuma apraksts un cena
+let mockPirkumi = [];        // veiktie maketa pirkumi (no profila) — admin vēsturei
+// Pirkumu pierakstām profilā, lai admin panelī tas parādās vēsturē ar ķeksi.
+function pierakstitMockPirkumu() {
+  if (!mockPirkumaInfo) return;
+  mockPirkumi.push({
+    datums: new Date().toISOString(),
+    apraksts: mockPirkumaInfo.apraksts,
+    cena: mockPirkumaInfo.cena,
+  });
+  saglabatProfilu(uid, { mockPirkumi })
+    .catch((err) => console.error('Mock pirkuma pieraksta kļūda:', err));
+}
 function atvertMockMaksu(nr, apraksts, cena) {
   mockPirkums = nr;
+  mockPirkumaInfo = { apraksts, cena };
   el('mockMaksaApraksts').textContent = `${apraksts} · ${cena}`;
   el('pogaMockMaksat').textContent = `Apmaksāt ${cena}`;
   el('mockMaksaKarte').classList.add('atverts');
@@ -1357,6 +1371,7 @@ Object.keys(mockPaketes).forEach((id) => {
 });
 el('pogaMockMaksat').onclick = () => {
   el('mockMaksaKarte').classList.remove('atverts');
+  pierakstitMockPirkumu();
   if (typeof mockPirkums === 'string' && mockPaketes[mockPirkums]) {
     // Paketes pirkums (3. skats): bilance aug, kartīte paliek pērkama atkārtoti.
     mockKrediti += mockPaketes[mockPirkums].krediti;
@@ -2474,6 +2489,7 @@ prasitPieteiksanos(async (user) => {
 
   // Maketa rezervācija (2. skata kalendāra izvēle) — rādīsies gaidāmajās.
   mockRez = p?.mockRezervacija?.start ?? null;
+  mockPirkumi = p?.mockPirkumi ?? [];
 
   // Rindas skata (1. skata) stāvoklis.
   rindaPieteikta = !!p?.rindaPieteikta;
