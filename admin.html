@@ -139,12 +139,6 @@
   .diena-kolonna.briva .kolonna-diena,
   .diena-kolonna.briva .kolonna-datums{color:#B3A57F}
 
-  /* Iepazīšanās kalendārs (2. lapa) — maigi zaļš fons */
-  .kalendars-iepaz{
-    background:#EFF5E6;border:0.5px solid rgba(59,109,17,.2);
-    border-radius:14px;padding:14px;
-  }
-
   /* Sekciju navigācija */
   .sekciju-nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:22px}
   .sekciju-nav[hidden]{display:none}
@@ -356,9 +350,9 @@
     </p>
   </section>
 
-  <!-- ============ 2. LAPAS KALENDĀRS — tikai iepazīšanās nodarbības ============ -->
+  <!-- ============ 2. LAPAS KALENDĀRS — tikai iepazīšanās nodarbības un laiki ============ -->
   <section class="sadala" id="sadalaKalendars2">
-    <div id="kalendars2" class="kalendars-iepaz"></div>
+    <div id="kalendars2"></div>
   </section>
 
   <!-- ============ 3. LAPAS KALENDĀRS — tikai parastās nodarbības ============ -->
@@ -745,6 +739,9 @@ function uzstaditRezimu(jauns) {
   atjaunotJaunaVeidus();
   atjaunotSekcijas();
   atjaunotKalendarus();
+  // Darba laiki un brīvdienas dalās pa lapām — pārzīmējam sarakstus.
+  renderDarbaLaikus();
+  ieladetBlokus();
 }
 
 /* ---------- Lapas 1 · 2 · 3 (kā klienta profila skati) ----------
@@ -1396,17 +1393,39 @@ async function lietotajaDati(uid) {
 /* ---------- Kalendārs ---------- */
 
 // Darba laiki kalendāra fonam: viss ārpus tiem (brīvdienas, vakari) ir pelēks.
-let biznesaStundas = [];
+// Darba laiki dalās pa lapām: availabilityRules ieraksti ar rezims "pirma"
+// pieder 2. lapai (iepazīšanās), "parastas" (vai bez lauka — vecie) 3. lapai.
+let biznesaStundas2 = []; // iepazīšanās
+let biznesaStundas3 = []; // parastās
+let zalaZonuAvots = null; // 4. lapas zaļās zonas — iepazīšanās darba laiki
 async function ieladetBiznesaStundas() {
   try {
     const snap = await getDocs(query(collection(db, "availabilityRules"), where("active", "==", true)));
-    biznesaStundas = snap.docs.map((d) => {
+    biznesaStundas2 = [];
+    biznesaStundas3 = [];
+    snap.docs.forEach((d) => {
       const r = d.data();
-      return { daysOfWeek: [r.weekday % 7], startTime: r.startTime, endTime: r.endTime };
+      const josla = { daysOfWeek: [r.weekday % 7], startTime: r.startTime, endTime: r.endTime };
+      if ((r.rezims || "parastas") === "pirma") biznesaStundas2.push(josla);
+      else biznesaStundas3.push(josla);
     });
-    if (kalendars) kalendars.setOption("businessHours", biznesaStundas.length ? biznesaStundas : false);
+    atjaunotDarbaLaikusKalendaros();
   } catch (e) {
     console.error("Darba laiku ielādes kļūda:", e);
+  }
+}
+function atjaunotDarbaLaikusKalendaros() {
+  if (kalendars2) kalendars2.setOption("businessHours", biznesaStundas2.length ? biznesaStundas2 : false);
+  if (kalendars3) kalendars3.setOption("businessHours", biznesaStundas3.length ? biznesaStundas3 : false);
+  if (kalendars) {
+    const abas = [...biznesaStundas2, ...biznesaStundas3];
+    kalendars.setOption("businessHours", abas.length ? abas : false);
+    // Kopējā kalendārā iepazīšanās (2. lapas) darba laiki iezīmēti maigi zaļi
+    // pāri brīvajiem laikiem.
+    if (zalaZonuAvots) zalaZonuAvots.remove();
+    zalaZonuAvots = kalendars.addEventSource(biznesaStundas2.map((j) => ({
+      ...j, display: "background", backgroundColor: "rgba(59,109,17,.22)",
+    })));
   }
 }
 
@@ -1424,7 +1443,7 @@ function izveidotKalendaru(elementaId, filtrs) {
     height: "auto",
     editable: true,
     eventOverlap: false,
-    businessHours: biznesaStundas.length ? biznesaStundas : false,
+    businessHours: false, // uzstāda atjaunotDarbaLaikusKalendaros() pēc izveides
     headerToolbar: { left: "prev,next today", center: "title", right: "timeGridDay,timeGridWeek,dayGridMonth" },
     events: (info, success, failure) => ieladetNotikumus(filtrs, info, success, failure),
     eventDrop: parvietotNotikumu,
@@ -1445,6 +1464,7 @@ function initKalendaru() {
   kalendars = izveidotKalendaru("kalendars", "visi");
   kalendars2 = izveidotKalendaru("kalendars2", "iepaz");
   kalendars3 = izveidotKalendaru("kalendars3", "parastas");
+  atjaunotDarbaLaikusKalendaros();
 
   ["filtrsVeids", "filtrsAtceltas"].forEach((id) =>
     el(id).addEventListener("change", atjaunotKalendarus));
@@ -1508,6 +1528,11 @@ async function ieladetNotikumus(filtrs, info, success, failure) {
     for (const d of blokuSnap.docs) {
       const b = d.data();
       if (b.startAt.toDate() >= info.end) continue;
+      // Brīvdienas rāda tikai savas lapas kalendārā; vecie ieraksti bez
+      // "rezims" ir globāli un redzami visur. Kopējais rāda visus.
+      const bRez = b.rezims || null;
+      if (filtrs === "iepaz" && bRez === "parastas") continue;
+      if (filtrs === "parastas" && bRez === "pirma") continue;
       notikumi.push({
         id: "bloks_" + d.id,
         start: b.startAt.toDate(),
@@ -2083,8 +2108,11 @@ async function renderDarbaLaikus() {
   const skolotajsId = el("laikuSkolotajs").value;
   const rezgis = el("laikuRezgis");
   if (!skolotajsId) { rezgis.innerHTML = '<p class="tukss">Vispirms pievieno skolotāju.</p>'; return; }
+  // Rādām un rediģējam tikai pašreizējās lapas darba laikus.
+  const aktRezims = rezims === "pirma" ? "pirma" : "parastas";
   const snap = await getDocs(query(collection(db, "availabilityRules"), where("teacherId", "==", skolotajsId)));
-  const noteikumi = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  const noteikumi = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+    .filter((n) => (n.rezims || "parastas") === aktRezims);
 
   rezgis.innerHTML = DIENU_NOSAUKUMI.map((nosaukums, i) => {
     const diena = i + 1;
@@ -2110,6 +2138,7 @@ async function renderDarbaLaikus() {
         await addDoc(collection(db, "availabilityRules"), {
           teacherId: skolotajsId, weekday: Number(poga.dataset.pievienot),
           startTime: "10:00", endTime: "18:00", active: true,
+          rezims: aktRezims, // 2. lapas laiki atsevišķi no 3. lapas
         });
         renderDarbaLaikus();
         ieladetBiznesaStundas();
@@ -2156,9 +2185,16 @@ async function ieladetBlokus() {
     where("endAt", ">", Timestamp.now()),
     orderBy("endAt"), limit(100),
   ));
-  el("blokuTabula").innerHTML = snap.empty
+  // Sarakstā tikai pašreizējās lapas brīvdienas (vecie ieraksti bez "rezims"
+  // ir globāli un redzami abās).
+  const aktRezims = rezims === "pirma" ? "pirma" : "parastas";
+  const doki = snap.docs.filter((d) => {
+    const bRez = d.data().rezims || null;
+    return !bRez || bRez === aktRezims;
+  });
+  el("blokuTabula").innerHTML = !doki.length
     ? '<tr><td colspan="5" class="tukss">Nav bloķētu periodu.</td></tr>'
-    : snap.docs.map((d) => {
+    : doki.map((d) => {
         const b = d.data();
         return `<tr>
           <td>${fmtDatumsLaiks.format(b.startAt.toDate())}</td>
@@ -2194,6 +2230,7 @@ el("pogaJaunsBloks").addEventListener("click", async () => {
       endAt: Timestamp.fromDate(new Date(beigas)),
       teacherId: el("blokaSkolotajs").value || null,
       reason: el("blokaIemesls").value.trim() || "Bloķēts",
+      rezims: rezims === "pirma" ? "pirma" : "parastas",
     });
     el("blokaIemesls").value = "";
     tosts("Periods pievienots.");
