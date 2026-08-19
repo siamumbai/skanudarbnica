@@ -90,6 +90,13 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    /* ---------- Admina piezīmes par klientiem ---------- */
+    // Redz un raksta TIKAI admins — klients savas piezīmes nevar nolasīt
+    // pat tieši vaicājot Firestore (dokumenta ID = lietotāja uid).
+    match /adminNotes/{uid} {
+      allow read, write: if irAdmins();
+    }
+
     /* ---------- Viss pārējais aizliegts ---------- */
     match /{document=**} {
       allow read, write: if false;

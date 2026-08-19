@@ -1202,6 +1202,7 @@ el('pogaRindaPieteikties').onclick = async () => {
     await saglabatProfilu(uid, {
       rindaPieteikta: true, rindasEpasts: epasts,
       rindasTel: tel, rindasVecums: Number(vecums),
+      rindaPieteiktaDatums: new Date().toISOString(),
     });
     rindaPieteikta = true;
     atjaunotRindasSkatu();
@@ -2454,6 +2455,11 @@ prasitPieteiksanos(async (user) => {
     saglabatProfilu(uid, { uznemsanasStatuss: uznemsanas }).catch(() => {});
   }
   piemerotUznemsanu();
+
+  // Konta izveides datums (admin panelim) — vienreiz pierakstām no Auth metadatiem.
+  if (!p?.kontsIzveidots && user.metadata?.creationTime) {
+    saglabatProfilu(uid, { kontsIzveidots: new Date(user.metadata.creationTime).toISOString() }).catch(() => {});
+  }
 
   // Rindas skata (1. skata) stāvoklis.
   rindaPieteikta = !!p?.rindaPieteikta;

@@ -87,6 +87,19 @@
   }
   .rindas-info b{font-weight:700}
 
+  /* 2. lapas "Info" izvērstā rinda Gaida tabulā */
+  .gaida-info-rinda > td{background:var(--bg);padding:16px 14px !important}
+  .gaida-info{font-size:13px;line-height:1.7}
+  .gaida-info .gi-virsraksts{
+    font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--accent-dark);margin:12px 0 4px;
+  }
+  .gaida-info .gi-berns{
+    background:var(--bg2);border:0.5px solid var(--border);border-radius:10px;
+    padding:10px 14px;margin:6px 0;
+  }
+  .gaida-info textarea{margin-top:2px}
+
   /* Sekciju navigācija */
   .sekciju-nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:22px}
   .sekciju-nav[hidden]{display:none}
@@ -314,7 +327,7 @@
       </p>
       <div class="tabula-riti">
         <table>
-          <thead><tr><th>Vecāks</th><th>E-pasts</th><th>Telefons</th><th>Bērns</th><th>Statuss</th><th>Izietas iepazīšanās</th><th></th></tr></thead>
+          <thead><tr><th>Vecāks</th><th>E-pasts</th><th>Telefons</th><th>Bērns</th><th>Statuss</th><th>Izietas iepazīšanās</th><th>Rezervēts</th><th></th></tr></thead>
           <tbody id="gaidaTabula"></tbody>
         </table>
       </div>
@@ -692,7 +705,8 @@ async function ieladetRindu() {
     k.querySelectorAll("[data-apstiprinat]").forEach((p) => p.addEventListener("click", async () => {
       p.disabled = true;
       try {
-        await setDoc(doc(db, "users", p.dataset.apstiprinat), { uznemsanasStatuss: "atlauts" }, { merge: true });
+        await setDoc(doc(db, "users", p.dataset.apstiprinat),
+          { uznemsanasStatuss: "atlauts", atlautsDatums: Timestamp.now() }, { merge: true });
         tosts("Apstiprināts — lietotājs pārcelts uz 2. lapu.");
         ieladetRindu();
       } catch (e) {
@@ -741,7 +755,7 @@ document.querySelectorAll(".sekciju-nav .nav-poga").forEach((poga) => {
 const GAIDA_STATUSI = { jauns: "Rindā", atlauts: "Atļauts rezervēt", pieteikts: "Apmaksājis" };
 async function ieladetGaidosos() {
   const tb = el("gaidaTabula");
-  tb.innerHTML = '<tr><td colspan="7" style="color:var(--muted)">Ielādē…</td></tr>';
+  tb.innerHTML = '<tr><td colspan="8" style="color:var(--muted)">Ielādē…</td></tr>';
   try {
     // Tikai 2. lapas cilvēki — "jauns" vēl ir rindā (1. lapa), "apstiprinats"
     // jau ir 3. lapā. Katrs e-pasts redzams tikai vienā lapā.
@@ -751,46 +765,123 @@ async function ieladetGaidosos() {
     ));
     const rindas = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
     if (!rindas.length) {
-      tb.innerHTML = '<tr><td colspan="7" style="color:var(--muted)">Šobrīd neviens negaida.</td></tr>';
+      tb.innerHTML = '<tr><td colspan="8" style="color:var(--muted)">Šobrīd neviens negaida.</td></tr>';
       return;
     }
     rindas.sort((a, b) => (a.epasts || "").localeCompare(b.epasts || ""));
-    // Cik iepazīšanās nodarbības katrs jau ir izgājis (notikušas, neatceltas) —
-    // palīdz izlemt, kad dot pilno piekļuvi.
-    const izietas = await Promise.all(rindas.map(async (u) => {
+    // Katram: cik iepazīšanās nodarbības izietas (notikušas, neatceltas) un
+    // vai ir rezervēta gaidāma nodarbība (tuvākā — rādīšanai "Info" panelī).
+    const rezerv = await Promise.all(rindas.map(async (u) => {
       try {
         const bs = await getDocs(query(collection(db, "bookings"), where("userId", "==", u.id)));
         const tagad = new Date();
-        return bs.docs.filter((d) => {
-          const b = d.data();
-          return b.status !== "cancelled" && irIepazRezervacija(b) && b.startAt.toDate() < tagad;
-        }).length;
-      } catch { return null; }
+        const aktivas = bs.docs.map((d) => d.data()).filter((b) => b.status !== "cancelled");
+        const izietas = aktivas.filter((b) => irIepazRezervacija(b) && b.startAt.toDate() < tagad).length;
+        const gaidamas = aktivas.filter((b) => b.startAt.toDate() >= tagad)
+          .sort((a, b) => a.startAt.toMillis() - b.startAt.toMillis());
+        return { izietas, nakama: gaidamas[0]?.startAt.toDate() ?? null };
+      } catch { return { izietas: null, nakama: null }; }
     }));
     tb.innerHTML = rindas.map((u, i) => {
       const berns = (u.berni || []).map((b) => b.berna_vards).filter(Boolean).join(", ") || "—";
       const statuss = GAIDA_STATUSI[u.uznemsanasStatuss] || u.uznemsanasStatuss;
+      const r = rezerv[i];
+      const berniInfo = (u.berni || []).length
+        ? (u.berni || []).map((b) => `
+          <div class="gi-berns">
+            <b>${escapeHTML(b.berna_vards || "Audzēknis")}</b>${b.berna_vecums ? " · " + escapeHTML(String(b.berna_vecums)) + " g." : ""}<br>
+            ${[
+              b.vecaka_tel ? "Vecāka tel.: " + b.vecaka_tel : "",
+              b.berna_tel ? "Bērna tel.: " + b.berna_tel : "",
+              b.muzikas_pieredze ? "Mūzikas pieredze: " + b.muzikas_pieredze + (b.muzikas_piezime ? " (" + b.muzikas_piezime + ")" : "") : "",
+              b.instruments_majas ? "Instruments mājās: " + b.instruments_majas + (b.instrumenta_piezime ? " (" + b.instrumenta_piezime + ")" : "") : "",
+              b.velamie_laiki ? "Vēlamie laiki: " + b.velamie_laiki : "",
+            ].filter(Boolean).map(escapeHTML).join("<br>")}
+          </div>`).join("")
+        : '<div style="color:var(--muted)">Bērna anketa vēl nav aizpildīta.</div>';
       return `<tr>
         <td>${escapeHTML(u.vards || "—")}</td>
         <td>${escapeHTML(u.epasts || "")}</td>
         <td>${escapeHTML(u.telefons || u.rindasTel || "—")}</td>
-        <td>${escapeHTML(berns)}</td>
+        <td>${escapeHTML(berns)} <button class="maza-poga" data-info="${i}" style="padding:4px 10px;font-size:11px">info</button></td>
         <td>${escapeHTML(statuss)}</td>
-        <td>${izietas[i] === null ? "—" : `${izietas[i]} no 3`}</td>
-        <td style="white-space:nowrap"><button class="maza-poga" data-pilna="${u.id}">Pilnā piekļuve</button></td>
+        <td>${r.izietas === null ? "—" : `${r.izietas} no 3`}</td>
+        <td style="text-align:center">${r.nakama ? '<span style="color:var(--zala);font-weight:800">✓</span>' : ""}</td>
+        <td style="white-space:nowrap"><button class="maza-poga" data-info="${i}">Info</button></td>
+      </tr>
+      <tr class="gaida-info-rinda" id="gaidaInfoRinda${i}" hidden>
+        <td colspan="8">
+          <div class="gaida-info">
+            <div><b>Reģistrējies:</b> ${datumaTeksts(u.kontsIzveidots || u.rindaPieteiktaDatums)}</div>
+            <div><b>Piekļuve 2. lapai dota:</b> ${datumaTeksts(u.atlautsDatums)}</div>
+            <div><b>Rezervēta nodarbība:</b> ${r.nakama ? "ir — " + fmtDatumsLaiks.format(r.nakama) : "nav"}</div>
+            ${u.rindasVecums ? `<div><b>Audzēkņa vecums (no pieteikuma):</b> ${escapeHTML(String(u.rindasVecums))} g.</div>` : ""}
+            <div class="gi-virsraksts">Bērni</div>
+            ${berniInfo}
+            <div class="gi-virsraksts">Komentārs (redzams tikai adminiem)</div>
+            <textarea id="gaidaKoment${i}" rows="3" placeholder="Piezīmes par šo cilvēku, bērnu vai nodarbībām…"></textarea>
+            <button class="maza-poga" data-koment="${u.id}" data-i="${i}" style="margin-top:8px">Saglabāt komentāru</button>
+            <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+              <button class="cta" data-pilna="${u.id}">Pilnā piekļuve</button>
+              <button class="maza-poga" data-rinda="${u.id}">Atgriezt rindā (1. lapa)</button>
+            </div>
+          </div>
+        </td>
       </tr>`;
     }).join("");
+    // "Info"/"info" pogas atver izvērsto rindu; komentāru ielādējam pirmajā atvēršanā.
+    tb.querySelectorAll("[data-info]").forEach((p) => p.addEventListener("click", async () => {
+      const i = p.dataset.info;
+      const rinda = el("gaidaInfoRinda" + i);
+      rinda.hidden = !rinda.hidden;
+      const lauks = el("gaidaKoment" + i);
+      if (!rinda.hidden && !lauks.dataset.ieladets) {
+        lauks.dataset.ieladets = "1";
+        try {
+          const piez = await getDoc(doc(db, "adminNotes", rindas[i].id));
+          if (piez.exists()) lauks.value = piez.data().teksts || "";
+        } catch (e) { console.error("Komentāra ielādes kļūda:", e); }
+      }
+    }));
+    tb.querySelectorAll("[data-koment]").forEach((p) => p.addEventListener("click", async () => {
+      p.disabled = true;
+      try {
+        await setDoc(doc(db, "adminNotes", p.dataset.koment), {
+          teksts: el("gaidaKoment" + p.dataset.i).value.trim(),
+          atjaunots: Timestamp.now(),
+        }, { merge: true });
+        tosts("Komentārs saglabāts.");
+      } catch (e) {
+        console.error("Komentāra saglabāšanas kļūda:", e);
+        tosts("Neizdevās saglabāt komentāru.");
+      }
+      p.disabled = false;
+    }));
     tb.querySelectorAll("[data-pilna]").forEach((p) =>
       p.addEventListener("click", () => mainitUznemsanu(p.dataset.pilna, "apstiprinats")));
+    tb.querySelectorAll("[data-rinda]").forEach((p) =>
+      p.addEventListener("click", () => mainitUznemsanu(p.dataset.rinda, "jauns")));
   } catch (e) {
     console.error("Gaidošo ielādes kļūda:", e);
-    tb.innerHTML = '<tr><td colspan="7" style="color:var(--sarkana)">Neizdevās ielādēt sarakstu.</td></tr>';
+    tb.innerHTML = '<tr><td colspan="8" style="color:var(--sarkana)">Neizdevās ielādēt sarakstu.</td></tr>';
   }
+}
+// Datums no ISO teksta vai Firestore Timestamp — "—", ja nav.
+function datumaTeksts(v) {
+  if (!v) return "—";
+  const d = typeof v === "string" ? new Date(v) : (v.toDate ? v.toDate() : v);
+  return Number.isNaN(d.getTime?.() ?? NaN) ? "—" : fmtDatumsLaiks.format(d);
 }
 async function mainitUznemsanu(uid, statuss) {
   try {
-    await setDoc(doc(db, "users", uid), { uznemsanasStatuss: statuss }, { merge: true });
-    tosts(statuss === "atlauts" ? "Atļauts rezervēt pirmo nodarbību." : "Piešķirta pilnā piekļuve.");
+    const dati = { uznemsanasStatuss: statuss };
+    // Datumus pierakstām vēsturei — rādām "Info" panelī.
+    if (statuss === "atlauts") dati.atlautsDatums = Timestamp.now();
+    if (statuss === "apstiprinats") dati.apstiprinatsDatums = Timestamp.now();
+    await setDoc(doc(db, "users", uid), dati, { merge: true });
+    tosts(statuss === "apstiprinats" ? "Piešķirta pilnā piekļuve — pārcelts uz 3. lapu."
+      : statuss === "jauns" ? "Atgriezts rindā — 1. lapa."
+      : "Atļauts rezervēt pirmo nodarbību.");
     ieladetGaidosos();
   } catch (e) {
     console.error("Statusa maiņas kļūda:", e);
@@ -1179,7 +1270,8 @@ el("pogaAtnemtPiekluvi").addEventListener("click", async () => {
   const poga = el("pogaAtnemtPiekluvi");
   poga.disabled = true;
   try {
-    await setDoc(doc(db, "users", atvertaisAudzeknis.id), { uznemsanasStatuss: "atlauts" }, { merge: true });
+    await setDoc(doc(db, "users", atvertaisAudzeknis.id),
+      { uznemsanasStatuss: "atlauts", atlautsDatums: Timestamp.now() }, { merge: true });
     tosts("Pilnā piekļuve atņemta — lietotājs pārcelts uz 2. lapu.");
     lietotajuKese.delete(atvertaisAudzeknis.id);
     // Lietotājs vairs nepieder 3. lapai — aizveram kartīti un atjaunojam sarakstu.
