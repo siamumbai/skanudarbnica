@@ -70,7 +70,15 @@
 
   /* "Info" izvērstā rinda (1. lapas Rindas un 2. lapas Gaida tabulās) */
   .gaida-info-rinda > td{background:var(--bg);padding:16px 14px !important}
-  .gaida-info{font-size:13px;line-height:1.7}
+  .gaida-info{font-size:13px;line-height:1.7;position:relative}
+  /* 6 krāsu kvadrāti paneļa labajā augšējā stūrī — iekrāso visu cilni */
+  .gi-krasas{position:absolute;top:0;right:0;display:flex;gap:6px}
+  .gi-krasa{
+    width:20px;height:20px;border-radius:6px;padding:0;cursor:pointer;
+    border:1px solid rgba(0,0,0,.14);transition:transform .1s;
+  }
+  .gi-krasa:hover{transform:scale(1.18)}
+  .gi-krasa.aktiva{outline:2px solid var(--accent-dark);outline-offset:1.5px}
   .gaida-info .gi-virsraksts{
     font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
     color:var(--accent-dark);margin:12px 0 4px;
@@ -828,8 +836,15 @@ async function ieladetRindu() {
       tb.innerHTML = '<tr><td colspan="5" style="color:var(--muted)">Šobrīd rindā neviena pieteikuma nav.</td></tr>';
       return;
     }
+    // Ciļņu krāsas (adminNotes.krasa) — iekrāso rindu jau ielādējot.
+    const krasas = await Promise.all(rindasCilveki.map(async (u) => {
+      try {
+        const s = await getDoc(doc(db, "adminNotes", u.id));
+        return s.exists() ? s.data().krasa || null : null;
+      } catch { return null; }
+    }));
     tb.innerHTML = rindasCilveki.map((u, i) => `
-      <tr>
+      <tr id="rindaRinda${i}"${krasas[i] ? ` style="background:${krasas[i]}"` : ""}>
         <td>${escapeHTML(u.vards || "—")}</td>
         <td>${escapeHTML(u.rindasEpasts || u.epasts || "—")}</td>
         <td>${u.rindasVecums ? escapeHTML(String(u.rindasVecums)) + " g." : "—"}</td>
@@ -837,8 +852,9 @@ async function ieladetRindu() {
         <td style="white-space:nowrap"><button class="maza-poga" data-info="${i}">Info</button></td>
       </tr>
       <tr class="gaida-info-rinda" id="rindaInfoRinda${i}" hidden>
-        <td colspan="5">
+        <td colspan="5"${krasas[i] ? ` style="background:${krasas[i]}"` : ""}>
           <div class="gaida-info">
+            ${krasuPogasHTML(i, krasas[i])}
             <button class="maza-poga" data-vesture="${i}">Vēsture</button>
             <div class="gi-vesture" id="rindaVesture${i}" hidden style="margin-top:8px">Ielādē…</div>
             <div class="gi-virsraksts">Komentārs (redzams tikai adminiem)</div>
@@ -896,6 +912,7 @@ async function ieladetRindu() {
         p.disabled = false;
       }
     }));
+    pieslegtKrasuPogas(tb, rindasCilveki, "rinda");
   } catch (e) {
     console.error("Rindas ielādes kļūda:", e);
     tb.innerHTML = '<tr><td colspan="5" style="color:var(--sarkana)">Neizdevās ielādēt rindu.</td></tr>';
@@ -1023,6 +1040,11 @@ async function ieladetPosmaTabulu(tbId, statusi, prefiks, tresa, tuksums) {
     // Katram: cik iepazīšanās nodarbības izietas (notikušas, neatceltas) un
     // vai ir rezervēta gaidāma nodarbība (tuvākā — rādīšanai "Info" panelī).
     const rezerv = await Promise.all(rindas.map(async (u) => {
+      let krasa = null;
+      try {
+        const piez = await getDoc(doc(db, "adminNotes", u.id));
+        if (piez.exists()) krasa = piez.data().krasa || null;
+      } catch { /* krāsa nav kritiska */ }
       try {
         const bs = await getDocs(query(collection(db, "bookings"), where("userId", "==", u.id)));
         const tagad = new Date();
@@ -1030,8 +1052,8 @@ async function ieladetPosmaTabulu(tbId, statusi, prefiks, tresa, tuksums) {
         const izietas = aktivas.filter((b) => irIepazRezervacija(b) && b.startAt.toDate() < tagad).length;
         const gaidamas = aktivas.filter((b) => b.startAt.toDate() >= tagad)
           .sort((a, b) => a.startAt.toMillis() - b.startAt.toMillis());
-        return { izietas, nakama: gaidamas[0]?.startAt.toDate() ?? null };
-      } catch { return { izietas: null, nakama: null }; }
+        return { izietas, nakama: gaidamas[0]?.startAt.toDate() ?? null, krasa };
+      } catch { return { izietas: null, nakama: null, krasa }; }
     }));
     tb.innerHTML = rindas.map((u, i) => {
       const berns = (u.berni || []).map((b) => b.berna_vards).filter(Boolean).join(", ") || "—";
@@ -1061,7 +1083,7 @@ async function ieladetPosmaTabulu(tbId, statusi, prefiks, tresa, tuksums) {
            <button class="maza-poga" data-atpakal2="${u.id}">Atgriezt uz 2. lapu</button>`
         : `<button class="maza-poga" data-rinda="${u.id}">Atgriezt rindā (1. lapa)</button>
            <button class="cta" data-pilna="${u.id}">Pilnā piekļuve</button>`;
-      return `<tr>
+      return `<tr id="${prefiks}Rinda${i}"${r.krasa ? ` style="background:${r.krasa}"` : ""}>
         <td>${escapeHTML(u.vards || "—")}</td>
         <td>${escapeHTML(u.epasts || "")}</td>
         <td>${escapeHTML(u.telefons || u.rindasTel || "—")}</td>
@@ -1072,8 +1094,9 @@ async function ieladetPosmaTabulu(tbId, statusi, prefiks, tresa, tuksums) {
         <td style="white-space:nowrap"><button class="maza-poga" data-info="${i}">Info</button></td>
       </tr>
       <tr class="gaida-info-rinda" id="${prefiks}InfoRinda${i}" hidden>
-        <td colspan="8">
+        <td colspan="8"${r.krasa ? ` style="background:${r.krasa}"` : ""}>
           <div class="gaida-info">
+            ${krasuPogasHTML(i, r.krasa)}
             <div><b>Rezervēta nodarbība:</b> ${r.nakama
               ? `ir — ${fmtDatumsLaiks.format(r.nakama)} <span style="color:var(--zala);font-weight:800">✓</span>`
               : "nav"}</div>
@@ -1175,6 +1198,7 @@ async function ieladetPosmaTabulu(tbId, statusi, prefiks, tresa, tuksums) {
       p.addEventListener("click", () => mainitUznemsanu(p.dataset.rinda, "jauns")));
     tb.querySelectorAll("[data-atpakal2]").forEach((p) =>
       p.addEventListener("click", () => mainitUznemsanu(p.dataset.atpakal2, "atlauts")));
+    pieslegtKrasuPogas(tb, rindas, prefiks);
   } catch (e) {
     console.error("Posma tabulas ielādes kļūda:", e);
     tb.innerHTML = '<tr><td colspan="8" style="color:var(--sarkana)">Neizdevās ielādēt sarakstu.</td></tr>';
@@ -1186,6 +1210,36 @@ function datumaTeksts(v) {
   const d = typeof v === "string" ? new Date(v) : (v.toDate ? v.toDate() : v);
   return Number.isNaN(d.getTime?.() ?? NaN) ? "—" : fmtDatumsLaiks.format(d);
 }
+/* ---------- Ciļņu krāsas: 6 kvadrāti Info panelī iekrāso visu cilni.
+   Krāsa glabājas adminNotes/{uid}.krasa — paliek pie e-pasta visās lapās.
+   Klikšķis uz jau aktīvās krāsas to noņem. ---------- */
+const CILNU_KRASAS = ["#F3E2B3", "#DBE8CC", "#D7E4EE", "#F2DBD3", "#E4DCEE", "#E7E2D4"];
+function krasuPogasHTML(i, krasa) {
+  return `<div class="gi-krasas">${CILNU_KRASAS.map((k) =>
+    `<button type="button" class="gi-krasa${krasa === k ? " aktiva" : ""}" data-krasa="${k}" data-i="${i}" title="Iekrāsot cilni" aria-label="Cilnes krāsa" style="background:${k}"></button>`).join("")}</div>`;
+}
+function iekrasotCilni(prefiks, i, krasa) {
+  const galvena = el(prefiks + "Rinda" + i);
+  if (galvena) galvena.style.background = krasa || "";
+  const infoTd = el(prefiks + "InfoRinda" + i)?.querySelector("td");
+  if (infoTd) infoTd.style.background = krasa || "";
+}
+function pieslegtKrasuPogas(tb, rindas, prefiks) {
+  tb.querySelectorAll(".gi-krasa").forEach((p) => p.addEventListener("click", async () => {
+    const i = p.dataset.i;
+    const jauna = p.classList.contains("aktiva") ? null : p.dataset.krasa;
+    try {
+      await setDoc(doc(db, "adminNotes", rindas[i].id), { krasa: jauna }, { merge: true });
+      p.closest(".gi-krasas").querySelectorAll(".gi-krasa").forEach((x) =>
+        x.classList.toggle("aktiva", x === p && !!jauna));
+      iekrasotCilni(prefiks, i, jauna);
+    } catch (e) {
+      console.error("Krāsas saglabāšanas kļūda:", e);
+      tosts("Neizdevās saglabāt krāsu.");
+    }
+  }));
+}
+
 /* ---------- Globālā vēsture (galvenes poga) ---------- */
 // Katru pārcelšanu starp lapām pierakstām adminLog kolekcijā (tikai adminiem).
 async function pierakstitNotikumu(uid, teksts) {
