@@ -816,8 +816,8 @@ async function ieladetRindu() {
           <div class="gaida-info">
             <button class="maza-poga" data-vesture="${i}">Vēsture</button>
             <div class="gi-vesture" id="rindaVesture${i}" hidden style="margin-top:8px">Ielādē…</div>
-            <div class="gi-virsraksts">Jauns komentārs (redzams tikai adminiem)</div>
-            <textarea id="rindaKoment${i}" rows="3" placeholder="Piezīmes par šo cilvēku, bērnu vai nodarbībām…"></textarea>
+            <div class="gi-virsraksts">Komentārs (redzams tikai adminiem)</div>
+            <textarea id="rindaKoment${i}" rows="3" placeholder="..."></textarea>
             <button class="maza-poga" data-koment="${i}" style="margin-top:8px">Pievienot komentāru</button>
             <div class="gi-darbibas">
               <button class="cta" data-apstiprinat="${u.id}">Apstiprināt</button>
@@ -1031,7 +1031,8 @@ async function ieladetPosmaTabulu(tbId, statusi, prefiks, tresa, tuksums) {
         }).join("")
         : '<div style="color:var(--muted)">Bērna anketa vēl nav aizpildīta.</div>';
       const darbibas = tresa
-        ? `<button class="maza-poga" data-atpakal2="${u.id}">Atgriezt uz 2. lapu</button>`
+        ? `<button class="maza-poga" data-rinda="${u.id}">Atgriezt uz 1. lapu</button>
+           <button class="maza-poga" data-atpakal2="${u.id}">Atgriezt uz 2. lapu</button>`
         : `<button class="maza-poga" data-rinda="${u.id}">Atgriezt rindā (1. lapa)</button>
            <button class="cta" data-pilna="${u.id}">Pilnā piekļuve</button>`;
       return `<tr>
@@ -1051,14 +1052,14 @@ async function ieladetPosmaTabulu(tbId, statusi, prefiks, tresa, tuksums) {
               ? `ir — ${fmtDatumsLaiks.format(r.nakama)} <span style="color:var(--zala);font-weight:800">✓</span>`
               : "nav"}</div>
             ${u.rindasVecums ? `<div><b>Audzēkņa vecums (no pieteikuma):</b> ${escapeHTML(String(u.rindasVecums))} g.</div>` : ""}
-            <div class="gi-virsraksts">Bērni</div>
-            ${berniInfo}
             <button class="maza-poga" data-vesture="${i}" style="margin-top:10px">Vēsture</button>
             <div class="gi-vesture" id="${prefiks}Vesture${i}" hidden style="margin-top:8px">Ielādē…</div>
-            <div class="gi-virsraksts">Jauns komentārs (redzams tikai adminiem)</div>
-            <textarea id="${prefiks}Koment${i}" rows="3" placeholder="Piezīmes par šo cilvēku, bērnu vai nodarbībām…"></textarea>
-            <button class="maza-poga" data-koment="${i}" style="margin-top:8px">Pievienot komentāru</button>
-            <button class="maza-poga" data-kalendars="${i}" style="margin-top:14px">Rezervēt nodarbību</button>
+            <div class="gi-virsraksts">Bērni</div>
+            ${berniInfo}
+            <div class="gi-virsraksts">Komentārs (redzams tikai adminiem)</div>
+            <textarea id="${prefiks}Koment${i}" rows="3" placeholder="..."></textarea>
+            <div><button class="maza-poga" data-koment="${i}" style="margin-top:8px">Pievienot komentāru</button></div>
+            <div><button class="maza-poga" data-kalendars="${i}" style="margin-top:10px">Rezervēt nodarbību</button></div>
             <div class="admin-kalendars" id="${prefiks}Kalendars${i}" hidden></div>
             <div id="${prefiks}RezApstiprinat${i}" hidden style="margin-top:10px">
               <button class="cta" data-rezervet="${i}">Rezervēt — <span id="${prefiks}RezTeksts${i}"></span></button>
@@ -1161,10 +1162,14 @@ function datumaTeksts(v) {
 }
 async function mainitUznemsanu(uid, statuss) {
   try {
+    // Mainās TIKAI statuss (un datumi vēsturei) — nekas cits netiek dzēsts:
+    // bilance, pirkumi, rezervācijas, bērni un komentāri paliek pie e-pasta,
+    // tāpēc netīša pārcelšana 1.↔2.↔3. neko nepazaudē.
     const dati = { uznemsanasStatuss: statuss };
-    // Datumus pierakstām vēsturei — rādām "Info" panelī.
     if (statuss === "atlauts") dati.atlautsDatums = Timestamp.now();
     if (statuss === "apstiprinats") dati.apstiprinatsDatums = Timestamp.now();
+    // Atgriežot uz 1. lapu — lai cilvēks noteikti parādās rindas sarakstā.
+    if (statuss === "jauns") dati.rindaPieteikta = true;
     await setDoc(doc(db, "users", uid), dati, { merge: true });
     tosts(statuss === "apstiprinats" ? "Piešķirta pilnā piekļuve — pārcelts uz 3. lapu."
       : statuss === "jauns" ? "Atgriezts rindā — 1. lapa."
