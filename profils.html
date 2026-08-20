@@ -2492,6 +2492,31 @@ prasitPieteiksanos(async (user) => {
     tosts(kludasTeksts(err), 'kluda');
   }
 
+  // Ja konts bija dzēsts un e-pasts reģistrējas no jauna — atjaunojam datus
+  // (bērnus, pirkumus, rezervāciju) no arhīva. Statuss sākas no "jauns":
+  // cilvēks atkal iet caur rindu, bet iekšā viss ir saglabāts.
+  if (!p?.atjaunotsNoArhiva) {
+    try {
+      const arh = await getDoc(doc(db, 'arhivs', (user.email || '').toLowerCase()));
+      if (arh.exists()) {
+        const a = arh.data().profils || {};
+        const atjaunot = { atjaunotsNoArhiva: true };
+        ['vards', 'telefons', 'rindasTel', 'rindasVecums', 'berni', 'mockPirkumi',
+          'mockRezervacija', 'iepazAtlautas', 'kontsIzveidots'].forEach((lauks) => {
+          const esoss = p?.[lauks];
+          const tukss = esoss === undefined || esoss === null
+            || (Array.isArray(esoss) && esoss.length === 0);
+          if (tukss && a[lauks] != null) atjaunot[lauks] = a[lauks];
+        });
+        if (!p?.uznemsanasStatuss) atjaunot.uznemsanasStatuss = 'jauns';
+        await saglabatProfilu(uid, atjaunot);
+        p = { ...(p || {}), ...atjaunot };
+      }
+    } catch (err) {
+      console.error('Arhīva atjaunošanas kļūda:', err);
+    }
+  }
+
   // Vecajiem profiliem (izveidoti pirms rezervāciju sistēmas) dokumentā var
   // trūkt e-pasta vai vārda lauka — bez tiem admin panelis lietotāju neatrod
   // vai rāda "—". Aizpildām trūkstošo klusām vienreiz.

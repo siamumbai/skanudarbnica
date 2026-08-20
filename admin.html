@@ -902,12 +902,20 @@ async function lietotajaVesture(u) {
       `Nopirka nodarbību — ${m.apraksts || ""}${m.cena ? " · " + m.cena : ""}`, true);
   });
   try {
-    const [ieraksti, maksSnap, rezSnap] = await Promise.all([
+    const epasts = (u.epasts || "").toLowerCase();
+    const [ieraksti, maksSnap, rezSnap, arhSnap] = await Promise.all([
       nolasitPiezimes(u.id),
       getDocs(query(collection(db, "payments"), where("userId", "==", u.id))),
       getDocs(query(collection(db, "bookings"), where("userId", "==", u.id))),
+      epasts ? getDoc(doc(db, "arhivs", epasts)) : Promise.resolve(null),
     ]);
     ieraksti.forEach((k) => pielikt(k.datums ? new Date(k.datums) : null, "Komentārs: " + k.teksts));
+    // Arhīvs pēc e-pasta — vēsture un komentāri izdzīvo konta dzēšanu.
+    if (arhSnap?.exists()) {
+      const a = arhSnap.data();
+      (a.dzesanas || []).forEach((iso) => pielikt(new Date(iso), "Konts tika dzēsts"));
+      (a.piezimes?.ieraksti || []).forEach((k) => pielikt(k.datums ? new Date(k.datums) : null, "Komentārs: " + k.teksts));
+    }
     maksSnap.docs.map((d) => d.data()).forEach((p) => {
       if (p.status === "succeeded") {
         pielikt(p.createdAt?.toDate?.(), `Samaksāja ${eiro(p.amountCents)}${p.packageName ? " — " + p.packageName : ""}`, true);
@@ -980,6 +988,7 @@ async function ieladetRindu() {
             <textarea id="rindaKoment${i}" rows="3" placeholder="..."></textarea>
             <button class="maza-poga" data-koment="${i}" style="margin-top:8px">Pievienot komentāru</button>
             <div class="gi-darbibas">
+              <button class="maza-poga dzest" data-dzest-kontu="${i}" style="margin-right:auto">Dzēst kontu</button>
               <button class="cta" data-apstiprinat="${u.id}">Apstiprināt</button>
             </div>
           </div>
@@ -1030,6 +1039,10 @@ async function ieladetRindu() {
         tosts("Neizdevās apstiprināt.");
         p.disabled = false;
       }
+    }));
+    tb.querySelectorAll("[data-dzest-kontu]").forEach((p) => p.addEventListener("click", async () => {
+      const ok = await dzestKontuNoInfo(rindasCilveki[p.dataset.dzestKontu]);
+      if (ok) atjaunotVisusSarakstus();
     }));
     pieslegtKrasuPogas(tb, rindasCilveki, "rinda");
   } catch (e) {
@@ -1240,10 +1253,11 @@ async function ieladetPosmaTabulu(tbId, statusi, prefiks, tresa, tuksums) {
           </div>`;
         }).join("")
         : '<div style="color:var(--muted)">Bērna anketa vēl nav aizpildīta.</div>';
+      const dzestPoga = `<button class="maza-poga dzest" data-dzest-kontu="${i}" style="margin-right:auto">Dzēst kontu</button>`;
       const darbibas = tresa
-        ? `<button class="maza-poga" data-rinda="${u.id}">Atgriezt uz 1. lapu</button>
+        ? `${dzestPoga}<button class="maza-poga" data-rinda="${u.id}">Atgriezt uz 1. lapu</button>
            <button class="maza-poga" data-atpakal2="${u.id}">Atgriezt uz 2. lapu</button>`
-        : `<button class="maza-poga" data-rinda="${u.id}">Atgriezt rindā (1. lapa)</button>
+        : `${dzestPoga}<button class="maza-poga" data-rinda="${u.id}">Atgriezt rindā (1. lapa)</button>
            <button class="cta" data-pilna="${u.id}">Pilnā piekļuve</button>`;
       return `<tr id="${prefiks}Rinda${i}"${r.krasa ? ` style="background:${r.krasa}"` : ""}>
         <td>${escapeHTML(u.vards || "—")}</td>
@@ -1386,6 +1400,10 @@ async function ieladetPosmaTabulu(tbId, statusi, prefiks, tresa, tuksums) {
       p.addEventListener("click", () => mainitUznemsanu(p.dataset.rinda, "jauns")));
     tb.querySelectorAll("[data-atpakal2]").forEach((p) =>
       p.addEventListener("click", () => mainitUznemsanu(p.dataset.atpakal2, "atlauts")));
+    tb.querySelectorAll("[data-dzest-kontu]").forEach((p) => p.addEventListener("click", async () => {
+      const ok = await dzestKontuNoInfo(rindas[p.dataset.dzestKontu]);
+      if (ok) atjaunotVisusSarakstus();
+    }));
     pieslegtKrasuPogas(tb, rindas, prefiks);
   } catch (e) {
     console.error("Posma tabulas ielādes kļūda:", e);
@@ -1426,6 +1444,56 @@ function pieslegtKrasuPogas(tb, rindas, prefiks) {
       tosts("Neizdevās saglabāt krāsu.");
     }
   }));
+}
+
+// Pēc konta dzēšanas atsvaidzinām visus sarakstus, kur tas varēja būt.
+function atjaunotVisusSarakstus() {
+  ieladetRindu();
+  ieladetGaidosos();
+  ieladetGaida3();
+  atjaunotJaunumus();
+  if (el("visiModalis").classList.contains("redzams")) paraditVisus();
+}
+
+/* ---------- Konta dzēšana no Info paneļa ----------
+   Pirms dzēšanas datus (bērnus, pirkumus, rezervāciju, piezīmes) arhivējam
+   pēc e-pasta — ja tas pats e-pasts reģistrējas no jauna, viss atgriežas.
+   Vēsturē paliek ieraksts "Konts tika dzēsts". */
+async function dzestKontuNoInfo(u) {
+  const epasts = (u.epasts || u.rindasEpasts || "").toLowerCase();
+  if (!epasts) { tosts("Kontam nav e-pasta — dzēs no Audzēkņu kartītes."); return false; }
+  const ievade = prompt(
+    `Konta dzēšana: ${epasts}\nLietotājam būs jāreģistrējas no jauna; nodarbības un vēsture saglabāsies.\nIeraksti e-pastu, lai apstiprinātu:`);
+  if (ievade === null) return false;
+  if (ievade.trim().toLowerCase() !== epasts) { tosts("E-pasts nesakrīt — dzēšana atcelta."); return false; }
+  try {
+    const piezimes = await nolasitPiezimes(u.id);
+    const arhSnap = await getDoc(doc(db, "arhivs", epasts));
+    const vecais = arhSnap.exists() ? arhSnap.data() : {};
+    await setDoc(doc(db, "arhivs", epasts), {
+      profils: {
+        vards: u.vards ?? null, telefons: u.telefons ?? null,
+        rindasTel: u.rindasTel ?? null, rindasVecums: u.rindasVecums ?? null,
+        berni: u.berni ?? [], mockPirkumi: u.mockPirkumi ?? [],
+        mockRezervacija: u.mockRezervacija ?? null,
+        iepazAtlautas: u.iepazAtlautas ?? null,
+        kontsIzveidots: u.kontsIzveidots ?? null,
+      },
+      piezimes: { ieraksti: [...(vecais.piezimes?.ieraksti ?? []), ...piezimes] },
+      dzesanas: [...(vecais.dzesanas ?? []), new Date().toISOString()],
+    });
+    await izsauktFunkciju("adminDeleteUser", { userId: u.id });
+    await addDoc(collection(db, "adminLog"), {
+      datums: Timestamp.now(), epasts, teksts: "Konts dzēsts",
+    });
+    lietotajuKese.delete(u.id);
+    tosts("Konts dzēsts — e-pastam jāreģistrējas no jauna.");
+    return true;
+  } catch (e) {
+    console.error("Konta dzēšanas kļūda:", e);
+    tosts(funkcijasKluda(e));
+    return false;
+  }
 }
 
 /* ---------- Globālā vēsture (galvenes poga) ---------- */

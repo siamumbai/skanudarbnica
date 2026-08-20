@@ -104,6 +104,14 @@ service cloud.firestore {
     match /adminLog/{id} {
       allow read, write: if irAdmins();
     }
+    // Dzēstu kontu arhīvs pēc e-pasta: nodarbības, bērni un piezīmes
+    // saglabājas un atgriežas, ja tas pats e-pasts reģistrējas no jauna.
+    // Lasīt drīkst admins un pats e-pasta īpašnieks; raksta tikai admins.
+    match /arhivs/{epasts} {
+      allow read: if irAdmins()
+        || (autorizets() && request.auth.token.email == epasts);
+      allow write: if irAdmins();
+    }
 
     /* ---------- Viss pārējais aizliegts ---------- */
     match /{document=**} {
