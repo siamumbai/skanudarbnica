@@ -746,6 +746,7 @@ const fmtDatumsLaiks = new Intl.DateTimeFormat("lv-LV", {
 // Maketa kalendāram — tās pašas datuma palīgfunkcijas kā klienta profilā.
 const LAIKA_ZONA = "Europe/Riga";
 const fmtNedelasDiena = new Intl.DateTimeFormat("lv-LV", { timeZone: LAIKA_ZONA, weekday: "long" });
+const fmtIssLaiks = new Intl.DateTimeFormat("lv-LV", { timeZone: LAIKA_ZONA, day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
 const fmtDatumsIss = new Intl.DateTimeFormat("lv-LV", { timeZone: LAIKA_ZONA, day: "2-digit", month: "2-digit" });
 const isoFormatetajs = new Intl.DateTimeFormat("en-CA", { timeZone: LAIKA_ZONA, year: "numeric", month: "2-digit", day: "2-digit" });
 const datumsISO = (d) => isoFormatetajs.format(d);
@@ -1202,20 +1203,26 @@ async function ieladetPosmaTabulu(tbId, statusi, prefiks, tresa, tuksums) {
       // tur vēl nav) arī skaitās kā rezervēts; pagājis — kā izieta nodarbība.
       const mockStart = u.mockRezervacija?.start && u.mockRezervacija.start >= Date.now()
         ? new Date(u.mockRezervacija.start) : null;
-      const mockPagajusi = u.mockRezervacija?.start && u.mockRezervacija.start < Date.now() ? 1 : 0;
+      const mockPagajusiD = u.mockRezervacija?.start && u.mockRezervacija.start < Date.now()
+        ? new Date(u.mockRezervacija.start) : null;
       let izietas = null;
       let nakama = mockStart;
+      let pagajusi = mockPagajusiD; // pēdējā jau notikusī rezervācija — "Aizvadīta"
       try {
         const bs = await getDocs(query(collection(db, "bookings"), where("userId", "==", u.id)));
         const tagad = new Date();
         const aktivas = bs.docs.map((d) => d.data())
           .filter((b) => b.status !== "cancelled" && b.startAt?.toDate);
         izietas = aktivas.filter((b) => irIepazRezervacija(b) && b.startAt.toDate() < tagad).length
-          + mockPagajusi;
+          + (mockPagajusiD ? 1 : 0);
         const gaidamas = aktivas.filter((b) => b.startAt.toDate() >= tagad)
           .sort((a, b) => a.startAt.toMillis() - b.startAt.toMillis());
         nakama = gaidamas[0]?.startAt.toDate() ?? null;
         if (mockStart && (!nakama || mockStart < nakama)) nakama = mockStart;
+        const pagajusas = aktivas.filter((b) => b.startAt.toDate() < tagad)
+          .sort((a, b) => b.startAt.toMillis() - a.startAt.toMillis());
+        const pedejaReala = pagajusas[0]?.startAt.toDate() ?? null;
+        if (pedejaReala && (!pagajusi || pedejaReala > pagajusi)) pagajusi = pedejaReala;
       } catch { /* izietas paliek null */ }
       // Automātika (tikai 2. lapā): kad nodarbības laiks pagājis, nākamās
       // pirkšanas ķeksis ieliekas pats — bet tikai, ja admins to nav
@@ -1231,7 +1238,7 @@ async function ieladetPosmaTabulu(tbId, statusi, prefiks, tresa, tuksums) {
             .catch((e) => console.error("Auto ķekša kļūda:", e));
         }
       }
-      return { izietas, nakama, krasa };
+      return { izietas, nakama, pagajusi, krasa };
     }));
     tb.innerHTML = rindas.map((u, i) => {
       const berns = (u.berni || []).map((b) => b.berna_vards).filter(Boolean).join(", ") || "—";
@@ -1269,7 +1276,9 @@ async function ieladetPosmaTabulu(tbId, statusi, prefiks, tresa, tuksums) {
         <td>${escapeHTML(berns)}</td>
         <td>${escapeHTML(statuss)}</td>
         <td>${r.izietas === null ? "—" : `${r.izietas} no 3`}</td>
-        <td style="text-align:center">${r.nakama ? '<span style="color:var(--zala);font-weight:800">✓</span>' : ""}</td>
+        <td style="text-align:center;white-space:nowrap">${r.nakama
+          ? `<span style="color:var(--zala);font-weight:800">✓</span> <span style="font-size:12px">${fmtIssLaiks.format(r.nakama)}</span>`
+          : r.pagajusi ? '<span class="atzime zala">Aizvadīta</span>' : ""}</td>
         <td style="white-space:nowrap"><button class="maza-poga" data-info="${i}">Info</button></td>
       </tr>
       <tr class="gaida-info-rinda" id="${prefiks}InfoRinda${i}" hidden>
@@ -1287,7 +1296,7 @@ async function ieladetPosmaTabulu(tbId, statusi, prefiks, tresa, tuksums) {
             })() : ""}
             <div><b>Rezervēta nodarbība:</b> ${r.nakama
               ? `ir — ${fmtDatumsLaiks.format(r.nakama)} <span style="color:var(--zala);font-weight:800">✓</span>`
-              : "nav"}</div>
+              : r.pagajusi ? `aizvadīta — ${fmtDatumsLaiks.format(r.pagajusi)}` : "nav"}</div>
             ${u.rindasVecums ? `<div><b>Audzēkņa vecums (no pieteikuma):</b> ${escapeHTML(String(u.rindasVecums))} g.</div>` : ""}
             <button class="maza-poga" data-vesture="${i}" style="margin-top:10px">Vēsture</button>
             <div class="gi-vesture" id="${prefiks}Vesture${i}" hidden style="margin-top:8px">Ielādē…</div>
