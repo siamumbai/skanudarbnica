@@ -504,6 +504,7 @@
     background:var(--bg);color:var(--muted);text-transform:uppercase;
   }
   .atzime.zala{background:#E4EDD8;color:var(--zala);border-color:rgba(59,109,17,.3)}
+  .atzime.dzeltena{background:#F3E7C6;color:#8A6D00;border-color:rgba(184,134,11,.35)}
   .atzime.sarkana{background:#F2DFD8;color:var(--sarkana);border-color:rgba(156,58,34,.3)}
   .maza-poga{
     background:transparent;border:0.5px solid var(--border);border-radius:100px;
@@ -856,6 +857,10 @@
         <div class="paslepts" id="mockRezervetRinda" style="margin-top:14px;text-align:center">
           <button class="cta cta-auto" id="pogaMockRezervet" type="button">Rezervēt</button>
         </div>
+        <!-- Ja iepriekšējā rezervācija vēl nav apmaksāta — jaunu rezervēt nevar -->
+        <p class="tukss paslepts" id="mockRezervetPiezime" style="margin-top:14px;text-align:center">
+          Rezervē jaunu nodarbību pēc jau rezervētās nodarbības.
+        </p>
       </section>
 
       <!-- Iepazīšanās nodarbības (redzamas tikai 2. skatā) — hronoloģiski var
@@ -1361,8 +1366,27 @@ function zimetMockKalendaru() {
   }
 }
 let mockIzvele = null; // kalendārā iezīmētais, vēl neapstiprinātais laiks
+// Cik nodarbības ir apmaksātas (iepazīšanās pa vienai; paketes pēc apjoma).
+function apmaksatoNodarbibuSkaits() {
+  let n = 0;
+  mockPirkumi.forEach((m) => {
+    const a = m.apraksts || '';
+    if (/8 nodarbības/.test(a)) n += 8;
+    else if (/4 nodarbības/.test(a)) n += 4;
+    else n += 1;
+  });
+  return n;
+}
 function paraditMockRezervetPogu() {
+  el('mockRezervetPiezime').classList.add('paslepts');
   if (!mockIzvele) { el('mockRezervetRinda').classList.add('paslepts'); return; }
+  // Vienlaikus var būt tikai viena neapmaksāta rezervācija — jaunu var
+  // rezervēt tikai tad, kad iepriekšējā ir apmaksāta.
+  if (mockRezes.length - apmaksatoNodarbibuSkaits() >= 1) {
+    el('mockRezervetRinda').classList.add('paslepts');
+    el('mockRezervetPiezime').classList.remove('paslepts');
+    return;
+  }
   const kad = new Date(mockIzvele);
   el('pogaMockRezervet').textContent = `Rezervēt — ${arLieloBurtu(fmtDiena.format(kad))} plkst. ${fmtLaiks.format(kad)}`;
   el('mockRezervetRinda').classList.remove('paslepts');
@@ -1453,6 +1477,9 @@ Object.keys(mockPaketes).forEach((id) => {
 el('pogaMockMaksat').onclick = () => {
   el('mockMaksaKarte').classList.remove('atverts');
   pierakstitMockPirkumu();
+  // Pēc apmaksas rezervācija kļūst "Apstiprināta" un atbloķējas jauna rezervēšana.
+  ieladetGaidamas();
+  paraditMockRezervetPogu();
   if (typeof mockPirkums === 'string' && mockPaketes[mockPirkums]) {
     // Paketes pirkums (3. skats): bilance aug, kartīte paliek pērkama atkārtoti.
     mockKrediti += mockPaketes[mockPirkums].krediti;
@@ -1912,12 +1939,15 @@ el('pogaApstiprinat').onclick = async () => {
 
 /* ---------- Manas nodarbības ---------- */
 // Rinda: audzēkņa vārds | diena, datums, laiks | Labot | statuss.
-function nodarbibasRinda(b, id, { arLabotPogu = false } = {}) {
+function nodarbibasRinda(b, id, { arLabotPogu = false, gaidaApmaksu = false } = {}) {
   const sakums = b.startAt.toMillis();
   const beigas = b.endAt?.toMillis?.() ?? null;
-  const statuss = sakums < Date.now()
-    ? '<span class="atzime zala">Notikusi</span>'
-    : '<span class="atzime zala">Apstiprināta</span>';
+  // "Apstiprināta" tikai apmaksātām; rezervēta bez apmaksas — "Gaida apmaksu".
+  const statuss = gaidaApmaksu
+    ? '<span class="atzime dzeltena">Gaida apmaksu</span>'
+    : sakums < Date.now()
+      ? '<span class="atzime zala">Notikusi</span>'
+      : '<span class="atzime zala">Apstiprināta</span>';
   const laiks = fmtLaiks.format(new Date(sakums))
     + (beigas ? `–${fmtLaiks.format(new Date(beigas))}` : '');
   return `
@@ -1954,14 +1984,18 @@ async function ieladetGaidamas() {
       html: nodarbibasRinda(d.data(), d.id, { arLabotPogu: true }),
     }));
     // Maketa rezervācijas arī skaitās — katra gaidāmā rādās kā nodarbība
-    // (bez "Labot"; jaunus laikus izvēlas maketa kalendārā).
+    // (bez "Labot"; jaunus laikus izvēlas maketa kalendārā). "Apstiprināta"
+    // tikai tad, ja tai atbilst veikta apmaksa — pēdējās bez apmaksas rāda
+    // "Gaida apmaksu".
+    const sortetas = [...mockRezes].sort((a, b) => (a.izveidots || '').localeCompare(b.izveidots || ''));
+    const nesamaksatas = new Set(sortetas.slice(apmaksatoNodarbibuSkaits()).map((r) => r.start));
     mockRezes.filter((r) => r.start >= Date.now()).forEach((r, nr) => {
       rindas.push({
         millis: r.start,
         html: nodarbibasRinda({
           startAt: { toMillis: () => r.start },
           childName: berni[0]?.berna_vards || '',
-        }, 'mock' + nr, {}),
+        }, 'mock' + nr, { gaidaApmaksu: nesamaksatas.has(r.start) }),
       });
     });
     rindas.sort((a, b) => a.millis - b.millis);
