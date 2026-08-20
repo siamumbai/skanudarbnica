@@ -1470,6 +1470,15 @@ let iepazAtlautas = {};
 function iepazNopirkta(n) {
   return mockPirkumi.some((m) => (m.apraksts || '').includes(`${n}. nodarbība`));
 }
+// Datums vārdiski lokatīvā — "21. augustā", nevis "21.08."
+const MENESI_LOKATIVA = ['janvārī', 'februārī', 'martā', 'aprīlī', 'maijā', 'jūnijā',
+  'jūlijā', 'augustā', 'septembrī', 'oktobrī', 'novembrī', 'decembrī'];
+function datumsVardiski(d) {
+  const dalas = new Intl.DateTimeFormat('lv-LV', { timeZone: LAIKA_ZONA, day: 'numeric', month: 'numeric' }).formatToParts(d);
+  const diena = dalas.find((p) => p.type === 'day').value;
+  const menesis = Number(dalas.find((p) => p.type === 'month').value);
+  return `${diena}. ${MENESI_LOKATIVA[menesis - 1]}`;
+}
 function atjaunotIepazKartites() {
   // Katrai kartītei pa kārtai atbilst attiecīgā rezervācija (pēc izveides laika).
   const sortetasRez = [...mockRezes].sort((a, b) => (a.izveidots || '').localeCompare(b.izveidots || ''));
@@ -1487,7 +1496,7 @@ function atjaunotIepazKartites() {
     if (nopirkta && rez) {
       info.textContent = rez.start < Date.now()
         ? 'Aizvadīta'
-        : `${fmtDatumsIss.format(new Date(rez.start))} ${fmtLaiks.format(new Date(rez.start))}`;
+        : `${datumsVardiski(new Date(rez.start))} ${fmtLaiks.format(new Date(rez.start))}`;
       info.classList.remove('paslepts');
     } else {
       info.classList.add('paslepts');
