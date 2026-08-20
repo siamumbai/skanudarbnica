@@ -2178,7 +2178,7 @@ async function ieladetGaidamas() {
     skaititajs.textContent = String(apstiprinatas);
     skaititajs.classList.toggle('paslepts', apstiprinatas === 0 || gaidaApmaksuSkaits > 0);
     const gaidaZime = el('navGaidaApmaksu');
-    gaidaZime.textContent = 'apmaksā';
+    gaidaZime.textContent = '?';
     gaidaZime.classList.toggle('paslepts', gaidaApmaksuSkaits === 0);
   } catch (err) {
     console.error('Gaidāmo ielādes kļūda:', err);
