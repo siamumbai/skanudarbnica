@@ -634,17 +634,33 @@
 </div>
 
 <!-- Modālis: rezervācijas detaļas -->
-<!-- "Visi" (galvenes poga) — visi reģistrētie konti un kurā lapā katrs stāv. -->
+<!-- "Visi" (galvenes poga) — visi reģistrētie konti trīs daļās pa lapām,
+     tādās pašās tabulās kā Gaida sadaļas (ar Info paneli katram e-pastam). -->
 <div class="modalis-fons" id="visiModalis">
-  <div class="modalis" style="max-width:640px;width:92%;max-height:82vh;overflow:auto">
+  <div class="modalis" style="max-width:1100px;width:95%;max-height:88vh;overflow:auto">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
       <h3 style="margin-bottom:0">Visi</h3>
       <button class="maza-poga" id="pogaVisiAizvert" type="button">Aizvērt</button>
     </div>
+    <h2>1 · Rinda</h2>
+    <div class="tabula-riti" style="margin-bottom:22px">
+      <table>
+        <thead><tr><th>Vecāks</th><th>E-pasts</th><th>Telefons</th><th>Bērns</th><th>Statuss</th><th>Izietas iepazīšanās</th><th>Rezervēts</th><th></th></tr></thead>
+        <tbody id="visi1Tabula"></tbody>
+      </table>
+    </div>
+    <h2>2 · Iepazīšanās</h2>
+    <div class="tabula-riti" style="margin-bottom:22px">
+      <table>
+        <thead><tr><th>Vecāks</th><th>E-pasts</th><th>Telefons</th><th>Bērns</th><th>Statuss</th><th>Izietas iepazīšanās</th><th>Rezervēts</th><th></th></tr></thead>
+        <tbody id="visi2Tabula"></tbody>
+      </table>
+    </div>
+    <h2>3 · Nodarbības</h2>
     <div class="tabula-riti">
       <table>
-        <thead><tr><th>Vārds</th><th>E-pasts</th><th>Lapa</th></tr></thead>
-        <tbody id="visiTabula"></tbody>
+        <thead><tr><th>Vecāks</th><th>E-pasts</th><th>Telefons</th><th>Bērns</th><th>Statuss</th><th>Izietas iepazīšanās</th><th>Rezervēts</th><th></th></tr></thead>
+        <tbody id="visi3Tabula"></tbody>
       </table>
     </div>
   </div>
@@ -1069,9 +1085,10 @@ function zimetInfoKalendaru(prefiks, i) {
   const st = mockKalStavokli[prefiks + i] ??= { nobide: 0, slide: 0, izvele: null };
   const konteiners = el(prefiks + "Kalendars" + i);
   // 2. lapā iepazīšanās darba laiki un brīvdienas, 3. lapā — parastie.
-  const joslas = prefiks === "gaida3" ? biznesaStundas3 : biznesaStundas2;
+  const tresaisPosms = prefiks === "gaida3" || prefiks === "visi3";
+  const joslas = tresaisPosms ? biznesaStundas3 : biznesaStundas2;
   const bloki = visiBloki.filter((b) =>
-    (b.rezims || null) !== (prefiks === "gaida3" ? "pirma" : "parastas"));
+    (b.rezims || null) !== (tresaisPosms ? "pirma" : "parastas"));
   const pirmdiena = nedelasPirmdiena(st.nobide);
   const sodien = sodienISO();
   const kolonnas = [];
@@ -1485,31 +1502,12 @@ async function paraditGlobaloVesturi() {
 el("pogaVesture").addEventListener("click", paraditGlobaloVesturi);
 el("pogaVestureAizvert").addEventListener("click", () => el("vesturesModalis").classList.remove("redzams"));
 
-/* ---------- "Visi" — visi reģistrētie konti un to lapas ---------- */
-const LAPU_NOSAUKUMI = {
-  jauns: "1 · Rinda", atlauts: "2 · Iepazīšanās",
-  pieteikts: "2 · Iepazīšanās", apstiprinats: "3 · Nodarbības",
-};
-async function paraditVisus() {
+/* ---------- "Visi" — visi konti trīs daļās, tādās pašās tabulās kā Gaida ---------- */
+function paraditVisus() {
   el("visiModalis").classList.add("redzams");
-  const tb = el("visiTabula");
-  tb.innerHTML = '<tr><td colspan="3" style="color:var(--muted)">Ielādē…</td></tr>';
-  try {
-    const snap = await getDocs(collection(db, "users"));
-    const rindas = snap.docs
-      .filter((d) => d.id !== auth.currentUser?.uid)
-      .map((d) => ({ id: d.id, ...d.data() }))
-      .sort((a, b) => (a.epasts || "").localeCompare(b.epasts || ""))
-      .map((u) => `<tr>
-        <td>${escapeHTML(u.vards || "—")}</td>
-        <td>${escapeHTML(u.epasts || u.id)}</td>
-        <td>${LAPU_NOSAUKUMI[u.uznemsanasStatuss] || LAPU_NOSAUKUMI.apstiprinats}</td>
-      </tr>`).join("");
-    tb.innerHTML = rindas || '<tr><td colspan="3" class="tukss">Nav neviena konta.</td></tr>';
-  } catch (e) {
-    console.error("Visu kontu ielādes kļūda:", e);
-    tb.innerHTML = '<tr><td colspan="3" style="color:var(--sarkana)">Neizdevās ielādēt.</td></tr>';
-  }
+  ieladetPosmaTabulu("visi1Tabula", ["jauns"], "visi1", false, "1. lapā neviena nav.");
+  ieladetPosmaTabulu("visi2Tabula", ["atlauts", "pieteikts"], "visi2", false, "2. lapā neviena nav.");
+  ieladetPosmaTabulu("visi3Tabula", ["apstiprinats"], "visi3", true, "3. lapā neviena nav.");
 }
 el("pogaVisi").addEventListener("click", paraditVisus);
 el("pogaVisiAizvert").addEventListener("click", () => el("visiModalis").classList.remove("redzams"));
