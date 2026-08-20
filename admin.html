@@ -42,6 +42,10 @@
     color:var(--muted);cursor:pointer;
   }
   .izeja:hover{border-color:var(--accent-dark);color:var(--accent-dark)}
+  /* Apaļā atjaunošanas poga galvenē — pārlādē visu lapu datus */
+  .atjaunot-poga{width:34px;height:34px;padding:0;border-radius:50%;font-size:16px;line-height:1}
+  @keyframes griezas{to{transform:rotate(360deg)}}
+  .atjaunot-poga.griezas{animation:griezas .8s linear infinite}
 
   .ielade{max-width:1380px;margin:0 auto;padding:44px 28px;color:var(--muted);font-size:15px}
 
@@ -296,7 +300,10 @@
 <body>
 
 <header class="josla">
-  <a class="logo" href="index.html">Skaņu Darbnīca · <b>Administrēšana</b></a>
+  <div style="display:flex;align-items:center;gap:12px">
+    <a class="logo" href="index.html">Skaņu Darbnīca · <b>Administrēšana</b></a>
+    <button class="izeja atjaunot-poga" id="pogaAtjaunot" type="button" title="Atjaunot visu" aria-label="Atjaunot visu">↻</button>
+  </div>
   <div style="display:flex;gap:8px">
     <button class="izeja" id="pogaVisi">Visi</button>
     <button class="izeja" id="pogaVesture">Vēsture</button>
@@ -388,7 +395,6 @@
           <tbody id="rindasTabula"></tbody>
         </table>
       </div>
-      <button class="maza-poga" id="pogaRinduAtjaunot" style="margin-top:10px">Atjaunot sarakstu</button>
     </div>
   </section>
 
@@ -402,7 +408,6 @@
           <tbody id="gaidaTabula"></tbody>
         </table>
       </div>
-      <button class="maza-poga" id="pogaGaidaAtjaunot" style="margin-top:10px">Atjaunot sarakstu</button>
     </div>
   </section>
 
@@ -420,7 +425,6 @@
           <tbody id="gaida3Tabula"></tbody>
         </table>
       </div>
-      <button class="maza-poga" id="pogaGaida3Atjaunot" style="margin-top:10px">Atjaunot sarakstu</button>
     </div>
   </section>
 
@@ -1050,7 +1054,6 @@ async function ieladetRindu() {
     tb.innerHTML = '<tr><td colspan="5" style="color:var(--sarkana)">Neizdevās ielādēt rindu.</td></tr>';
   }
 }
-el("pogaRinduAtjaunot").addEventListener("click", ieladetRindu);
 
 // Jaunas rezervācijas modālī rādām tikai aktīvā režīma nodarbību veidus.
 function atjaunotJaunaVeidus() {
@@ -1455,6 +1458,30 @@ function atjaunotVisusSarakstus() {
   if (el("visiModalis").classList.contains("redzams")) paraditVisus();
 }
 
+/* ---------- Galvenes ↻ — atjauno visu 4 lapu datus, paliekot esošajā lapā ---------- */
+el("pogaAtjaunot").addEventListener("click", async () => {
+  const poga = el("pogaAtjaunot");
+  if (poga.classList.contains("griezas")) return;
+  poga.classList.add("griezas");
+  try {
+    await Promise.allSettled([
+      ieladetRindu(),
+      ieladetGaidosos(),
+      ieladetGaida3(),
+      ieladetBiznesaStundas(),
+      ieladetBlokus(),
+      ieladetAudzeknus(true),
+      ieladetMaksajumus(true),
+      atjaunotJaunumus(),
+    ]);
+    atjaunotKalendarus();
+    if (el("visiModalis").classList.contains("redzams")) paraditVisus();
+    tosts("Viss atjaunots.");
+  } finally {
+    poga.classList.remove("griezas");
+  }
+});
+
 /* ---------- Konta dzēšana no Info paneļa ----------
    Pirms dzēšanas datus (bērnus, pirkumus, rezervāciju, piezīmes) arhivējam
    pēc e-pasta — ja tas pats e-pasts reģistrējas no jauna, viss atgriežas.
@@ -1604,8 +1631,6 @@ async function mainitUznemsanu(uid, statuss) {
     tosts("Neizdevās mainīt statusu.");
   }
 }
-el("pogaGaidaAtjaunot").addEventListener("click", ieladetGaidosos);
-el("pogaGaida3Atjaunot").addEventListener("click", ieladetGaida3);
 el("pogaIziet").addEventListener("click", async () => {
   await izrakstities();
   window.location.href = "index.html";
