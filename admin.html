@@ -827,7 +827,7 @@ async function atjaunotJaunumus() {
         if (u.rindaPieteikta && u.rindaPieteiktaDatums) laiki.push(new Date(u.rindaPieteiktaDatums).getTime());
       } else {
         (u.mockPirkumi || []).forEach((m) => { if (m.datums) laiki.push(new Date(m.datums).getTime()); });
-        if (u.mockRezervacija?.izveidots) laiki.push(new Date(u.mockRezervacija.izveidots).getTime());
+        mockRezuSaraksts(u).forEach((r) => { if (r.izveidots) laiki.push(new Date(r.izveidots).getTime()); });
       }
       if (laiki.length && Math.max(...laiki) > lapasRedzets(lapaNr)) skaits[lapaNr]++;
     });
@@ -897,10 +897,10 @@ async function lietotajaVesture(u) {
   };
   pielikt(u.rindaPieteiktaDatums ? new Date(u.rindaPieteiktaDatums) : null, "Pieteicās rindā");
   pielikt(u.apstiprinatsDatums?.toDate?.(), "Piešķirta pilnā piekļuve (3. lapa)");
-  if (u.mockRezervacija?.start) {
-    pielikt(u.mockRezervacija.izveidots ? new Date(u.mockRezervacija.izveidots) : new Date(u.mockRezervacija.start),
-      `Izvēlēts nodarbības laiks profilā — ${fmtDatumsLaiks.format(new Date(u.mockRezervacija.start))}`);
-  }
+  mockRezuSaraksts(u).forEach((r) => {
+    pielikt(r.izveidots ? new Date(r.izveidots) : new Date(r.start),
+      `Rezervēts nodarbības laiks profilā — ${fmtDatumsLaiks.format(new Date(r.start))}`);
+  });
   // Profila maketa pirkumi — izcelti ar zaļu ķeksi.
   (u.mockPirkumi || []).forEach((m) => {
     pielikt(m.datums ? new Date(m.datums) : null,
@@ -1093,6 +1093,13 @@ document.querySelectorAll(".sekciju-nav .nav-poga").forEach((poga) => {
    Katrs e-pasts redzams tikai savas lapas tabulā. ---------- */
 const GAIDA_STATUSI = { jauns: "Rindā", atlauts: "Atļauts rezervēt", pieteikts: "Apmaksājis", apstiprinats: "Pilnā piekļuve" };
 
+// Klienta profila maketa rezervācijas — saraksts (jaunais formāts) vai viens
+// laiks (vecais lauks mockRezervacija).
+function mockRezuSaraksts(u) {
+  return (u.mockRezervacijas || (u.mockRezervacija ? [u.mockRezervacija] : []))
+    .filter((r) => r && r.start);
+}
+
 /* Maketa kalendārs Info panelī — VIENMĒR tas pats, ko klients redz sava
    profila 2. skatā (profils.html, zimetMockKalendaru): laikus zīmē no
    attiecīgās lapas darba laikiem un brīvdienām. Ja maini vienu, maini abus.
@@ -1201,10 +1208,12 @@ async function ieladetPosmaTabulu(tbId, statusi, prefiks, tresa, tuksums) {
       } catch { /* krāsa nav kritiska */ }
       // Klienta profila 2. skatā izvēlētais laiks (makets — īstas rezervācijas
       // tur vēl nav) arī skaitās kā rezervēts; pagājis — kā izieta nodarbība.
-      const mockStart = u.mockRezervacija?.start && u.mockRezervacija.start >= Date.now()
-        ? new Date(u.mockRezervacija.start) : null;
-      const mockPagajusiD = u.mockRezervacija?.start && u.mockRezervacija.start < Date.now()
-        ? new Date(u.mockRezervacija.start) : null;
+      const mockVisas = mockRezuSaraksts(u);
+      const tagadMs = Date.now();
+      const mockNakamas = mockVisas.filter((r) => r.start >= tagadMs).sort((a, b) => a.start - b.start);
+      const mockPagajusas = mockVisas.filter((r) => r.start < tagadMs).sort((a, b) => b.start - a.start);
+      const mockStart = mockNakamas[0] ? new Date(mockNakamas[0].start) : null;
+      const mockPagajusiD = mockPagajusas[0] ? new Date(mockPagajusas[0].start) : null;
       let izietas = null;
       let nakama = mockStart;
       let pagajusi = mockPagajusiD; // pēdējā jau notikusī rezervācija — "Aizvadīta"
@@ -1214,7 +1223,7 @@ async function ieladetPosmaTabulu(tbId, statusi, prefiks, tresa, tuksums) {
         const aktivas = bs.docs.map((d) => d.data())
           .filter((b) => b.status !== "cancelled" && b.startAt?.toDate);
         izietas = aktivas.filter((b) => irIepazRezervacija(b) && b.startAt.toDate() < tagad).length
-          + (mockPagajusiD ? 1 : 0);
+          + mockPagajusas.length;
         const gaidamas = aktivas.filter((b) => b.startAt.toDate() >= tagad)
           .sort((a, b) => a.startAt.toMillis() - b.startAt.toMillis());
         nakama = gaidamas[0]?.startAt.toDate() ?? null;
@@ -1467,10 +1476,17 @@ function atjaunotVisusSarakstus() {
   if (el("visiModalis").classList.contains("redzams")) paraditVisus();
 }
 
-/* ---------- Galvenes ↻ — atjauno visu 4 lapu datus, paliekot esošajā lapā ---------- */
+/* ---------- Galvenes ↻ — atjauno visu 4 lapu datus, paliekot esošajā lapā ----------
+   Ikona griežas, kamēr notiek ielāde, un apstājas tikai pabeigusi pilnu
+   apgriezienu (animationiteration robežā) — bez aprāviena. */
+let atjaunosanaRit = false;
+el("pogaAtjaunot").addEventListener("animationiteration", () => {
+  if (!atjaunosanaRit) el("pogaAtjaunot").classList.remove("griezas");
+});
 el("pogaAtjaunot").addEventListener("click", async () => {
   const poga = el("pogaAtjaunot");
-  if (poga.classList.contains("griezas")) return;
+  if (atjaunosanaRit) return;
+  atjaunosanaRit = true;
   poga.classList.add("griezas");
   try {
     await Promise.allSettled([
@@ -1487,7 +1503,7 @@ el("pogaAtjaunot").addEventListener("click", async () => {
     if (el("visiModalis").classList.contains("redzams")) paraditVisus();
     tosts("Viss atjaunots.");
   } finally {
-    poga.classList.remove("griezas");
+    atjaunosanaRit = false; // klase noņemsies, pabeidzot iesākto apgriezienu
   }
 });
 
@@ -1512,6 +1528,7 @@ async function dzestKontuNoInfo(u) {
         rindasTel: u.rindasTel ?? null, rindasVecums: u.rindasVecums ?? null,
         berni: u.berni ?? [], mockPirkumi: u.mockPirkumi ?? [],
         mockRezervacija: u.mockRezervacija ?? null,
+        mockRezervacijas: u.mockRezervacijas ?? null,
         iepazAtlautas: u.iepazAtlautas ?? null,
         kontsIzveidots: u.kontsIzveidots ?? null,
       },
@@ -1830,19 +1847,21 @@ async function ieladetNotikumus(filtrs, info, success, failure) {
           where("uznemsanasStatuss", "in", ["jauns", "atlauts", "pieteikts", "apstiprinats"])));
         uSnap.docs.forEach((d) => {
           const u = d.data();
-          const s = u.mockRezervacija?.start;
-          if (!s || s < info.start.getTime() || s >= info.end.getTime()) return;
-          notikumi.push({
-            id: "mockrez_" + d.id,
-            title: `${(u.berni || [])[0]?.berna_vards || u.vards || u.epasts || "?"} · Iepazīšanās (profils)`,
-            start: new Date(s),
-            end: new Date(s + 20 * 60000),
-            backgroundColor: "#3B6D11",
-            borderColor: "#3B6D11",
-            textColor: "#F5EDD8",
-            startEditable: false,
-            durationEditable: false,
-            extendedProps: { mockProfila: true },
+          mockRezuSaraksts(u).forEach((r) => {
+            const s = r.start;
+            if (s < info.start.getTime() || s >= info.end.getTime()) return;
+            notikumi.push({
+              id: "mockrez_" + d.id + "_" + s,
+              title: `${(u.berni || [])[0]?.berna_vards || u.vards || u.epasts || "?"} · Iepazīšanās (profils)`,
+              start: new Date(s),
+              end: new Date(s + 20 * 60000),
+              backgroundColor: "#3B6D11",
+              borderColor: "#3B6D11",
+              textColor: "#F5EDD8",
+              startEditable: false,
+              durationEditable: false,
+              extendedProps: { mockProfila: true },
+            });
           });
         });
       } catch (e) { console.error("Profila rezervāciju ielādes kļūda:", e); }

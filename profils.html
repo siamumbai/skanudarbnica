@@ -1376,15 +1376,19 @@ el('pogaMockRezervet').onclick = () => {
   el('mockRezervetRinda').classList.add('paslepts');
   el('iepazKarte').scrollIntoView({ behavior: 'smooth', block: 'center' });
 };
-// Izvēlēto laiku pierakstām profilā — admin panelī tas ieslēdz "Rezervēts"
-// ķeksi un parādās Info panelī un vēsturē (īsta rezervācija maketā nenotiek).
-let mockRez = null; // maketa rezervācijas laiks (millis) — rādām arī "Rezervētajās nodarbībās"
+// Izvēlētos laikus pierakstām profilā kā SARAKSTU — katra rezervācija
+// pievienojas (nevis pārraksta iepriekšējo), tāpēc visas nopirktās nodarbības
+// var rezervēt un visas parādās "Rezervētajās nodarbībās" un admin panelī.
+let mockRezes = []; // [{start, izveidots}]
 function pierakstitMockRezervaciju(startMillis) {
-  mockRez = startMillis;
+  if (mockRezes.some((r) => r.start === startMillis)) {
+    tosts('Šis laiks jau ir rezervēts.', 'dzeltens');
+    return;
+  }
+  mockRezes.push({ start: startMillis, izveidots: new Date().toISOString() });
   ieladetGaidamas(); // parādās sadaļā "Rezervētās nodarbības"
-  saglabatProfilu(uid, {
-    mockRezervacija: { start: startMillis, izveidots: new Date().toISOString() },
-  }).catch((err) => console.error('Mock rezervācijas pieraksta kļūda:', err));
+  saglabatProfilu(uid, { mockRezervacijas: mockRezes })
+    .catch((err) => console.error('Mock rezervācijas pieraksta kļūda:', err));
 }
 zimetMockKalendaru();
 
@@ -1945,17 +1949,17 @@ async function ieladetGaidamas() {
       millis: d.data().startAt.toMillis(),
       html: nodarbibasRinda(d.data(), d.id, { arLabotPogu: true }),
     }));
-    // 2. skata maketa rezervācija arī skaitās — rādām kā gaidāmu nodarbību
-    // (bez "Labot"; laiku maina, izvēloties citu maketa kalendārā).
-    if (mockRez && mockRez >= Date.now()) {
+    // Maketa rezervācijas arī skaitās — katra gaidāmā rādās kā nodarbība
+    // (bez "Labot"; jaunus laikus izvēlas maketa kalendārā).
+    mockRezes.filter((r) => r.start >= Date.now()).forEach((r, nr) => {
       rindas.push({
-        millis: mockRez,
+        millis: r.start,
         html: nodarbibasRinda({
-          startAt: { toMillis: () => mockRez },
+          startAt: { toMillis: () => r.start },
           childName: berni[0]?.berna_vards || '',
-        }, 'mock', {}),
+        }, 'mock' + nr, {}),
       });
-    }
+    });
     rindas.sort((a, b) => a.millis - b.millis);
     k.innerHTML = rindas.length
       ? rindas.map((r) => r.html).join('')
@@ -2528,7 +2532,7 @@ prasitPieteiksanos(async (user) => {
         const a = arh.data().profils || {};
         const atjaunot = { atjaunotsNoArhiva: true };
         ['vards', 'telefons', 'rindasTel', 'rindasVecums', 'berni', 'mockPirkumi',
-          'mockRezervacija', 'iepazAtlautas', 'kontsIzveidots'].forEach((lauks) => {
+          'mockRezervacija', 'mockRezervacijas', 'iepazAtlautas', 'kontsIzveidots'].forEach((lauks) => {
           const esoss = p?.[lauks];
           const tukss = esoss === undefined || esoss === null
             || (Array.isArray(esoss) && esoss.length === 0);
@@ -2584,8 +2588,9 @@ prasitPieteiksanos(async (user) => {
     saglabatProfilu(uid, { kontsIzveidots: new Date(user.metadata.creationTime).toISOString() }).catch(() => {});
   }
 
-  // Maketa rezervācija (2. skata kalendāra izvēle) — rādīsies gaidāmajās.
-  mockRez = p?.mockRezervacija?.start ?? null;
+  // Maketa rezervācijas (2. skata kalendāra izvēles) — rādīsies gaidāmajās.
+  // Vecais viena laika formāts (mockRezervacija) pārtop par sarakstu.
+  mockRezes = p?.mockRezervacijas ?? (p?.mockRezervacija ? [p.mockRezervacija] : []);
   mockPirkumi = p?.mockPirkumi ?? [];
   iepazAtlautas = p?.iepazAtlautas ?? {};
   atjaunotIepazKartites();
