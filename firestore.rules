@@ -113,6 +113,19 @@ service cloud.firestore {
       allow write: if irAdmins();
     }
 
+    /* ---------- Aizņemtie laiki (dubultbukinga slēdzene) ---------- */
+    // Viens dokuments uz konkrētu sākuma laiku (ID = milisekundes) — otrs
+    // mēģinājums izveidot to pašu laiku neizdodas, tāpēc divi klienti nevar
+    // rezervēt vienu stundu. Dzēst var īpašnieks (labojot laiku) vai admins.
+    match /aiznemtie/{millis} {
+      allow read: if autorizets();
+      allow create: if irAdmins()
+        || (autorizets() && request.resource.data.uid == request.auth.uid);
+      allow update: if false;
+      allow delete: if irAdmins()
+        || (autorizets() && resource.data.uid == request.auth.uid);
+    }
+
     /* ---------- Viss pārējais aizliegts ---------- */
     match /{document=**} {
       allow read, write: if false;

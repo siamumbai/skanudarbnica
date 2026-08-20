@@ -82,6 +82,10 @@
   /* "Info" izvērstā rinda (1. lapas Rindas un 2. lapas Gaida tabulās) */
   .gaida-info-rinda > td{background:var(--bg);padding:16px 14px !important}
   .gaida-info{font-size:13px;line-height:1.7;position:relative}
+  /* "Šodiena" kopsavilkuma rindas */
+  .sodienas-rinda{padding:7px 0;border-bottom:1px solid var(--border);font-size:13.5px}
+  .sodienas-rinda:last-child{border-bottom:none}
+
   /* "Visi" logs — lieli sadaļu virsraksti un treknas atdalošās līnijas */
   .visi-virsraksts{
     font-family:Georgia,serif;font-size:24px;color:var(--text);
@@ -327,6 +331,9 @@
 
   <!-- Kreisā navigācija: klienta dzīves posmi 1 · 2 · 3 + kopējais kalendārs -->
   <nav class="rezimu-nav" aria-label="Klienta posmi">
+    <button class="rezima-poga aktiva" id="lapaPogaSodiena" type="button">
+      <span aria-hidden="true" style="font-size:15px">☀️</span> Šodiena
+    </button>
     <button class="rezima-poga" id="lapaPoga1" type="button">
       <span class="lapas-nr" aria-hidden="true">1</span> Rinda
       <span class="lapas-jauns" id="lapaJauns1" hidden></span>
@@ -335,7 +342,7 @@
       <span class="lapas-nr" aria-hidden="true">2</span> Iepazīšanās
       <span class="lapas-jauns" id="lapaJauns2" hidden></span>
     </button>
-    <button class="rezima-poga aktiva" id="lapaPoga3" type="button">
+    <button class="rezima-poga" id="lapaPoga3" type="button">
       <span class="lapas-nr" aria-hidden="true">3</span> Nodarbības
       <span class="lapas-jauns" id="lapaJauns3" hidden></span>
     </button>
@@ -360,6 +367,22 @@
     <button class="nav-poga" data-sadala="sadalaIestatijumi">⚙️ Iestatījumi</button>
   </nav>
 
+  <!-- ============ ŠODIENA — kopsavilkums vienā ekrānā ============ -->
+  <section class="sadala" id="sadalaSodiena">
+    <div class="karte">
+      <h2>Šodien un rīt</h2>
+      <div id="sodienasNodarbibas"></div>
+    </div>
+    <div class="karte">
+      <h2>Gaida apmaksu</h2>
+      <div id="sodienasGaidaApmaksu"></div>
+    </div>
+    <div class="karte">
+      <h2>Jaunie pieteikumi (pēdējās 24 h)</h2>
+      <div id="sodienasJaunie"></div>
+    </div>
+  </section>
+
   <!-- ============ KOPĒJAIS KALENDĀRS (kreisās nav "Kalendārs" lapa) ============
        Rāda abu veidu nodarbības kopā: iepazīšanās zaļas, parastās brūnas. -->
   <section class="sadala aktiva" id="sadalaKalendars">
@@ -378,6 +401,8 @@
       </div>
     </div>
     <div id="kalendars"></div>
+    <!-- Klikšķis uz zaļas profila rezervācijas atver klienta Info paneli šeit -->
+    <div id="kalendaraInfoA" hidden style="margin-top:18px"></div>
     <p class="h2-piezime" style="margin-top:10px">
       Velc nodarbību uz citu laiku, lai to pārceltu; velc malu, lai mainītu ilgumu.
       Klikšķis uz brīvas vietas izveido jaunu nodarbību, klikšķis uz nodarbības — atver detaļas.
@@ -388,6 +413,7 @@
   <!-- ============ 2. LAPAS KALENDĀRS — tikai iepazīšanās nodarbības un laiki ============ -->
   <section class="sadala" id="sadalaKalendars2">
     <div id="kalendars2"></div>
+    <div id="kalendaraInfoB" hidden style="margin-top:18px"></div>
   </section>
 
   <!-- ============ 3. LAPAS KALENDĀRS — tikai parastās nodarbības ============ -->
@@ -656,6 +682,8 @@
       <h3 style="margin-bottom:0">Visi</h3>
       <button class="maza-poga" id="pogaVisiAizvert" type="button">Aizvērt</button>
     </div>
+    <input id="visiMeklet" type="search" placeholder="Meklēt vārdu, e-pastu vai telefonu"
+      style="max-width:340px;margin-bottom:18px">
     <div class="visi-virsraksts">1 · Rinda</div>
     <div class="tabula-riti" style="margin-bottom:22px">
       <table>
@@ -851,9 +879,10 @@ async function atjaunotJaunumus() {
   } catch (e) { console.error("Jaunumu skaitīšanas kļūda:", e); }
 }
 
-let lapa = 3;
+let lapa = 0;
 function uzstaditLapu(nr) {
   lapa = nr;
+  el("lapaPogaSodiena").classList.toggle("aktiva", nr === 0);
   [1, 2, 3].forEach((n) => el("lapaPoga" + n).classList.toggle("aktiva", n === nr));
   // Atverot lapu, tās jaunumi skaitās redzēti.
   if (nr >= 1 && nr <= 3) {
@@ -861,9 +890,13 @@ function uzstaditLapu(nr) {
     el("lapaJauns" + nr).hidden = true;
   }
   el("lapaPogaKal").classList.toggle("aktiva", nr === 4);
-  // 1. lapā un Kalendāra lapā sekciju navigācijas nav.
-  document.querySelector(".sekciju-nav").hidden = nr === 1 || nr === 4;
-  if (nr === 1) {
+  // Šodienas, 1. lapā un Kalendāra lapā sekciju navigācijas nav.
+  document.querySelector(".sekciju-nav").hidden = nr === 0 || nr === 1 || nr === 4;
+  if (nr === 0) {
+    document.querySelectorAll(".sadala").forEach((s) =>
+      s.classList.toggle("aktiva", s.id === "sadalaSodiena"));
+    ieladetSodienu();
+  } else if (nr === 1) {
     document.querySelectorAll(".sadala").forEach((s) =>
       s.classList.toggle("aktiva", s.id === "sadalaRinda"));
     ieladetRindu();
@@ -879,6 +912,64 @@ function uzstaditLapu(nr) {
 }
 [1, 2, 3].forEach((n) => el("lapaPoga" + n).addEventListener("click", () => uzstaditLapu(n)));
 el("lapaPogaKal").addEventListener("click", () => uzstaditLapu(4));
+el("lapaPogaSodiena").addEventListener("click", () => uzstaditLapu(0));
+
+/* ---------- "Šodiena" — kopsavilkums vienā ekrānā ---------- */
+async function ieladetSodienu() {
+  const sakums = new Date(sodienISO() + "T00:00:00");
+  const beigas = new Date(sakums.getTime() + 2 * 86_400_000);
+  try {
+    const [bSnap, uSnap] = await Promise.all([
+      getDocs(query(collection(db, "bookings"),
+        where("startAt", ">=", Timestamp.fromDate(sakums)),
+        where("startAt", "<", Timestamp.fromDate(beigas)))),
+      getDocs(query(collection(db, "users"),
+        where("uznemsanasStatuss", "in", ["jauns", "atlauts", "pieteikts", "apstiprinats"]))),
+    ]);
+    const lietotaji = uSnap.docs.filter((d) => d.id !== auth.currentUser?.uid)
+      .map((d) => ({ id: d.id, ...d.data() }));
+    // Nodarbības šodien un rīt — īstās un profila rezervācijas kopā, hronoloģiski.
+    const nod = [];
+    bSnap.docs.map((d) => d.data()).forEach((b) => {
+      if (b.status === "cancelled" || !b.startAt?.toDate) return;
+      nod.push({
+        d: b.startAt.toDate(),
+        t: `${escapeHTML(b.childName || b.studentName || b.studentEmail || "?")} · ${escapeHTML(b.lessonTypeName || "")}`,
+      });
+    });
+    lietotaji.forEach((u) => {
+      mockRezuSaraksts(u).forEach((r) => {
+        if (r.start < sakums.getTime() || r.start >= beigas.getTime()) return;
+        nod.push({
+          d: new Date(r.start),
+          t: `${escapeHTML((u.berni || [])[0]?.berna_vards || u.vards || u.epasts || "?")} · Iepazīšanās · ${escapeHTML(u.telefons || u.rindasTel || "")}`,
+        });
+      });
+    });
+    nod.sort((a, b) => a.d - b.d);
+    el("sodienasNodarbibas").innerHTML = nod.length
+      ? nod.map((n) => `<div class="sodienas-rinda"><b>${fmtIssLaiks.format(n.d)}</b> — ${n.t}</div>`).join("")
+      : '<p class="tukss">Šodien un rīt nodarbību nav.</p>';
+    // Gaida apmaksu — rezervāciju vairāk nekā apmaksāto nodarbību.
+    const apmaksatas = (u) => (u.mockPirkumi || []).reduce((n, m) => {
+      const a = m.apraksts || "";
+      return n + (/8 nodarbības/.test(a) ? 8 : /4 nodarbības/.test(a) ? 4 : 1);
+    }, 0);
+    const gaida = lietotaji.filter((u) => mockRezuSaraksts(u).length > apmaksatas(u));
+    el("sodienasGaidaApmaksu").innerHTML = gaida.length
+      ? gaida.map((u) => `<div class="sodienas-rinda">${escapeHTML(u.vards || "—")} · ${escapeHTML(u.epasts || u.id)} · ${escapeHTML(u.telefons || u.rindasTel || "")}</div>`).join("")
+      : '<p class="tukss">Neviens negaida apmaksu.</p>';
+    // Jaunie rindas pieteikumi pēdējās 24 stundās.
+    const robeza = Date.now() - 24 * 3600 * 1000;
+    const jaunie = lietotaji.filter((u) => u.uznemsanasStatuss === "jauns" && u.rindaPieteikta
+      && u.rindaPieteiktaDatums && new Date(u.rindaPieteiktaDatums).getTime() >= robeza);
+    el("sodienasJaunie").innerHTML = jaunie.length
+      ? jaunie.map((u) => `<div class="sodienas-rinda">${escapeHTML(u.vards || "—")} · ${escapeHTML(u.rindasEpasts || u.epasts || "")} · ${escapeHTML(u.rindasTel || u.telefons || "")}</div>`).join("")
+      : '<p class="tukss">Jaunu pieteikumu nav.</p>';
+  } catch (e) {
+    console.error("Šodienas skata kļūda:", e);
+  }
+}
 
 /* ---------- Vēsture un komentāri (Info paneļi 1. un 2. lapā) ----------
    Komentāri glabājas adminNotes/{uid} kā ierakstu saraksts ar datumiem —
@@ -999,6 +1090,7 @@ async function ieladetRindu() {
         <td colspan="5"${krasas[i] ? ` style="background:${krasas[i]}"` : ""}>
           <div class="gaida-info">
             ${krasuPogasHTML(i, krasas[i])}
+            ${u.parBernu ? `<div style="margin-bottom:8px"><b>Par bērnu:</b> ${escapeHTML(u.parBernu)}</div>` : ""}
             <button class="maza-poga" data-vesture="${i}">Vēsture</button>
             <div class="gi-vesture" id="rindaVesture${i}" hidden style="margin-top:8px">Ielādē…</div>
             <div class="gi-virsraksts">Komentārs (redzams tikai adminiem)</div>
@@ -1115,6 +1207,19 @@ function mockRezuSaraksts(u) {
   return (u.mockRezervacijas || (u.mockRezervacija ? [u.mockRezervacija] : []))
     .filter((r) => r && r.start);
 }
+// Nomaina klienta rezervācijas laiku: jauno aizņem (dubultbukinga slēdzene),
+// veco atbrīvo, un klienta profils to redz reāllaikā.
+async function mainitMockRezervaciju(u, vecais, jauns) {
+  await setDoc(doc(db, "aiznemtie", String(jauns)), {
+    start: jauns, uid: u.id, izveidots: new Date().toISOString(),
+  });
+  deleteDoc(doc(db, "aiznemtie", String(vecais))).catch(() => {});
+  const saraksts = mockRezuSaraksts(u).map((r) => r.start === vecais ? { ...r, start: jauns } : r);
+  await setDoc(doc(db, "users", u.id), { mockRezervacijas: saraksts, mockRezervacija: null }, { merge: true });
+  u.mockRezervacijas = saraksts;
+  u.mockRezervacija = null;
+  pierakstitNotikumu(u.id, `Nodarbības laiks nomainīts uz ${fmtDatumsLaiks.format(new Date(jauns))}`);
+}
 
 /* Maketa kalendārs Info panelī — VIENMĒR tas pats, ko klients redz sava
    profila 2. skatā (profils.html, zimetMockKalendaru): laikus zīmē no
@@ -1146,7 +1251,7 @@ function zimetInfoKalendaru(prefiks, i) {
     }
     const dienasJoslas = joslas.filter((j) => j.daysOfWeek.includes((d + 1) % 7));
     if (dienasJoslas.length === 0) {
-      kolonnas.push(`<div class="diena-kolonna briva">${virsraksts}<div class="brivs-bloks">Brīvs</div></div>`);
+      kolonnas.push(`<div class="diena-kolonna briva">${virsraksts}<div class="brivs-bloks">Aizņemts</div></div>`);
       continue;
     }
     const stundas = new Set();
@@ -1160,6 +1265,7 @@ function zimetInfoKalendaru(prefiks, i) {
     const sloti = [...stundas].sort((a, b) => a - b).map((stunda) => {
       const startMillis = new Date(`${datums}T${String(stunda).padStart(2, "0")}:00:00`).getTime();
       const aiznemts = startMillis < Date.now()
+        || (aiznemtiSloti.has(startMillis) && startMillis !== st.labo)
         || bloki.some((b) => startMillis >= b.startAt.toMillis() && startMillis < b.endAt.toMillis());
       return aiznemts
         ? `<button class="laiks aiznemts" type="button" disabled title="Nav pieejams">${String(stunda).padStart(2, "0")}:00</button>`
@@ -1185,7 +1291,10 @@ function zimetInfoKalendaru(prefiks, i) {
     poga.onclick = () => {
       st.izvele = Number(poga.dataset.start);
       konteiners.querySelectorAll(".laiks").forEach((p) => p.classList.toggle("aktivs", p === poga));
-      el(prefiks + "RezApstiprinat" + i).hidden = false;
+      const apst = el(prefiks + "RezApstiprinat" + i);
+      apst.hidden = false;
+      const apstPoga = apst.querySelector("button");
+      if (apstPoga) apstPoga.firstChild.textContent = st.labo ? "Mainīt — " : "Rezervēt — ";
       el(prefiks + "RezTeksts" + i).textContent = fmtDatumsLaiks.format(new Date(st.izvele));
     };
   });
@@ -1198,7 +1307,7 @@ function ieladetGaida3() {
   return ieladetPosmaTabulu("gaida3Tabula", ["apstiprinats"], "gaida3", true,
     "Šobrīd nav neviena ar pilno piekļuvi.");
 }
-async function ieladetPosmaTabulu(tbId, statusi, prefiks, tresa, tuksums) {
+async function ieladetPosmaTabulu(tbId, statusi, prefiks, tresa, tuksums, tikaiUid = null) {
   const tb = el(tbId);
   tb.innerHTML = '<tr><td colspan="8" style="color:var(--muted)">Ielādē…</td></tr>';
   try {
@@ -1207,8 +1316,9 @@ async function ieladetPosmaTabulu(tbId, statusi, prefiks, tresa, tuksums) {
       where("uznemsanasStatuss", "in", statusi),
     ));
     // Pats admins sarakstos neparādās.
-    const rindas = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+    let rindas = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
       .filter((u) => u.id !== auth.currentUser?.uid);
+    if (tikaiUid) rindas = rindas.filter((u) => u.id === tikaiUid);
     if (!rindas.length) {
       tb.innerHTML = `<tr><td colspan="8" style="color:var(--muted)">${tuksums}</td></tr>`;
       return;
@@ -1263,7 +1373,7 @@ async function ieladetPosmaTabulu(tbId, statusi, prefiks, tresa, tuksums) {
             .catch((e) => console.error("Auto ķekša kļūda:", e));
         }
       }
-      return { izietas, nakama, pagajusi, krasa };
+      return { izietas, nakama, pagajusi, krasa, mockNakamas: mockNakamas.map((x) => x.start) };
     }));
     tb.innerHTML = rindas.map((u, i) => {
       const berns = (u.berni || []).map((b) => b.berna_vards).filter(Boolean).join(", ") || "—";
@@ -1319,10 +1429,15 @@ async function ieladetPosmaTabulu(tbId, statusi, prefiks, tresa, tuksums) {
                 </label>`).join("")}
               </div>`;
             })() : ""}
-            <div><b>Rezervēta nodarbība:</b> ${r.nakama
-              ? `ir — ${fmtDatumsLaiks.format(r.nakama)} <span style="color:var(--zala);font-weight:800">✓</span>`
-              : r.pagajusi ? `aizvadīta — ${fmtDatumsLaiks.format(r.pagajusi)}` : "nav"}</div>
+            ${r.mockNakamas.length
+              ? r.mockNakamas.map((ms) => `<div><b>Rezervēta nodarbība:</b> ${fmtDatumsLaiks.format(new Date(ms))}
+                  <span style="color:var(--zala);font-weight:800">✓</span>
+                  <button class="maza-poga" data-mock-labot="${i}" data-vecais="${ms}" style="padding:3px 10px;font-size:11px;margin-left:6px">Labot</button></div>`).join("")
+              : `<div><b>Rezervēta nodarbība:</b> ${r.nakama
+                  ? `ir — ${fmtDatumsLaiks.format(r.nakama)} <span style="color:var(--zala);font-weight:800">✓</span>`
+                  : r.pagajusi ? `aizvadīta — ${fmtDatumsLaiks.format(r.pagajusi)}` : "nav"}</div>`}
             ${u.rindasVecums ? `<div><b>Audzēkņa vecums (no pieteikuma):</b> ${escapeHTML(String(u.rindasVecums))} g.</div>` : ""}
+            ${u.parBernu ? `<div><b>Par bērnu:</b> ${escapeHTML(u.parBernu)}</div>` : ""}
             <button class="maza-poga" data-vesture="${i}" style="margin-top:10px">Vēsture</button>
             <div class="gi-vesture" id="${prefiks}Vesture${i}" hidden style="margin-top:8px">Ielādē…</div>
             <div class="gi-virsraksts">Bērni</div>
@@ -1399,6 +1514,19 @@ async function ieladetPosmaTabulu(tbId, statusi, prefiks, tresa, tuksums) {
       const b = el(prefiks + "Berns" + p.dataset.berns);
       b.hidden = !b.hidden;
     }));
+    // Klienta rezervācijas "Labot" — atver mini-kalendāru labošanas režīmā:
+    // izvēlētais laiks AIZSTĀJ esošo (admins to var darīt jebkurā brīdī).
+    tb.querySelectorAll("[data-mock-labot]").forEach((p) => p.addEventListener("click", () => {
+      const i = p.dataset.mockLabot;
+      const st = mockKalStavokli[prefiks + i] ??= { nobide: 0, slide: 0, izvele: null };
+      st.labo = Number(p.dataset.vecais);
+      st.izvele = null;
+      el(prefiks + "RezApstiprinat" + i).hidden = true;
+      const k = el(prefiks + "Kalendars" + i);
+      k.hidden = false;
+      zimetInfoKalendaru(prefiks, i);
+      tosts("Izvēlies jauno laiku kalendārā un apstiprini.");
+    }));
     // "Rezervēt nodarbību" — atver to pašu maketa kalendāru kā klienta profilā.
     tb.querySelectorAll("[data-kalendars]").forEach((p) => p.addEventListener("click", () => {
       const i = p.dataset.kalendars;
@@ -1412,6 +1540,23 @@ async function ieladetPosmaTabulu(tbId, statusi, prefiks, tresa, tuksums) {
       const u = rindas[i];
       const st = mockKalStavokli[prefiks + i];
       if (!st?.izvele) { tosts("Izvēlies laiku kalendārā."); return; }
+      // Labošanas režīms — izvēlētais laiks aizstāj esošo rezervāciju.
+      if (st.labo) {
+        p.disabled = true;
+        try {
+          await mainitMockRezervaciju(u, st.labo, st.izvele);
+          tosts("Nodarbības laiks nomainīts.");
+          delete mockKalStavokli[prefiks + i];
+          ieladetAiznemtos();
+          atjaunotKalendarus();
+          ieladetPosmaTabulu(tbId, statusi, prefiks, tresa, tuksums);
+        } catch (e) {
+          console.error("Laika maiņas kļūda:", e);
+          tosts("Neizdevās nomainīt — laiks jau aizņemts vai radās kļūda.");
+          p.disabled = false;
+        }
+        return;
+      }
       const aktivi = veidi.filter((v) => v.active);
       const veids = aktivi.find((v) => tresa !== /iepaz/i.test(v.name || "")) || aktivi[0];
       if (!veids) { tosts("Nav neviena aktīva nodarbības veida."); return; }
@@ -1510,11 +1655,13 @@ el("pogaAtjaunot").addEventListener("click", async () => {
   poga.classList.add("griezas");
   try {
     await Promise.allSettled([
+      ieladetSodienu(),
       ieladetRindu(),
       ieladetGaidosos(),
       ieladetGaida3(),
       ieladetBiznesaStundas(),
       ieladetBlokus(),
+      ieladetAiznemtos(),
       ieladetAudzeknus(true),
       ieladetMaksajumus(true),
       atjaunotJaunumus(),
@@ -1526,6 +1673,27 @@ el("pogaAtjaunot").addEventListener("click", async () => {
     atjaunosanaRit = false; // klase noņemsies, pabeidzot iesākto apgriezienu
   }
 });
+
+/* ---------- Klienta Info panelis zem kalendāra ----------
+   Klikšķis uz zaļās profila rezervācijas kalendārā atver šī e-pasta rindu
+   ar pilno Info paneli tieši zem kalendāra — laiku maina ar [Labot]. */
+async function paraditKalendaraInfo(uid, kalId) {
+  if (!uid) return;
+  const kont = el(kalId === "kalendars2" ? "kalendaraInfoB" : "kalendaraInfoA");
+  const prefiks = kalId === "kalendars2" ? "kalinfoB" : "kalinfoA";
+  kont.hidden = false;
+  kont.innerHTML = `<div class="karte">
+    <h2>Klients</h2>
+    <div class="tabula-riti"><table>
+      <thead><tr><th>Vecāks</th><th>E-pasts</th><th>Telefons</th><th>Bērns</th><th>Statuss</th><th>Izietas iepazīšanās</th><th>Rezervēts</th><th></th></tr></thead>
+      <tbody id="${prefiks}Tabula"></tbody>
+    </table></div>
+  </div>`;
+  await ieladetPosmaTabulu(prefiks + "Tabula", ["jauns", "atlauts", "pieteikts", "apstiprinats"], prefiks, false, "Nav atrasts.", uid);
+  const rinda = el(prefiks + "InfoRinda0");
+  if (rinda) rinda.hidden = false;
+  kont.scrollIntoView({ behavior: "smooth", block: "start" });
+}
 
 /* ---------- Konta dzēšana no Info paneļa ----------
    Pirms dzēšanas datus (bērnus, pirkumus, rezervāciju, piezīmes) arhivējam
@@ -1652,6 +1820,23 @@ function paraditVisus() {
 }
 el("pogaVisi").addEventListener("click", paraditVisus);
 el("pogaVisiAizvert").addEventListener("click", () => el("visiModalis").classList.remove("redzams"));
+// Meklēšana "Visi" logā — filtrē rindas visās trīs tabulās pēc jebkura teksta.
+el("visiMeklet").addEventListener("input", () => {
+  const q = el("visiMeklet").value.trim().toLowerCase();
+  ["visi1Tabula", "visi2Tabula", "visi3Tabula"].forEach((id) => {
+    const rindas = [...el(id).querySelectorAll("tr")];
+    rindas.forEach((tr, j) => {
+      if (tr.classList.contains("gaida-info-rinda")) return;
+      const info = rindas[j + 1]?.classList.contains("gaida-info-rinda") ? rindas[j + 1] : null;
+      const rada = !q || tr.textContent.toLowerCase().includes(q);
+      tr.style.display = rada ? "" : "none";
+      if (info) {
+        info.style.display = rada ? "" : "none";
+        if (!rada) info.hidden = true;
+      }
+    });
+  });
+});
 
 async function mainitUznemsanu(uid, statuss) {
   try {
@@ -1726,6 +1911,13 @@ async function lietotajaDati(uid) {
 let biznesaStundas2 = []; // iepazīšanās
 let biznesaStundas3 = []; // parastās
 let visiBloki = [];       // brīvdienas/bloķētie periodi Info paneļa kalendāriem
+let aiznemtiSloti = new Set(); // klientu rezervētie laiki (aiznemtie kolekcija)
+async function ieladetAiznemtos() {
+  try {
+    const snap = await getDocs(query(collection(db, "aiznemtie"), where("start", ">=", Date.now())));
+    aiznemtiSloti = new Set(snap.docs.map((d) => Number(d.id)));
+  } catch (e) { console.error("Aizņemto laiku ielādes kļūda:", e); }
+}
 let zalaZonuAvots = null; // 4. lapas zaļās zonas — iepazīšanās darba laiki
 async function ieladetBiznesaStundas() {
   try {
@@ -1780,7 +1972,8 @@ function izveidotKalendaru(elementaId, filtrs) {
     eventClick: (info) => {
       if (info.event.display === "background") return;
       if (info.event.extendedProps.mockProfila) {
-        tosts("Klienta profilā izvēlētais laiks — pārvaldi to Info panelī.");
+        // Klikšķis uz profila rezervācijas atver klienta Info paneli zem kalendāra.
+        paraditKalendaraInfo(info.event.extendedProps.klientaUid, elementaId);
         return;
       }
       atvertDetalas(info.event);
@@ -1840,8 +2033,20 @@ async function ieladetNotikumus(filtrs, info, success, failure) {
       // Iepazīšanās nodarbības zaļas, parastās brūnas. Katrs lapas kalendārs
       // rāda tikai savējās; kopējais — abas, bet rediģēt var sava režīma.
       const iepaz = irIepazRezervacija(b);
-      if (filtrs === "iepaz" && !iepaz) continue;
-      if (filtrs === "parastas" && iepaz) continue;
+      if ((filtrs === "iepaz" && !iepaz) || (filtrs === "parastas" && iepaz)) {
+        // Otras lapas nodarbība — telpa ir viena, tāpēc laiks šeit rādās
+        // kā aizņemts pelēks fons (rediģē to otras lapas kalendārā).
+        if (!atcelta) {
+          notikumi.push({
+            id: "aizn_" + d.id,
+            start: b.startAt.toDate(),
+            end: b.endAt.toDate(),
+            display: "background",
+            backgroundColor: "rgba(58,50,34,.35)",
+          });
+        }
+        continue;
+      }
       const krasa = iepaz ? "#3B6D11" : "#7A5800";
       const savaRezima = (rezims === "pirma") === iepaz;
       notikumi.push({
@@ -1859,33 +2064,41 @@ async function ieladetNotikumus(filtrs, info, success, failure) {
     }
 
     // Klientu profilos izvēlētie iepazīšanās laiki (mockRezervacija) — zaļi
-    // notikumi 2. lapas un kopējā kalendārā. Rādās vienmēr, arī ja laiks
-    // iekrīt pelēkajā zonā (piem., pa vidu mainīti darba laiki).
-    if (filtrs !== "parastas") {
-      try {
-        const uSnap = await getDocs(query(collection(db, "users"),
-          where("uznemsanasStatuss", "in", ["jauns", "atlauts", "pieteikts", "apstiprinats"])));
-        uSnap.docs.forEach((d) => {
-          const u = d.data();
-          mockRezuSaraksts(u).forEach((r) => {
-            const s = r.start;
-            if (s < info.start.getTime() || s >= info.end.getTime()) return;
+    // notikumi 2. lapas un kopējā kalendārā; 3. lapas kalendārā tie rādās kā
+    // aizņemts pelēks fons (telpa viena). Rādās arī pelēkajā zonā.
+    try {
+      const uSnap = await getDocs(query(collection(db, "users"),
+        where("uznemsanasStatuss", "in", ["jauns", "atlauts", "pieteikts", "apstiprinats"])));
+      uSnap.docs.forEach((d) => {
+        const u = d.data();
+        mockRezuSaraksts(u).forEach((r) => {
+          const s = r.start;
+          if (s < info.start.getTime() || s >= info.end.getTime()) return;
+          if (filtrs === "parastas") {
             notikumi.push({
-              id: "mockrez_" + d.id + "_" + s,
-              title: `${(u.berni || [])[0]?.berna_vards || u.vards || u.epasts || "?"} · Iepazīšanās (profils)`,
+              id: "aizn_mockrez_" + d.id + "_" + s,
               start: new Date(s),
               end: new Date(s + 20 * 60000),
-              backgroundColor: "#3B6D11",
-              borderColor: "#3B6D11",
-              textColor: "#F5EDD8",
-              startEditable: false,
-              durationEditable: false,
-              extendedProps: { mockProfila: true },
+              display: "background",
+              backgroundColor: "rgba(58,50,34,.35)",
             });
+            return;
+          }
+          notikumi.push({
+            id: "mockrez_" + d.id + "_" + s,
+            title: `${(u.berni || [])[0]?.berna_vards || u.vards || u.epasts || "?"} · Iepazīšanās (profils)`,
+            start: new Date(s),
+            end: new Date(s + 20 * 60000),
+            backgroundColor: "#3B6D11",
+            borderColor: "#3B6D11",
+            textColor: "#F5EDD8",
+            startEditable: false,
+            durationEditable: false,
+            extendedProps: { mockProfila: true, klientaUid: d.id },
           });
         });
-      } catch (e) { console.error("Profila rezervāciju ielādes kļūda:", e); }
-    }
+      });
+    } catch (e) { console.error("Profila rezervāciju ielādes kļūda:", e); }
 
     for (const d of blokuSnap.docs) {
       const b = d.data();
@@ -2705,7 +2918,8 @@ onAuthStateChanged(auth, async (user) => {
 
   await Promise.all([ieladetSkolotajus(), ieladetVeidus(), ieladetBiznesaStundas()]);
   initKalendaru();
-  uzstaditLapu(3); // saskaņots sākuma stāvoklis — 3. lapa ar Gaida sadaļu
+  ieladetAiznemtos();
+  uzstaditLapu(0); // panelis atveras ar "Šodiena" kopsavilkumu
   atjaunotJaunumus();
   setInterval(atjaunotJaunumus, 60_000); // jaunumu cipari atsvaidzinās ik minūti
   renderDarbaLaikus();

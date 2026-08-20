@@ -80,6 +80,18 @@
     padding-top:22px;border-top:0.5px solid var(--border);
   }
   .rindas-soli.nakosie li{color:var(--muted)}
+  /* "Pastāsti par bērnu" — kluss, neobligāts lauks pēc iestāšanās rindā */
+  .par-bernu{
+    margin-top:26px;padding-top:22px;border-top:0.5px solid var(--border);
+    text-align:left;
+  }
+  .par-bernu label{
+    font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:none;
+    color:var(--muted);margin-bottom:8px;
+  }
+  .par-bernu textarea{resize:vertical;margin-bottom:10px}
+  .par-bernu .poga2:disabled{opacity:.45;cursor:default}
+
   /* Izpildīts solis — cipars pārtop zaļā ķeksī */
   .sola-nr.izpildits{background:var(--zala);border-color:var(--zala);color:#fff}
 
@@ -511,6 +523,7 @@
   }
   .atzime.zala{background:#E4EDD8;color:var(--zala);border-color:rgba(59,109,17,.3)}
   .atzime.dzeltena{background:#F3E7C6;color:#8A6D00;border-color:rgba(184,134,11,.35)}
+  .labot-atskaite{font-size:11.5px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
   .atzime.sarkana{background:#F2DFD8;color:var(--sarkana);border-color:rgba(156,58,34,.3)}
   .maza-poga{
     background:transparent;border:0.5px solid var(--border);border-radius:100px;
@@ -639,6 +652,12 @@
       <div class="rindas-kekss" aria-hidden="true">✓</div>
       <h3>Tu esi rindā!</h3>
       <p>Tiklīdz atbrīvosies vieta, nosūtīsim apstiprinājumu</p>
+      <!-- Maigs, neuzbāzīgs aicinājums — neobligāts -->
+      <div class="par-bernu">
+        <label for="parBernuLauks">Ja vēlies, pastāsti mazliet par savu bērnu</label>
+        <textarea id="parBernuLauks" rows="3" placeholder="Piemēram — cik viņam gadu, kas patīk, vai mūzika jau ir pamēģināta…"></textarea>
+        <button class="poga2" id="pogaParBernu" type="button" disabled>Saglabāt</button>
+      </div>
     </div>
 
     <!-- Soļi zem pogas: pēc veiksmīgas pieteikšanās 1. cipars pārtop zaļā ķeksī -->
@@ -1059,7 +1078,7 @@ import {
   izrakstities, kludasTeksts, izsauktFunkciju, funkcijasKluda,
 } from './js/firebase-init.js';
 import {
-  doc, getDoc, onSnapshot, collection, query, where, orderBy,
+  doc, getDoc, setDoc, deleteDoc, onSnapshot, collection, query, where, orderBy,
   limit, getDocs,
 } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js';
 import { getIdTokenResult } from 'https://www.gstatic.com/firebasejs/12.16.0/firebase-auth.js';
@@ -1167,6 +1186,8 @@ function paraditSkatu(nr) {
   el('navProfils').classList.toggle('paslepts', nr === 1);
   document.body.classList.toggle('skats2', nr === 2);
   document.body.classList.toggle('skats3', nr === 3);
+  // 2. un 3. skatam kalendārs zīmējas ar attiecīgās lapas darba laikiem.
+  if (nr === 2 || nr === 3) zimetMockKalendaru();
   // 2. un 3. skatā nav "Dāvināt", "Maksājumi", "Pievienot bērnu" un vecās
   // "Pirmā nodarbība" — ja kāda no tām atvērta, pārejam uz Rezervēt.
   if (nr !== 1 && (el('sadalaDavinat').classList.contains('aktiva')
@@ -1237,6 +1258,26 @@ el('pogaRindaPieteikties').onclick = async () => {
   poga.textContent = 'Pieteikties';
 };
 
+// "Pastāsti par bērnu" — neobligāts apraksts, ko admins redz Info panelī.
+el('parBernuLauks').addEventListener('input', () => {
+  el('pogaParBernu').disabled = !el('parBernuLauks').value.trim();
+});
+el('pogaParBernu').onclick = async () => {
+  const teksts = el('parBernuLauks').value.trim();
+  if (!teksts) return;
+  el('pogaParBernu').disabled = true;
+  try {
+    await saglabatProfilu(uid, { parBernu: teksts });
+    tosts('Paldies! Apraksts saglabāts.', 'labi');
+    el('pogaParBernu').textContent = 'Saglabāts ✓';
+    setTimeout(() => { el('pogaParBernu').textContent = 'Saglabāt'; }, 2500);
+  } catch (err) {
+    console.error('Apraksta saglabāšanas kļūda:', err);
+    tosts(kludasTeksts(err), 'kluda');
+    el('pogaParBernu').disabled = false;
+  }
+};
+
 /* ---------- 2. skats: iepazīšanās makets ---------- */
 // Atvērts kalendārs ar izdomātiem laikiem — īstas rezervācijas šeit nenotiek.
 // Klikšķis uz brīva laika "iededz" 1. iepazīšanās nodarbību gaitā.
@@ -1288,19 +1329,28 @@ el('pogaRezPievienotBernu').onclick = () => atvertRezAnketu(null);
 // zimetInfoKalendaru). Abi zīmē laikus no admin 2. lapas darba laikiem
 // (availabilityRules ar rezims "pirma") un brīvdienām — rezervēt var TIKAI
 // admina atļautos laikus.
-let iepazJoslas = []; // admin 2. lapas darba laiki (weekday, startTime, endTime)
-let iepazBloki = [];  // brīvdienas/bloķētie periodi (iepazīšanās vai globālie)
+let iepazJoslas = [];    // admin 2. lapas darba laiki (weekday, startTime, endTime)
+let parastasJoslas = []; // admin 3. lapas darba laiki
+let iepazBloki = [];     // brīvdienas — iepazīšanās vai globālās
+let parastieBloki = [];  // brīvdienas — parastās vai globālās
+let aiznemtiSloti = new Set(); // jau rezervētie laiki (visu klientu) — dubultbukinga sargs
 async function ieladetIepazLaikus() {
   try {
-    const [rSnap, bSnap] = await Promise.all([
+    const [rSnap, bSnap, aSnap] = await Promise.all([
       getDocs(query(collection(db, 'availabilityRules'), where('active', '==', true))),
       getDocs(query(collection(db, 'blockedPeriods'), where('endAt', '>', new Date()))),
+      getDocs(query(collection(db, 'aiznemtie'), where('start', '>=', Date.now()))),
     ]);
-    iepazJoslas = rSnap.docs.map((d) => d.data()).filter((r) => (r.rezims || 'parastas') === 'pirma');
-    iepazBloki = bSnap.docs.map((d) => d.data()).filter((b) => (b.rezims || null) !== 'parastas');
+    const joslas = rSnap.docs.map((d) => d.data());
+    iepazJoslas = joslas.filter((r) => (r.rezims || 'parastas') === 'pirma');
+    parastasJoslas = joslas.filter((r) => (r.rezims || 'parastas') === 'parastas');
+    const bloki = bSnap.docs.map((d) => d.data());
+    iepazBloki = bloki.filter((b) => (b.rezims || null) !== 'parastas');
+    parastieBloki = bloki.filter((b) => (b.rezims || null) !== 'pirma');
+    aiznemtiSloti = new Set(aSnap.docs.map((d) => Number(d.id)));
     zimetMockKalendaru();
   } catch (err) {
-    console.error('Iepazīšanās laiku ielādes kļūda:', err);
+    console.error('Laiku ielādes kļūda:', err);
   }
 }
 function zimetMockKalendaru() {
@@ -1319,10 +1369,13 @@ function zimetMockKalendaru() {
       kolonnas.push(`<div class="diena-kolonna briva">${virsraksts}<div class="brivs-bloks">Pagājusi</div></div>`);
       continue;
     }
-    // Dienas stundas no admin 2. lapas darba laikiem (weekday: 1=Pi … 7=Sv).
-    const dienasJoslas = iepazJoslas.filter((r) => r.weekday === d + 1);
+    // 2. skatā iepazīšanās darba laiki, 3. skatā — parastie (weekday: 1=Pi … 7=Sv).
+    const skats3 = document.body.classList.contains('skats3');
+    const joslas = skats3 ? parastasJoslas : iepazJoslas;
+    const bloki = skats3 ? parastieBloki : iepazBloki;
+    const dienasJoslas = joslas.filter((r) => r.weekday === d + 1);
     if (dienasJoslas.length === 0) {
-      kolonnas.push(`<div class="diena-kolonna briva">${virsraksts}<div class="brivs-bloks">Brīvs</div></div>`);
+      kolonnas.push(`<div class="diena-kolonna briva">${virsraksts}<div class="brivs-bloks">Aizņemts</div></div>`);
       continue;
     }
     const stundas = new Set();
@@ -1335,9 +1388,10 @@ function zimetMockKalendaru() {
     });
     const sloti = [...stundas].sort((a, b) => a - b).map((st) => {
       const startMillis = new Date(`${datums}T${String(st).padStart(2, '0')}:00:00`).getTime();
-      // Aizņemts = brīvdiena/bloķēts periods vai jau pagājusi šodienas stunda.
+      // Aizņemts = cits jau rezervējis, brīvdiena/bloķēts periods vai pagājusi stunda.
       const aiznemts = startMillis < Date.now()
-        || iepazBloki.some((b) => startMillis >= b.startAt.toMillis() && startMillis < b.endAt.toMillis());
+        || aiznemtiSloti.has(startMillis)
+        || bloki.some((b) => startMillis >= b.startAt.toMillis() && startMillis < b.endAt.toMillis());
       return aiznemts
         ? `<button class="laiks aiznemts" type="button" disabled title="Nav pieejams">${String(st).padStart(2, '0')}:00</button>`
         : `<button class="laiks" data-start="${startMillis}" type="button">${String(st).padStart(2, '0')}:00</button>`;
@@ -1397,40 +1451,69 @@ function paraditMockRezervetPogu() {
   el('mockRezervetPiezime').classList.add('paslepts');
   if (!mockIzvele) { el('mockRezervetRinda').classList.add('paslepts'); return; }
   // Vienlaikus var būt tikai viena neapmaksāta rezervācija — jaunu var
-  // rezervēt tikai tad, kad iepriekšējā ir apmaksāta.
-  if (mockRezes.length - apmaksatoNodarbibuSkaits() >= 1) {
+  // rezervēt tikai tad, kad iepriekšējā ir apmaksāta. Labošana ir atļauta.
+  if (mockLabojamais === null && mockRezes.length - apmaksatoNodarbibuSkaits() >= 1) {
     el('mockRezervetRinda').classList.add('paslepts');
     el('mockRezervetPiezime').classList.remove('paslepts');
     return;
   }
   const kad = new Date(mockIzvele);
-  el('pogaMockRezervet').textContent = `Rezervēt — ${arLieloBurtu(fmtDiena.format(kad))} plkst. ${fmtLaiks.format(kad)}`;
+  el('pogaMockRezervet').textContent =
+    `${mockLabojamais !== null ? 'Mainīt laiku' : 'Rezervēt'} — ${arLieloBurtu(fmtDiena.format(kad))} plkst. ${fmtLaiks.format(kad)}`;
   el('mockRezervetRinda').classList.remove('paslepts');
 }
-// "Rezervēt" apstiprina izvēlēto laiku un ved tālāk uz pirkšanu.
-el('pogaMockRezervet').onclick = () => {
+// "Rezervēt" apstiprina izvēlēto laiku un ved tālāk uz pirkšanu;
+// labošanas režīmā nomaina esošās rezervācijas laiku.
+el('pogaMockRezervet').onclick = async () => {
   if (!mockIzvele) return;
-  pierakstitMockRezervaciju(mockIzvele);
-  const kad = new Date(mockIzvele);
-  tosts(`Rezervēts: ${arLieloBurtu(fmtDiena.format(kad))} plkst. ${fmtLaiks.format(kad)}`, 'labi');
+  const labots = mockLabojamais;
+  const jaunais = mockIzvele;
+  const ok = await pierakstitMockRezervaciju(jaunais, labots);
+  if (!ok) return;
+  const kad = new Date(jaunais);
+  tosts(`${labots !== null ? 'Laiks nomainīts' : 'Rezervēts'}: ${arLieloBurtu(fmtDiena.format(kad))} plkst. ${fmtLaiks.format(kad)}`, 'labi');
   mockIzvele = null;
+  mockLabojamais = null;
   el('mockRezervetRinda').classList.add('paslepts');
-  el('iepazKarte').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  if (labots === null) el('iepazKarte').scrollIntoView({ behavior: 'smooth', block: 'center' });
 };
 // Izvēlētos laikus pierakstām profilā kā SARAKSTU — katra rezervācija
 // pievienojas (nevis pārraksta iepriekšējo), tāpēc visas nopirktās nodarbības
 // var rezervēt un visas parādās "Rezervētajās nodarbībās" un admin panelī.
 let mockRezes = []; // [{start, izveidots}]
-function pierakstitMockRezervaciju(startMillis) {
+let mockLabojamais = null; // ja labo esošu rezervāciju — tās vecais laiks (millis)
+async function pierakstitMockRezervaciju(startMillis, vecais = null) {
   if (mockRezes.some((r) => r.start === startMillis)) {
     tosts('Šis laiks jau ir rezervēts.', 'dzeltens');
-    return;
+    return false;
   }
-  mockRezes.push({ start: startMillis, izveidots: new Date().toISOString() });
+  // Dubultbukinga slēdzene: "aiznemtie" dokumentu ar šo laiku var izveidot
+  // tikai viens — ja cits paspēja pirmais, izveide neizdodas.
+  try {
+    await setDoc(doc(db, 'aiznemtie', String(startMillis)), {
+      start: startMillis, uid, izveidots: new Date().toISOString(),
+    });
+  } catch (err) {
+    console.error('Aizņemtā laika kļūda:', err);
+    tosts('Šo laiku tikko rezervēja kāds cits — lūdzu, izvēlies citu.', 'kluda');
+    ieladetIepazLaikus(); // pārzīmē kalendāru ar svaigajiem aizņemtajiem
+    return false;
+  }
+  if (vecais !== null) {
+    deleteDoc(doc(db, 'aiznemtie', String(vecais))).catch(() => {});
+    aiznemtiSloti.delete(vecais);
+    const ieraksts = mockRezes.find((r) => r.start === vecais);
+    if (ieraksts) ieraksts.start = startMillis; // izveidots paliek — 10 min logs neatjaunojas
+  } else {
+    mockRezes.push({ start: startMillis, izveidots: new Date().toISOString() });
+  }
+  aiznemtiSloti.add(startMillis);
+  zimetMockKalendaru();
   ieladetGaidamas(); // parādās sadaļā "Rezervētās nodarbības"
   atjaunotIepazKartites(); // laiks parādās pie kartītes ķekša
-  saglabatProfilu(uid, { mockRezervacijas: mockRezes })
+  saglabatProfilu(uid, { mockRezervacijas: mockRezes, mockRezervacija: null })
     .catch((err) => console.error('Mock rezervācijas pieraksta kļūda:', err));
+  return true;
 }
 zimetMockKalendaru();
 
@@ -1978,7 +2061,7 @@ el('pogaApstiprinat').onclick = async () => {
 
 /* ---------- Manas nodarbības ---------- */
 // Rinda: audzēkņa vārds | diena, datums, laiks | Labot | statuss.
-function nodarbibasRinda(b, id, { arLabotPogu = false, gaidaApmaksu = false } = {}) {
+function nodarbibasRinda(b, id, { arLabotPogu = false, gaidaApmaksu = false, mockLabot = null } = {}) {
   const sakums = b.startAt.toMillis();
   const beigas = b.endAt?.toMillis?.() ?? null;
   // "Apstiprināta" tikai apmaksātām; rezervēta bez apmaksas — "Gaida apmaksu".
@@ -1995,6 +2078,7 @@ function nodarbibasRinda(b, id, { arLabotPogu = false, gaidaApmaksu = false } = 
       <div class="saraksta-vidus">${arLieloBurtu(fmtDiena.format(new Date(sakums)))} · ${laiks}</div>
       <div style="display:flex;align-items:center;gap:10px">
         ${arLabotPogu ? `<button class="maza-poga neitrala" data-labot="${id}">Labot</button>` : ''}
+        ${mockLabot ? `<button class="maza-poga neitrala" data-mock-labot="${mockLabot.start}">Labot</button><span class="labot-atskaite" data-izveidots="${escapeHTML(mockLabot.izveidots || '')}"></span>` : ''}
         ${statuss}
       </div>
     </div>`;
@@ -2029,12 +2113,17 @@ async function ieladetGaidamas() {
     const sortetas = [...mockRezes].sort((a, b) => (a.izveidots || '').localeCompare(b.izveidots || ''));
     const nesamaksatas = new Set(sortetas.slice(apmaksatoNodarbibuSkaits()).map((r) => r.start));
     mockRezes.filter((r) => r.start >= Date.now()).forEach((r, nr) => {
+      // "Labot" pieejams 10 minūtes pēc rezervēšanas — blakus tiek rādīta atskaite.
+      const atlicis = 10 * 60 * 1000 - (Date.now() - new Date(r.izveidots || 0).getTime());
       rindas.push({
         millis: r.start,
         html: nodarbibasRinda({
           startAt: { toMillis: () => r.start },
           childName: berni[0]?.berna_vards || '',
-        }, 'mock' + nr, { gaidaApmaksu: nesamaksatas.has(r.start) }),
+        }, 'mock' + nr, {
+          gaidaApmaksu: nesamaksatas.has(r.start),
+          mockLabot: atlicis > 0 ? r : null,
+        }),
       });
     });
     rindas.sort((a, b) => a.millis - b.millis);
@@ -2045,6 +2134,17 @@ async function ieladetGaidamas() {
     k.querySelectorAll('[data-labot]').forEach((poga) => {
       poga.addEventListener('click', () => atvertLabotu(poga.dataset.labot, poga.closest('.saraksta-rinda')));
     });
+    // Maketa rezervācijas labošana (10 min logā) — ved uz kalendāru jauna laika izvēlei.
+    k.querySelectorAll('[data-mock-labot]').forEach((poga) => {
+      poga.addEventListener('click', () => {
+        mockLabojamais = Number(poga.dataset.mockLabot);
+        mockIzvele = null;
+        paradietSadalu('sadalaRezervet');
+        setTimeout(() => el('iepazGaitaKarte').scrollIntoView({ behavior: 'smooth', block: 'center' }), 80);
+        tosts('Izvēlies jauno laiku kalendārā.', 'dzeltens');
+      });
+    });
+    atjaunotLabotAtskaites();
     // Navigācijā divi skaitītāji: zaļais — tikai apstiprinātās (apmaksātās)
     // gaidāmās; dzeltenais — "Gaida apmaksu" (spiežams, ved uz pirkšanu).
     const gaidamasMock = mockRezes.filter((r) => r.start >= Date.now());
@@ -2063,6 +2163,24 @@ async function ieladetGaidamas() {
     k.innerHTML = '<p class="tukss">Neizdevās ielādēt. Mēģini vēlreiz.</p>';
   }
 }
+
+/* Maketa rezervāciju "Labot" atskaite — cik minūtes vēl var mainīt laiku.
+   Kad 10 minūtes pagājušas, poga un atskaite pazūd pašas. */
+function atjaunotLabotAtskaites() {
+  document.querySelectorAll('.labot-atskaite').forEach((s) => {
+    const atlicis = 10 * 60 * 1000 - (Date.now() - new Date(s.dataset.izveidots || 0).getTime());
+    if (atlicis <= 0) {
+      const poga = s.previousElementSibling;
+      if (poga && poga.dataset.mockLabot !== undefined) poga.remove();
+      s.remove();
+      return;
+    }
+    const min = Math.floor(atlicis / 60000);
+    const sek = Math.floor((atlicis % 60000) / 1000);
+    s.textContent = `${min}:${String(sek).padStart(2, '0')}`;
+  });
+}
+setInterval(atjaunotLabotAtskaites, 1000);
 
 /* ---------- Nodarbības pārcelšana ("Labot") ---------- */
 let gaidamoDati = new Map();
@@ -2688,6 +2806,7 @@ prasitPieteiksanos(async (user) => {
   el('rindasTel').value = p?.rindasTel || p?.telefons || '';
   vecakaTelNoklusejums = p?.rindasTel || p?.telefons || '';
   if (p?.rindasVecums) el('rindasVecums').value = String(p.rindasVecums);
+  if (p?.parBernu) el('parBernuLauks').value = p.parBernu;
   atjaunotRindasSkatu();
 
   zimetBernuKartes();
@@ -2702,6 +2821,12 @@ prasitPieteiksanos(async (user) => {
     // Admina iepazīšanās ķekši — pirkšanas iespējas atveras/aizveras reāllaikā.
     iepazAtlautas = snap.data()?.iepazAtlautas ?? iepazAtlautas;
     if (snap.data()?.mockPirkumi) mockPirkumi = snap.data().mockPirkumi;
+    // Ja admins nomaina rezervācijas laiku — saraksts atjaunojas uzreiz.
+    const jaunasRezes = snap.data()?.mockRezervacijas;
+    if (jaunasRezes && JSON.stringify(jaunasRezes) !== JSON.stringify(mockRezes)) {
+      mockRezes = jaunasRezes;
+      ieladetGaidamas();
+    }
     atjaunotIepazKartites();
     const jaunais = snap.data()?.uznemsanasStatuss;
     if (jaunais && jaunais !== uznemsanas) {
