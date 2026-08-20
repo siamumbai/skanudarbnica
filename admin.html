@@ -66,6 +66,13 @@
     display:inline-flex;align-items:center;justify-content:center;
     border:1.5px solid currentColor;font-size:11.5px;font-weight:700;
   }
+  /* "Jaunumu" cipars — cik kontiem ir izmaiņas kopš lapa pēdējoreiz atvērta */
+  .lapas-jauns{
+    margin-left:auto;min-width:20px;height:20px;padding:0 6px;border-radius:50px;
+    background:var(--zala);color:#fff;font-size:11px;font-weight:800;
+    display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;
+  }
+  .lapas-jauns[hidden]{display:none}
   .rezima-saturs{min-width:0}
 
   /* "Info" izvērstā rinda (1. lapas Rindas un 2. lapas Gaida tabulās) */
@@ -304,12 +311,15 @@
   <nav class="rezimu-nav" aria-label="Klienta posmi">
     <button class="rezima-poga" id="lapaPoga1" type="button">
       <span class="lapas-nr" aria-hidden="true">1</span> Rinda
+      <span class="lapas-jauns" id="lapaJauns1" hidden></span>
     </button>
     <button class="rezima-poga" id="lapaPoga2" type="button">
       <span class="lapas-nr" aria-hidden="true">2</span> Iepazīšanās
+      <span class="lapas-jauns" id="lapaJauns2" hidden></span>
     </button>
     <button class="rezima-poga aktiva" id="lapaPoga3" type="button">
       <span class="lapas-nr" aria-hidden="true">3</span> Nodarbības
+      <span class="lapas-jauns" id="lapaJauns3" hidden></span>
     </button>
     <button class="rezima-poga" id="lapaPogaKal" type="button">
       <span aria-hidden="true" style="font-size:15px">🗓️</span> Kalendārs
@@ -754,10 +764,52 @@ function uzstaditRezimu(jauns) {
 /* ---------- Lapas 1 · 2 · 3 (kā klienta profila skati) ----------
    1 = rindas pieteikumi, 2 = Pirmā nodarbība (iepazīšanās režīms),
    3 = Nodarbības (parastais režīms). */
+/* ---------- "Jaunumu" cipari kreisajā navigācijā ----------
+   Cik dažādiem kontiem ir izmaiņas (jauns rindas pieteikums, pirkums vai
+   rezervācija) kopš pēdējās reizes, kad attiecīgā lapa atvērta. "Redzēts"
+   laiks glabājas šajā pārlūkā (localStorage) — atverot lapu, cipars nodziest. */
+const redzetsAtslega = (n) => "adminRedzets" + n;
+const lapasRedzets = (n) => {
+  const v = localStorage.getItem(redzetsAtslega(n));
+  return v ? new Date(v).getTime() : 0;
+};
+async function atjaunotJaunumus() {
+  try {
+    const snap = await getDocs(query(collection(db, "users"),
+      where("uznemsanasStatuss", "in", ["jauns", "atlauts", "pieteikts", "apstiprinats"])));
+    const skaits = { 1: 0, 2: 0, 3: 0 };
+    snap.docs.forEach((d) => {
+      if (d.id === auth.currentUser?.uid) return;
+      const u = d.data();
+      const lapaNr = u.uznemsanasStatuss === "jauns" ? 1
+        : u.uznemsanasStatuss === "apstiprinats" ? 3 : 2;
+      // Pēdējās izmaiņas laiks šim kontam.
+      const laiki = [];
+      if (lapaNr === 1) {
+        if (u.rindaPieteikta && u.rindaPieteiktaDatums) laiki.push(new Date(u.rindaPieteiktaDatums).getTime());
+      } else {
+        (u.mockPirkumi || []).forEach((m) => { if (m.datums) laiki.push(new Date(m.datums).getTime()); });
+        if (u.mockRezervacija?.izveidots) laiki.push(new Date(u.mockRezervacija.izveidots).getTime());
+      }
+      if (laiki.length && Math.max(...laiki) > lapasRedzets(lapaNr)) skaits[lapaNr]++;
+    });
+    [1, 2, 3].forEach((n) => {
+      const z = el("lapaJauns" + n);
+      z.textContent = String(skaits[n]);
+      z.hidden = skaits[n] === 0;
+    });
+  } catch (e) { console.error("Jaunumu skaitīšanas kļūda:", e); }
+}
+
 let lapa = 3;
 function uzstaditLapu(nr) {
   lapa = nr;
   [1, 2, 3].forEach((n) => el("lapaPoga" + n).classList.toggle("aktiva", n === nr));
+  // Atverot lapu, tās jaunumi skaitās redzēti.
+  if (nr >= 1 && nr <= 3) {
+    localStorage.setItem(redzetsAtslega(nr), new Date().toISOString());
+    el("lapaJauns" + nr).hidden = true;
+  }
   el("lapaPogaKal").classList.toggle("aktiva", nr === 4);
   // 1. lapā un Kalendāra lapā sekciju navigācijas nav.
   document.querySelector(".sekciju-nav").hidden = nr === 1 || nr === 4;
@@ -2438,6 +2490,8 @@ onAuthStateChanged(auth, async (user) => {
   await Promise.all([ieladetSkolotajus(), ieladetVeidus(), ieladetBiznesaStundas()]);
   initKalendaru();
   uzstaditLapu(3); // saskaņots sākuma stāvoklis — 3. lapa ar Gaida sadaļu
+  atjaunotJaunumus();
+  setInterval(atjaunotJaunumus, 60_000); // jaunumu cipari atsvaidzinās ik minūti
   renderDarbaLaikus();
   ieladetPaketes();
   ieladetAudzeknus(true);
