@@ -82,6 +82,16 @@
   /* "Info" izvērstā rinda (1. lapas Rindas un 2. lapas Gaida tabulās) */
   .gaida-info-rinda > td{background:var(--bg);padding:16px 14px !important}
   .gaida-info{font-size:13px;line-height:1.7;position:relative}
+  /* "Visi" logs — lieli sadaļu virsraksti un treknas atdalošās līnijas */
+  .visi-virsraksts{
+    font-family:Georgia,serif;font-size:24px;color:var(--text);
+    margin:6px 0 14px;
+  }
+  .visi-atdalitajs{
+    border:none;border-top:3px solid var(--accent-dark);
+    margin:28px 0 22px;
+  }
+
   /* Iepazīšanās nodarbību atļauju ķekši — paneļa kreisajā augšējā pusē */
   .gi-keksi{display:flex;gap:16px;margin-bottom:10px}
   .gi-keksis{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;cursor:pointer;margin:0}
@@ -646,21 +656,23 @@
       <h3 style="margin-bottom:0">Visi</h3>
       <button class="maza-poga" id="pogaVisiAizvert" type="button">Aizvērt</button>
     </div>
-    <h2>1 · Rinda</h2>
+    <div class="visi-virsraksts">1 · Rinda</div>
     <div class="tabula-riti" style="margin-bottom:22px">
       <table>
         <thead><tr><th>Vecāks</th><th>E-pasts</th><th>Telefons</th><th>Bērns</th><th>Statuss</th><th>Izietas iepazīšanās</th><th>Rezervēts</th><th></th></tr></thead>
         <tbody id="visi1Tabula"></tbody>
       </table>
     </div>
-    <h2>2 · Iepazīšanās</h2>
+    <hr class="visi-atdalitajs">
+    <div class="visi-virsraksts">2 · Iepazīšanās</div>
     <div class="tabula-riti" style="margin-bottom:22px">
       <table>
         <thead><tr><th>Vecāks</th><th>E-pasts</th><th>Telefons</th><th>Bērns</th><th>Statuss</th><th>Izietas iepazīšanās</th><th>Rezervēts</th><th></th></tr></thead>
         <tbody id="visi2Tabula"></tbody>
       </table>
     </div>
-    <h2>3 · Nodarbības</h2>
+    <hr class="visi-atdalitajs">
+    <div class="visi-virsraksts">3 · Nodarbības</div>
     <div class="tabula-riti">
       <table>
         <thead><tr><th>Vecāks</th><th>E-pasts</th><th>Telefons</th><th>Bērns</th><th>Statuss</th><th>Izietas iepazīšanās</th><th>Rezervēts</th><th></th></tr></thead>
