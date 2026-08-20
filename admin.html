@@ -298,6 +298,7 @@
 <header class="josla">
   <a class="logo" href="index.html">Skaņu Darbnīca · <b>Administrēšana</b></a>
   <div style="display:flex;gap:8px">
+    <button class="izeja" id="pogaVisi">Visi</button>
     <button class="izeja" id="pogaVesture">Vēsture</button>
     <button class="izeja" id="pogaIziet">Iziet</button>
   </div>
@@ -633,6 +634,22 @@
 </div>
 
 <!-- Modālis: rezervācijas detaļas -->
+<!-- "Visi" (galvenes poga) — visi reģistrētie konti un kurā lapā katrs stāv. -->
+<div class="modalis-fons" id="visiModalis">
+  <div class="modalis" style="max-width:640px;width:92%;max-height:82vh;overflow:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <h3 style="margin-bottom:0">Visi</h3>
+      <button class="maza-poga" id="pogaVisiAizvert" type="button">Aizvērt</button>
+    </div>
+    <div class="tabula-riti">
+      <table>
+        <thead><tr><th>Vārds</th><th>E-pasts</th><th>Lapa</th></tr></thead>
+        <tbody id="visiTabula"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
 <!-- Globālā vēsture (galvenes poga "Vēsture") — teksta žurnāls par visu:
      pārcelšanas starp lapām, maksājumi, rezervācijas. -->
 <div class="modalis-fons" id="vesturesModalis">
@@ -1467,6 +1484,35 @@ async function paraditGlobaloVesturi() {
 }
 el("pogaVesture").addEventListener("click", paraditGlobaloVesturi);
 el("pogaVestureAizvert").addEventListener("click", () => el("vesturesModalis").classList.remove("redzams"));
+
+/* ---------- "Visi" — visi reģistrētie konti un to lapas ---------- */
+const LAPU_NOSAUKUMI = {
+  jauns: "1 · Rinda", atlauts: "2 · Iepazīšanās",
+  pieteikts: "2 · Iepazīšanās", apstiprinats: "3 · Nodarbības",
+};
+async function paraditVisus() {
+  el("visiModalis").classList.add("redzams");
+  const tb = el("visiTabula");
+  tb.innerHTML = '<tr><td colspan="3" style="color:var(--muted)">Ielādē…</td></tr>';
+  try {
+    const snap = await getDocs(collection(db, "users"));
+    const rindas = snap.docs
+      .filter((d) => d.id !== auth.currentUser?.uid)
+      .map((d) => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => (a.epasts || "").localeCompare(b.epasts || ""))
+      .map((u) => `<tr>
+        <td>${escapeHTML(u.vards || "—")}</td>
+        <td>${escapeHTML(u.epasts || u.id)}</td>
+        <td>${LAPU_NOSAUKUMI[u.uznemsanasStatuss] || LAPU_NOSAUKUMI.apstiprinats}</td>
+      </tr>`).join("");
+    tb.innerHTML = rindas || '<tr><td colspan="3" class="tukss">Nav neviena konta.</td></tr>';
+  } catch (e) {
+    console.error("Visu kontu ielādes kļūda:", e);
+    tb.innerHTML = '<tr><td colspan="3" style="color:var(--sarkana)">Neizdevās ielādēt.</td></tr>';
+  }
+}
+el("pogaVisi").addEventListener("click", paraditVisus);
+el("pogaVisiAizvert").addEventListener("click", () => el("visiModalis").classList.remove("redzams"));
 
 async function mainitUznemsanu(uid, statuss) {
   try {
