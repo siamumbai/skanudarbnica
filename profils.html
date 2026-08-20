@@ -524,6 +524,11 @@
   .atzime.zala{background:#E4EDD8;color:var(--zala);border-color:rgba(59,109,17,.3)}
   .atzime.dzeltena{background:#F3E7C6;color:#8A6D00;border-color:rgba(184,134,11,.35)}
   .labot-atskaite{font-size:11.5px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
+  /* Bloķētās rezervēšanas paziņojums — pogas formā, dzeltens, nespiežams */
+  .cta.mock-bloketa:disabled{
+    opacity:1;background:var(--accent-light);color:var(--text);
+    cursor:not-allowed;
+  }
   .atzime.sarkana{background:#F2DFD8;color:var(--sarkana);border-color:rgba(156,58,34,.3)}
   .maza-poga{
     background:transparent;border:0.5px solid var(--border);border-radius:100px;
@@ -883,10 +888,11 @@
         <div class="paslepts" id="mockRezervetRinda" style="margin-top:14px;text-align:center">
           <button class="cta cta-auto" id="pogaMockRezervet" type="button">Rezervēt</button>
         </div>
-        <!-- Ja iepriekšējā rezervācija vēl nav apmaksāta — jaunu rezervēt nevar -->
-        <p class="tukss paslepts" id="mockRezervetPiezime" style="margin-top:14px;text-align:center">
-          Rezervē jaunu nodarbību pēc jau rezervētās nodarbības.
-        </p>
+        <!-- Ja nākamo nodarbību vēl nevar rezervēt — pogas izskata paziņojums,
+             dzeltens un nespiežams, ar jau rezervētās nodarbības laiku -->
+        <div class="paslepts" id="mockRezervetPiezimeRinda" style="margin-top:14px;text-align:center">
+          <button class="cta cta-auto mock-bloketa" id="mockRezervetPiezime" type="button" disabled></button>
+        </div>
       </section>
 
       <!-- Iepazīšanās nodarbības (redzamas tikai 2. skatā) — hronoloģiski var
@@ -1447,14 +1453,30 @@ function apmaksatoNodarbibuSkaits() {
   });
   return n;
 }
+// Cik iepazīšanās nodarbības admins ir atļāvis (1. pēc noklusējuma).
+function atlautoIepazSkaits() {
+  return (iepazAtlautas.n1 !== false ? 1 : 0)
+    + (iepazAtlautas.n2 === true ? 1 : 0)
+    + (iepazAtlautas.n3 === true ? 1 : 0);
+}
 function paraditMockRezervetPogu() {
-  el('mockRezervetPiezime').classList.add('paslepts');
+  el('mockRezervetPiezimeRinda').classList.add('paslepts');
   if (!mockIzvele) { el('mockRezervetRinda').classList.add('paslepts'); return; }
-  // Vienlaikus var būt tikai viena neapmaksāta rezervācija — jaunu var
-  // rezervēt tikai tad, kad iepriekšējā ir apmaksāta. Labošana ir atļauta.
-  if (mockLabojamais === null && mockRezes.length - apmaksatoNodarbibuSkaits() >= 1) {
+  // Jaunu rezervēt nevar, kamēr iepriekšējā nav apmaksāta VAI (2. skatā)
+  // admins vēl nav atļāvis nākamo nodarbību. Labošana vienmēr ir atļauta.
+  const skats2 = document.body.classList.contains('skats2');
+  const bloketa = mockLabojamais === null && (
+    mockRezes.length - apmaksatoNodarbibuSkaits() >= 1
+    || (skats2 && mockRezes.length >= atlautoIepazSkaits())
+  );
+  if (bloketa) {
     el('mockRezervetRinda').classList.add('paslepts');
-    el('mockRezervetPiezime').classList.remove('paslepts');
+    // Paziņojumā — jau rezervētās (pēdējās) nodarbības laiks no zaļā ķekša.
+    const pedeja = [...mockRezes].sort((a, b) => (a.izveidots || '').localeCompare(b.izveidots || '')).pop();
+    el('mockRezervetPiezime').textContent = pedeja
+      ? `Rezervēt varēs pēc pirmās nodarbības: ${datumsVardiski(new Date(pedeja.start))} ${fmtLaiks.format(new Date(pedeja.start))}`
+      : 'Rezervēt varēs pēc pirmās nodarbības.';
+    el('mockRezervetPiezimeRinda').classList.remove('paslepts');
     return;
   }
   const kad = new Date(mockIzvele);
@@ -2156,7 +2178,7 @@ async function ieladetGaidamas() {
     skaititajs.textContent = String(apstiprinatas);
     skaititajs.classList.toggle('paslepts', apstiprinatas === 0 || gaidaApmaksuSkaits > 0);
     const gaidaZime = el('navGaidaApmaksu');
-    gaidaZime.textContent = String(gaidaApmaksuSkaits);
+    gaidaZime.textContent = 'apmaksā';
     gaidaZime.classList.toggle('paslepts', gaidaApmaksuSkaits === 0);
   } catch (err) {
     console.error('Gaidāmo ielādes kļūda:', err);
