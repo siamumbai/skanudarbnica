@@ -852,6 +852,10 @@
       <section class="karte" id="iepazGaitaKarte">
         <h2>Rezervē nodarbību</h2>
         <div id="mockKalendars"></div>
+        <!-- Izvēlētais laiks jāapstiprina — var mainīt domas, pirms spiež Rezervēt -->
+        <div class="paslepts" id="mockRezervetRinda" style="margin-top:14px;text-align:center">
+          <button class="cta cta-auto" id="pogaMockRezervet" type="button">Rezervēt</button>
+        </div>
       </section>
 
       <!-- Iepazīšanās nodarbības (redzamas tikai 2. skatā) — hronoloģiski var
@@ -1342,14 +1346,36 @@ function zimetMockKalendaru() {
         pp.scrollIntoView({ behavior: 'smooth', block: 'center' });
         return;
       }
+      // Laiks tikai iezīmējas — var pārdomāt un izvēlēties citu; rezervācija
+      // notiek tikai ar "Rezervēt" pogu zem kalendāra.
+      mockIzvele = Number(poga.dataset.start);
       el('mockKalendars').querySelectorAll('.laiks').forEach((p) => p.classList.toggle('aktivs', p === poga));
-      const kad = new Date(Number(poga.dataset.start));
-      // Laiks izvēlēts — dzeltens paziņojums; zaļš būs tikai pēc apmaksas.
-      tosts(`1. nodarbība: ${arLieloBurtu(fmtDiena.format(kad))} plkst. ${fmtLaiks.format(kad)}`, 'dzeltens');
-      pierakstitMockRezervaciju(Number(poga.dataset.start));
+      paraditMockRezervetPogu();
     };
   });
+  // Pēc pārzīmēšanas (nedēļas maiņa) iezīmētais laiks paliek iezīmēts.
+  if (mockIzvele) {
+    const izv = el('mockKalendars').querySelector(`.laiks[data-start="${mockIzvele}"]`);
+    if (izv) izv.classList.add('aktivs');
+  }
 }
+let mockIzvele = null; // kalendārā iezīmētais, vēl neapstiprinātais laiks
+function paraditMockRezervetPogu() {
+  if (!mockIzvele) { el('mockRezervetRinda').classList.add('paslepts'); return; }
+  const kad = new Date(mockIzvele);
+  el('pogaMockRezervet').textContent = `Rezervēt — ${arLieloBurtu(fmtDiena.format(kad))} plkst. ${fmtLaiks.format(kad)}`;
+  el('mockRezervetRinda').classList.remove('paslepts');
+}
+// "Rezervēt" apstiprina izvēlēto laiku un ved tālāk uz pirkšanu.
+el('pogaMockRezervet').onclick = () => {
+  if (!mockIzvele) return;
+  pierakstitMockRezervaciju(mockIzvele);
+  const kad = new Date(mockIzvele);
+  tosts(`Rezervēts: ${arLieloBurtu(fmtDiena.format(kad))} plkst. ${fmtLaiks.format(kad)}`, 'labi');
+  mockIzvele = null;
+  el('mockRezervetRinda').classList.add('paslepts');
+  el('iepazKarte').scrollIntoView({ behavior: 'smooth', block: 'center' });
+};
 // Izvēlēto laiku pierakstām profilā — admin panelī tas ieslēdz "Rezervēts"
 // ķeksi un parādās Info panelī un vēsturē (īsta rezervācija maketā nenotiek).
 let mockRez = null; // maketa rezervācijas laiks (millis) — rādām arī "Rezervētajās nodarbībās"
@@ -2436,10 +2462,10 @@ el('pogaSaglabatBernu').onclick = async () => {
     if (laikaPoga) {
       document.querySelectorAll('#mockKalendars .laiks').forEach((p) => p.classList.remove('aktivs'));
       laikaPoga.classList.add('aktivs');
-      const kad = new Date(Number(mockGaidaSlots));
-      tosts(`1. nodarbība: ${arLieloBurtu(fmtDiena.format(kad))} plkst. ${fmtLaiks.format(kad)}`, 'dzeltens');
+      // Laiks tikai iezīmējas — apstiprina ar "Rezervēt" pogu zem kalendāra.
+      mockIzvele = Number(mockGaidaSlots);
+      paraditMockRezervetPogu();
       el('iepazGaitaKarte').scrollIntoView({ behavior: 'smooth', block: 'center' });
-      pierakstitMockRezervaciju(Number(mockGaidaSlots));
     }
     mockGaidaSlots = null;
   }

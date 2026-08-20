@@ -1742,6 +1742,10 @@ function izveidotKalendaru(elementaId, filtrs) {
     eventResize: parvietotNotikumu,
     eventClick: (info) => {
       if (info.event.display === "background") return;
+      if (info.event.extendedProps.mockProfila) {
+        tosts("Klienta profilā izvēlētais laiks — pārvaldi to Info panelī.");
+        return;
+      }
       atvertDetalas(info.event);
     },
     dateClick: (info) => atvertJauno(info.date),
@@ -1815,6 +1819,33 @@ async function ieladetNotikumus(filtrs, info, success, failure) {
         durationEditable: !atcelta && savaRezima,
         extendedProps: { rezervacija: b, iepaz },
       });
+    }
+
+    // Klientu profilos izvēlētie iepazīšanās laiki (mockRezervacija) — zaļi
+    // notikumi 2. lapas un kopējā kalendārā. Rādās vienmēr, arī ja laiks
+    // iekrīt pelēkajā zonā (piem., pa vidu mainīti darba laiki).
+    if (filtrs !== "parastas") {
+      try {
+        const uSnap = await getDocs(query(collection(db, "users"),
+          where("uznemsanasStatuss", "in", ["jauns", "atlauts", "pieteikts", "apstiprinats"])));
+        uSnap.docs.forEach((d) => {
+          const u = d.data();
+          const s = u.mockRezervacija?.start;
+          if (!s || s < info.start.getTime() || s >= info.end.getTime()) return;
+          notikumi.push({
+            id: "mockrez_" + d.id,
+            title: `${(u.berni || [])[0]?.berna_vards || u.vards || u.epasts || "?"} · Iepazīšanās (profils)`,
+            start: new Date(s),
+            end: new Date(s + 20 * 60000),
+            backgroundColor: "#3B6D11",
+            borderColor: "#3B6D11",
+            textColor: "#F5EDD8",
+            startEditable: false,
+            durationEditable: false,
+            extendedProps: { mockProfila: true },
+          });
+        });
+      } catch (e) { console.error("Profila rezervāciju ielādes kļūda:", e); }
     }
 
     for (const d of blokuSnap.docs) {
