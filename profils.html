@@ -2050,9 +2050,11 @@ async function ieladetGaidamas() {
     const gaidamasMock = mockRezes.filter((r) => r.start >= Date.now());
     const gaidaApmaksuSkaits = gaidamasMock.filter((r) => nesamaksatas.has(r.start)).length;
     const apstiprinatas = snap.size + gaidamasMock.length - gaidaApmaksuSkaits;
+    // Rādām tikai vienu: kamēr kaut kas gaida apmaksu — dzelteno; kad viss
+    // apmaksāts (vai dzēsts) — zaļo apstiprināto skaitu.
     const skaititajs = el('navNodarbibasSkaits');
     skaititajs.textContent = String(apstiprinatas);
-    skaititajs.classList.toggle('paslepts', apstiprinatas === 0);
+    skaititajs.classList.toggle('paslepts', apstiprinatas === 0 || gaidaApmaksuSkaits > 0);
     const gaidaZime = el('navGaidaApmaksu');
     gaidaZime.textContent = String(gaidaApmaksuSkaits);
     gaidaZime.classList.toggle('paslepts', gaidaApmaksuSkaits === 0);
