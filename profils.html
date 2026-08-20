@@ -1206,6 +1206,7 @@ el('pogaRindaPieteikties').onclick = async () => {
       rindaPieteiktaDatums: new Date().toISOString(),
     });
     rindaPieteikta = true;
+    vecakaTelNoklusejums = tel; // uzreiz aizpildīsies arī bērna anketā
     atjaunotRindasSkatu();
   } catch (err) {
     console.error('Rindas pieteikuma kļūda:', err);
@@ -1480,11 +1481,14 @@ function nolasitRadio(nosaukums) {
 }
 
 /* ---------- Anketas forma ---------- */
+// Vecāka telefona noklusējums bērna anketai — no rindas pieteikuma ("Tavs tel.")
+// vai reģistrācijas, lai jaunam audzēknim tas ir aizpildīts uzreiz.
+let vecakaTelNoklusejums = '';
 function iestatitAnketasFormu(berns) {
-  // Jaunam audzēknim visi lauki tukši, bez iepriekš aizpildītas informācijas.
+  // Jaunam audzēknim lauki tukši — izņemot vecāka telefonu, ko jau zinām.
   el('bernaVards').value = berns?.berna_vards || '';
   el('bernaVecums').value = berns?.berna_vecums || '';
-  el('vecakaTel').value = berns?.vecaka_tel || '';
+  el('vecakaTel').value = berns?.vecaka_tel || vecakaTelNoklusejums || '';
   el('bernaTel').value = berns?.berna_tel || '';
   iestatitRadio('muzika', berns?.muzikas_pieredze);
   iestatitRadio('instruments', berns?.instruments_majas);
@@ -2600,6 +2604,7 @@ prasitPieteiksanos(async (user) => {
   rindaPieteikta = !!p?.rindaPieteikta;
   el('rindasEpasts').value = user.email || p?.rindasEpasts || '';
   el('rindasTel').value = p?.rindasTel || p?.telefons || '';
+  vecakaTelNoklusejums = p?.rindasTel || p?.telefons || '';
   if (p?.rindasVecums) el('rindasVecums').value = String(p.rindasVecums);
   atjaunotRindasSkatu();
 
