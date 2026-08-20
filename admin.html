@@ -1002,8 +1002,8 @@ async function ieladetRindu() {
             <button class="maza-poga" data-vesture="${i}">Vēsture</button>
             <div class="gi-vesture" id="rindaVesture${i}" hidden style="margin-top:8px">Ielādē…</div>
             <div class="gi-virsraksts">Komentārs (redzams tikai adminiem)</div>
-            <textarea id="rindaKoment${i}" rows="3" placeholder="..."></textarea>
-            <button class="maza-poga" data-koment="${i}" style="margin-top:8px">Pievienot komentāru</button>
+            <textarea id="rindaKoment${i}" rows="3"></textarea>
+            <button class="maza-poga" data-koment="${i}" style="margin-top:8px" disabled>Pievienot komentāru</button>
             <div class="gi-darbibas">
               <button class="maza-poga dzest" data-dzest-kontu="${i}" style="margin-right:auto">Dzēst kontu</button>
               <button class="cta" data-apstiprinat="${u.id}">Apstiprināt</button>
@@ -1024,25 +1024,29 @@ async function ieladetRindu() {
         paraditVesturi(rindasCilveki[i], "rindaVesture" + i);
       }
     }));
-    tb.querySelectorAll("[data-koment]").forEach((p) => p.addEventListener("click", async () => {
-      const i = p.dataset.koment;
-      const lauks = el("rindaKoment" + i);
-      if (!lauks.value.trim()) { tosts("Ieraksti komentāru."); return; }
-      p.disabled = true;
-      try {
-        await pievienotKomentaru(rindasCilveki[i].id, lauks.value.trim());
-        lauks.value = "";
-        tosts("Komentārs pievienots.");
-        const vieta = el("rindaVesture" + i);
-        vieta.dataset.ieladets = "1";
-        vieta.hidden = false;
-        paraditVesturi(rindasCilveki[i], "rindaVesture" + i);
-      } catch (e) {
-        console.error("Komentāra kļūda:", e);
-        tosts("Neizdevās saglabāt komentāru.");
-      }
-      p.disabled = false;
-    }));
+    tb.querySelectorAll("[data-koment]").forEach((p) => {
+      const lauks = el("rindaKoment" + p.dataset.koment);
+      // Poga aktīva tikai tad, kad laukā ir vismaz viens simbols.
+      lauks.addEventListener("input", () => { p.disabled = !lauks.value.trim(); });
+      p.addEventListener("click", async () => {
+        const i = p.dataset.koment;
+        if (!lauks.value.trim()) return;
+        p.disabled = true;
+        try {
+          await pievienotKomentaru(rindasCilveki[i].id, lauks.value.trim());
+          lauks.value = "";
+          tosts("Komentārs pievienots.");
+          const vieta = el("rindaVesture" + i);
+          vieta.dataset.ieladets = "1";
+          vieta.hidden = false;
+          paraditVesturi(rindasCilveki[i], "rindaVesture" + i);
+        } catch (e) {
+          console.error("Komentāra kļūda:", e);
+          tosts("Neizdevās saglabāt komentāru.");
+        }
+        p.disabled = !lauks.value.trim();
+      });
+    });
     tb.querySelectorAll("[data-apstiprinat]").forEach((p) => p.addEventListener("click", async () => {
       p.disabled = true;
       try {
@@ -1324,8 +1328,8 @@ async function ieladetPosmaTabulu(tbId, statusi, prefiks, tresa, tuksums) {
             <div class="gi-virsraksts">Bērni</div>
             ${berniInfo}
             <div class="gi-virsraksts">Komentārs (redzams tikai adminiem)</div>
-            <textarea id="${prefiks}Koment${i}" rows="3" placeholder="..."></textarea>
-            <div><button class="maza-poga" data-koment="${i}" style="margin-top:8px">Pievienot komentāru</button></div>
+            <textarea id="${prefiks}Koment${i}" rows="3"></textarea>
+            <div><button class="maza-poga" data-koment="${i}" style="margin-top:8px" disabled>Pievienot komentāru</button></div>
             <div><button class="maza-poga" data-kalendars="${i}" style="margin-top:10px">Rezervēt nodarbību</button></div>
             <div class="admin-kalendars" id="${prefiks}Kalendars${i}" hidden></div>
             <div id="${prefiks}RezApstiprinat${i}" hidden style="margin-top:10px">
@@ -1350,25 +1354,29 @@ async function ieladetPosmaTabulu(tbId, statusi, prefiks, tresa, tuksums) {
         paraditVesturi(rindas[i], prefiks + "Vesture" + i);
       }
     }));
-    tb.querySelectorAll("[data-koment]").forEach((p) => p.addEventListener("click", async () => {
-      const i = p.dataset.koment;
-      const lauks = el(prefiks + "Koment" + i);
-      if (!lauks.value.trim()) { tosts("Ieraksti komentāru."); return; }
-      p.disabled = true;
-      try {
-        await pievienotKomentaru(rindas[i].id, lauks.value.trim());
-        lauks.value = "";
-        tosts("Komentārs pievienots.");
-        const vieta = el(prefiks + "Vesture" + i);
-        vieta.dataset.ieladets = "1";
-        vieta.hidden = false;
-        paraditVesturi(rindas[i], prefiks + "Vesture" + i);
-      } catch (e) {
-        console.error("Komentāra kļūda:", e);
-        tosts("Neizdevās saglabāt komentāru.");
-      }
-      p.disabled = false;
-    }));
+    tb.querySelectorAll("[data-koment]").forEach((p) => {
+      const lauks = el(prefiks + "Koment" + p.dataset.koment);
+      // Poga aktīva tikai tad, kad laukā ir vismaz viens simbols.
+      lauks.addEventListener("input", () => { p.disabled = !lauks.value.trim(); });
+      p.addEventListener("click", async () => {
+        const i = p.dataset.koment;
+        if (!lauks.value.trim()) return;
+        p.disabled = true;
+        try {
+          await pievienotKomentaru(rindas[i].id, lauks.value.trim());
+          lauks.value = "";
+          tosts("Komentārs pievienots.");
+          const vieta = el(prefiks + "Vesture" + i);
+          vieta.dataset.ieladets = "1";
+          vieta.hidden = false;
+          paraditVesturi(rindas[i], prefiks + "Vesture" + i);
+        } catch (e) {
+          console.error("Komentāra kļūda:", e);
+          tosts("Neizdevās saglabāt komentāru.");
+        }
+        p.disabled = !lauks.value.trim();
+      });
+    });
     // Iepazīšanās nodarbību atļauju ķekši (tikai 2. lapā) — kuru nodarbību
     // klients drīkst nopirkt; izmaiņa uzreiz atspoguļojas klienta profilā.
     tb.querySelectorAll("[data-iepaz-kekss]").forEach((ch) => ch.addEventListener("change", async () => {
