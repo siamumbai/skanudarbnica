@@ -155,15 +155,13 @@
      lai kartes padding ap "Izvēlies audzēkni" ir vienāds no visām pusēm */
   body.skats2 #audzeknaBloks .lauks,
   body.skats3 #audzeknaBloks .lauks{margin-top:0 !important}
-  /* Katrs bērns — spiežama poga ar kontūru; atver anketu labošanai */
-  .berna-poga{
-    display:block;width:100%;text-align:left;
+  /* Katrs bērns — cilne ar vārdu; "Labot" poga labajā pusē atver anketu */
+  .berna-rinda{
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
     background:var(--bg);border:1.5px solid var(--border);border-radius:12px;
-    padding:13px 16px;margin-bottom:10px;
-    font-family:inherit;font-size:14.5px;font-weight:600;color:var(--text);
-    cursor:pointer;transition:border-color .15s;
+    padding:10px 12px 10px 16px;margin-bottom:10px;
+    font-size:14.5px;font-weight:600;color:var(--text);
   }
-  .berna-poga:hover{border-color:var(--accent-dark)}
   #rezBernuRindas:not(:empty){margin-bottom:4px}
   /* Anketas vieta — izplešas/sakļaujas 1 sekundes laikā */
   #rezAnketaVieta{display:grid;grid-template-rows:0fr;transition:grid-template-rows 1s cubic-bezier(.22,.8,.3,1)}
@@ -1225,9 +1223,12 @@ let mockGaidaSlots = null; // pirms bērna pievienošanas izvēlētais laiks (mi
 function zimetRezBernuRindas() {
   const k = el('rezBernuRindas');
   k.innerHTML = berni.map((b, i) => `
-    <button class="berna-poga" data-i="${i}" type="button">${escapeHTML(b.berna_vards || 'Audzēknis')}</button>`).join('');
-  k.querySelectorAll('.berna-poga').forEach((p) => {
-    p.onclick = () => atvertRezAnketu(Number(p.dataset.i));
+    <div class="berna-rinda">
+      <span>${escapeHTML(b.berna_vards || 'Audzēknis')}</span>
+      <button class="mini-poga" data-labot-bernu="${i}" type="button">Labot</button>
+    </div>`).join('');
+  k.querySelectorAll('[data-labot-bernu]').forEach((p) => {
+    p.onclick = () => atvertRezAnketu(Number(p.dataset.labotBernu));
   });
 }
 
